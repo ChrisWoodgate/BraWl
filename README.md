@@ -2,7 +2,7 @@
 
 A code for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian. The code will be periodically updated so it is best to check the GitHub repository.
 
-Copyright (C) Christopher Woodgate 2019-2023. Released under the GNU Lesser General Public License, version 3.
+Copyright (C) Christopher Woodgate 2019-2024. Released under the GNU Lesser General Public License, version 3.
 
 ## Citations
 ANY publications/presentations/further work resulting from the use of this software should cite the original publication for which it was developed:
@@ -46,14 +46,17 @@ If you navigate to the `examples` subdirectory, you should find two examples dem
 Most of the options specified in the input file are fairly self-explanatory. The least obvious is the `mode' option. Because it is my intention to include a 2D (and potentially 1D) option in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented options are:
 - 01: Simulated Annealing. Uses the Metropolis Monte Carlo algorithm with Kawasaki dynamics to perform simulated annealing on a system in an initially random configuration.
 - 02: Draw Decorellated Samples. Optionally performs simulated annealing then draws samples of the grid N Monte Carlo steps apart. Good for generating supercell configurations for use other methods. *E.g.* this recent reference where the code was used to generate training/test data for a machine-learned interatomic potential: L. Shenoy, C. D. Woodgate, J. B. Staunton, A. P. Bartók, C. S. Becquart, C. Domain, J. R. Kermode, [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
-- 03: Nested sampling. Uses the nested sampling algorithm to sample the configuration space from random initial configurations, allowing to calculate the partition function at an arbitrary temperature during the post-processing step. This procedure is outlined in a recent preprint: C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [arXiv:2404.13173](https://doi.org/10.48550/arXiv.2404.13173).
+- 03: Nested sampling. (Implemented by Livia Bartók-Pártay, Department of Chemistry, University of Warwick, UK.) Uses the nested sampling algorithm to sample the configuration space from random initial configurations, facilitating calculation of the partition function at an arbitrary temperature during the post-processing step. This procedure is outlined in a recent preprint: C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [arXiv:2404.13173](https://doi.org/10.48550/arXiv.2404.13173).
+- 04: Transition Matrix Monte Carlo Method. (Implemented by Hubert Nagusewski, Department of Physics, University of Warwick.) 
+- 05: Wang-Landau Sampling. (Implemented by Hubert Nagusewski, Department of Physics, University of Warwick.) 
+- 06: Energy Spetrum algorithm. (Implemented by Hubert Nagusewski, Department of Physics, University of Warwick.) Needed for modes 04 and 05 to determine the range of possible simulation energies.
 
 ## Author
 Christopher D. Woodgate
 
 ## Contributors
-- Livia Bartók-Pártay
-- Hubert Naguszewski
+- Livia Bartók-Pártay (Nested Sampling implementation).
+- Hubert Naguszewski (Wang-Landau sampling and Transition Matrix Monte Carlo (TMMC) implementations).
 
 ## Contributing
 Any/all contributions are welcome via pull requests. 
