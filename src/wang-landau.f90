@@ -677,15 +677,17 @@ end subroutine dos_combine
     integer, dimension(:,:), intent(inout) :: window_intervals
     integer, intent(inout) :: mpi_bins, mpi_index
     real(real64), dimension(:), allocatable, intent(inout) :: mpi_bin_edges, mpi_wl_hist
-
+    
     ! Internal
-    integer :: i, ierror, bins_to_subtract, sum_below_2
+    integer :: i, j, k, ierror, bins_to_subtract, sum_below_2
     real(real64) :: diffusion(wl_setup%num_windows)
     integer :: bins(wl_setup%num_windows)
+    integer :: bins_max_indices(wl_setup%num_windows)
+    logical :: mk(wl_setup%num_windows)
 
     ! Perform window size adjustment then broadcast
     if (my_rank == 0) then
-      diffusion = (window_intervals(:,2) - window_intervals(:,1) + 1)**2/rank_all_time(:,1)
+      diffusion = (window_intervals(:,2) - window_intervals(:,1) + 1)/rank_all_time(:,1)
       bins = NINT(REAL(wl_setup%bins)*diffusion/SUM(diffusion))
       
       ! Compute bins to subtract
@@ -696,16 +698,32 @@ end subroutine dos_combine
           end if
       end do
       bins_to_subtract = count(bins < 2) * 2 - sum_below_2
+      bins_to_subtract = MAX(sum_below_2, SUM(bins)-wl_setup%bins)
       
+      mk = .True.
+      do i = 1, wl_setup%num_windows
+        bins_max_indices(i) = MAXLOC(bins,dim=1,mask=mk)
+        mk(MAXLOC(bins,mk)) = .FALSE.
+      end do
+
+      i = 0
+      j = 0
+      do while(i < bins_to_subtract)
+        j = j + 1
+        do k = 1, MIN(j, wl_setup%num_windows)
+          if (i < bins_to_subtract .and. bins(bins_max_indices(k)) > 2) then
+            i = i + 1
+            bins(bins_max_indices(k)) = bins(bins_max_indices(k)) - 1
+          end if
+        end do
+      end do
+
       ! Set all bins less than 2 to 2
       do i = 1, wl_setup%num_windows
           if (bins(i) < 2) then
               bins(i) = 2
           end if
       end do
-      
-      ! Adjust the max bin
-      bins(maxloc(bins)) = bins(maxloc(bins)) - bins_to_subtract
 
       print*, "Old"
       print*, window_intervals(:,1)
@@ -721,7 +739,6 @@ end subroutine dos_combine
       print*, "New"
       print*, window_intervals(:,1)
       print*, window_intervals(:,2)
-      !print*, 1+time_mult_array
     end if
 
     call MPI_BCAST(window_intervals, wl_setup%num_windows*2, MPI_INT, 0, MPI_COMM_WORLD, ierror)
