@@ -427,7 +427,7 @@ contains
 
       ! Stop burn if other rank in window is burnt in
       ! or if burnt in send configuration to rest of window
-      if (stop_burn_in .eqv. .True.) then
+      if (flag .eqv. .True.) then
         call MPI_RECV(config, SIZE(config), MPI_SHORT, MPI_ANY_SOURCE, 10001, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror) ! Check if you can put an array of accepted values in the source variable
         exit
       else if (e_unswapped > min_e .and. e_unswapped < max_e) then
