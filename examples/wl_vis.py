@@ -253,7 +253,8 @@ for itemp, new_temp in enumerate(temperatures):
     heat_caps[itemp] = np.dot(msq_dev, prob)*bin_width/(kb_ev*new_temp**2)
 
 gibbs_energies[0] = mean_energies[0]
-for itemp in range(1,len(temperatures)):
+gibbs_energies[1] = mean_energies[0]
+for itemp in range(2,len(temperatures)):
 
   beta_i = 1.0/(kb_ev*temperatures[itemp])
   beta_j = 1.0/(kb_ev*temperatures[itemp-1])
@@ -279,6 +280,8 @@ mean_energies = mean_energies/n_atoms*ev_to_mev
 heat_caps = heat_caps/kb_ev/n_atoms
 entropies = entropies/kb_ev/n_atoms
 
+ax1.set_xlim(hist_min,hist_max)
+ax1.set_ylim(0, prob_max*1.01)
 ax2.plot(temperatures, mean_energies, '-o', markersize=4)
 ax3.plot(temperatures, heat_caps, '-o', markersize=4, label="Heat Capacity")
 for ipair, pair in enumerate(pairs):
