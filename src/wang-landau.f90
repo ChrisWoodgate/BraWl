@@ -418,7 +418,7 @@ contains
     if (comms .eqv. .True.) then
       call MPI_IRECV(stop_burn_in, 1, MPI_LOGICAL, MPI_ANY_SOURCE, 10000, MPI_COMM_WORLD, request, ierror)
     end if
-    
+
     do while(.True.)
       ! Check if MPI message received
       if (comms .eqv. .True.) then
@@ -428,22 +428,21 @@ contains
       ! Stop burn if other rank in window is burnt in
       ! or if burnt in send configuration to rest of window
       if (stop_burn_in .eqv. .True.) then
-        !print*, my_rank, "Waiting"
         call MPI_RECV(config, SIZE(config), MPI_SHORT, MPI_ANY_SOURCE, 10001, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror) ! Check if you can put an array of accepted values in the source variable
-        !print*, my_rank, "Recieved"
         exit
       else if (e_unswapped > min_e .and. e_unswapped < max_e) then
         if (comms .eqv. .True.) then
-          stop_burn_in = .True.
-          call MPI_CANCEL(request, ierror)
-          call MPI_REQUEST_FREE(request, ierror)
-          do rank=window_rank_index(mpi_index, 1), window_rank_index(mpi_index, 2)
-            if (rank /= my_rank) then
-            ! print*, my_rank, "Sent to", rank
-              call MPI_SEND(stop_burn_in, 1, MPI_LOGICAL, rank, 10000, MPI_COMM_WORLD, ierror)
-              call MPI_SEND(config, SIZE(config), MPI_SHORT, rank, 10001, MPI_COMM_WORLD, ierror)
-            end if
-          end do
+          if (flag .eqv. .False.) then
+            stop_burn_in = .True.
+            call MPI_CANCEL(request, ierror)
+            call MPI_REQUEST_FREE(request, ierror)
+            do rank=window_rank_index(mpi_index, 1), window_rank_index(mpi_index, 2)
+              if (rank /= my_rank) then
+                call MPI_SEND(stop_burn_in, 1, MPI_LOGICAL, rank, 10000, MPI_COMM_WORLD, ierror)
+                call MPI_SEND(config, SIZE(config), MPI_SHORT, rank, 10001, MPI_COMM_WORLD, ierror)
+              end if
+            end do
+          end if
         end if
         exit
       end if
@@ -530,14 +529,14 @@ contains
     integer :: i
 
     window_indices(1, 1) = window_intervals(1,1)
-    window_indices(1,2) = INT(window_intervals(1,2) + ABS(window_intervals(2,1)-window_intervals(2,2))*wl_setup%bin_overlap)
+    window_indices(1,2) = INT(window_intervals(1,2) + wl_setup%bin_overlap)
     do i = 2, wl_setup%num_windows-1
-      window_indices(i, 1) = INT(window_intervals(i,1) - ABS(window_intervals(i-1,1)-window_intervals(i-1,2))*wl_setup%bin_overlap)
-      window_indices(i, 2) = INT(window_intervals(i,2) + ABS(window_intervals(i+1,1)-window_intervals(i+1,2))*wl_setup%bin_overlap)
+      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - wl_setup%bin_overlap), 1)
+      window_indices(i, 2) = MIN(INT(window_intervals(i,2) + wl_setup%bin_overlap), wl_setup%bins)
     end do
     window_indices(wl_setup%num_windows, 1) = INT(window_intervals(wl_setup%num_windows,1) &
                                     - ABS(window_intervals(wl_setup%num_windows-1,1) &
-                                    -window_intervals(wl_setup%num_windows-1,2))*wl_setup%bin_overlap)
+                                    - wl_setup%bin_overlap))
     window_indices(wl_setup%num_windows,2) = window_intervals(wl_setup%num_windows,2)
 
     mpi_index = my_rank/num_walkers + 1
@@ -680,35 +679,44 @@ end subroutine dos_combine
     real(real64), dimension(:), allocatable, intent(inout) :: mpi_bin_edges, mpi_wl_hist
 
     ! Internal
-    integer :: i, ierror
-    real(real64) :: time_inv, time_total_inv, bins, mean_percent, time_mult, scale_factor
-    real(real64) :: time_mult_array(wl_setup%num_windows)
+    integer :: i, ierror, bins_to_subtract, sum_below_2
+    real(real64) :: diffusion(wl_setup%num_windows)
+    integer :: bins(wl_setup%num_windows)
 
     ! Perform window size adjustment then broadcast
-    if (my_rank == 0) then                            
-      time_total_inv = SUM(1/rank_all_time(:,1))
-      mean_percent = 1.0_real64/wl_setup%num_windows
-      scale_factor = 0.5_real64
-
-      bins = window_intervals(1,2) - window_intervals(1,1) + 1
-      time_inv = 1/rank_all_time(1,1)
-      time_mult = (time_inv/time_total_inv/mean_percent-1.0_real64)*scale_factor ! last real is impact multiplier
-      time_mult_array(1) = time_mult
+    if (my_rank == 0) then
+      diffusion = (window_intervals(:,2) - window_intervals(:,1) + 1)**2/rank_all_time(:,1)
+      bins = NINT(REAL(wl_setup%bins)*diffusion/SUM(diffusion))
+      
+      ! Compute bins to subtract
+      sum_below_2 = 0
+      do i = 1, wl_setup%num_windows
+          if (bins(i) < 2) then
+              sum_below_2 = sum_below_2 + bins(i)
+          end if
+      end do
+      bins_to_subtract = count(bins < 2) * 2 - sum_below_2
+      
+      ! Set all bins less than 2 to 2
+      do i = 1, wl_setup%num_windows
+          if (bins(i) < 2) then
+              bins(i) = 2
+          end if
+      end do
+      
+      ! Adjust the max bin
+      bins(maxloc(bins)) = bins(maxloc(bins)) - bins_to_subtract
 
       print*, "Old"
       print*, window_intervals(:,1)
       print*, window_intervals(:,2)
 
-      window_intervals(1, 2) = MAX(NINT(bins*(1+time_mult)), 2)
+      window_intervals(1, 2) = bins(1)
       do i=2, wl_setup%num_windows
-        time_inv = 1/rank_all_time(i,1)
-        time_mult = (time_inv/time_total_inv/mean_percent-1.0_real64)*scale_factor
-        bins = window_intervals(i,2) - window_intervals(i,1) + 1
         window_intervals(i, 1) = window_intervals(i-1, 2) + 1
-        window_intervals(i, 2) = window_intervals(i, 1) + MAX(NINT(bins*(1+time_mult)) - 1, 1)
-        time_mult_array(i) = time_mult
+        window_intervals(i, 2) = window_intervals(i, 1) + bins(i) - 1
       end do
-      window_intervals(wl_setup%num_windows, 1) = MIN(window_intervals(wl_setup%num_windows, 1), wl_setup%bins-1)
+      window_intervals(wl_setup%num_windows, 1) = window_intervals(wl_setup%num_windows-1, 2) + 1
       window_intervals(wl_setup%num_windows, 2) = wl_setup%bins
       print*, "New"
       print*, window_intervals(:,1)
@@ -742,18 +750,15 @@ end subroutine dos_combine
     deallocate(mpi_bin_edges)
     deallocate(mpi_wl_hist)
 
-    window_indices(1,1) = window_intervals(1,1)
-    window_indices(1,2) = INT(window_intervals(1,2) &
-                        + ABS(window_intervals(2,1)-window_intervals(2,2))*wl_setup%bin_overlap)
+    window_indices(1, 1) = window_intervals(1,1)
+    window_indices(1,2) = INT(window_intervals(1,2) + wl_setup%bin_overlap)
     do i = 2, wl_setup%num_windows-1
-      window_indices(i,1) = INT(window_intervals(i,1) &
-                          - ABS(window_intervals(i-1,1)-window_intervals(i-1,2)) *wl_setup%bin_overlap)
-      window_indices(i,2) = INT(window_intervals(i,2) &
-                          + ABS(window_intervals(i+1,1)-window_intervals(i+1,2))*wl_setup%bin_overlap)
+      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - wl_setup%bin_overlap), 1)
+      window_indices(i, 2) = MIN(INT(window_intervals(i,2) + wl_setup%bin_overlap), wl_setup%bins)
     end do
-    window_indices(wl_setup%num_windows,1) = INT(window_intervals(wl_setup%num_windows,1) &
-                                            - ABS(window_intervals(wl_setup%num_windows-1,1) &
-                                            -window_intervals(wl_setup%num_windows-1,2))*wl_setup%bin_overlap)
+    window_indices(wl_setup%num_windows, 1) = INT(window_intervals(wl_setup%num_windows,1) &
+                                    - ABS(window_intervals(wl_setup%num_windows-1,1) &
+                                    - wl_setup%bin_overlap))
     window_indices(wl_setup%num_windows,2) = window_intervals(wl_setup%num_windows,2)
 
     mpi_index = my_rank/num_walkers + 1

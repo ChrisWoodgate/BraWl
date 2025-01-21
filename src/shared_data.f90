@@ -156,7 +156,7 @@ module shared_data
     ! Number of energy windows
     integer :: num_windows
     ! Number of bins in the overlap region
-    real :: bin_overlap
+    integer :: bin_overlap
     ! Tolerance for wang landau
     real :: tolerance
     ! Flatness for wang landau histogram
