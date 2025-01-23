@@ -8,9 +8,10 @@ from matplotlib.colors import ListedColormap
 import matplotlib.colors as mcolors
 import copy
 import itertools
+font_size = 12
 np.set_printoptions(suppress=True)
 plt.rcParams.update({"text.usetex": True,
-                     "font.size": 12})
+                     "font.size": font_size})
 plt.rc('font', family='serif')
 plt.rc('text', usetex=True)
 
@@ -253,7 +254,8 @@ for itemp, new_temp in enumerate(temperatures):
     heat_caps[itemp] = np.dot(msq_dev, prob)*bin_width/(kb_ev*new_temp**2)
 
 gibbs_energies[0] = mean_energies[0]
-for itemp in range(1,len(temperatures)):
+gibbs_energies[1] = mean_energies[0]
+for itemp in range(2,len(temperatures)):
 
   beta_i = 1.0/(kb_ev*temperatures[itemp])
   beta_j = 1.0/(kb_ev*temperatures[itemp-1])
@@ -279,6 +281,8 @@ mean_energies = mean_energies/n_atoms*ev_to_mev
 heat_caps = heat_caps/kb_ev/n_atoms
 entropies = entropies/kb_ev/n_atoms
 
+ax1.set_xlim(hist_min,hist_max)
+ax1.set_ylim(0, prob_max*1.01)
 ax2.plot(temperatures, mean_energies, '-o', markersize=4)
 ax3.plot(temperatures, heat_caps, '-o', markersize=4, label="Heat Capacity")
 for ipair, pair in enumerate(pairs):
@@ -313,6 +317,8 @@ for x in local_max_indices:
   ax5.vlines(x=temperatures[x], ymin=np.min(heat_caps)-0.1*heat_cap_diff, ymax=np.max(heat_caps), color=colors["firebrick_red"], linestyle='--')
   ax7.vlines(x=temperatures[x], ymin=np.min(entropies)-0.1*entropies_diff, ymax=np.max(entropies), color=colors["firebrick_red"], linestyle='--')
 
+ax1.set_xlim(hist_min,hist_max)
+ax1.set_ylim(0, prob_max*1.01)
 ax2.set_ylim(np.min(mean_energies)-0.025*np.abs(mean_energies_diff), np.max(mean_energies)+0.025*np.abs(mean_energies_diff))
 ax3.set_ylim(np.min(heat_caps)-0.025*np.abs(heat_cap_diff), np.max(heat_caps)+0.025*np.abs(heat_cap_diff))
 ax5.set_ylim(np.min(heat_caps)-0.025*np.abs(heat_cap_diff), np.max(heat_caps)+0.025*np.abs(heat_cap_diff))
@@ -324,20 +330,21 @@ fig3.savefig('figures/{}_heat_capacity_1.svg'.format(''.join(elements)), bbox_in
 fig4.savefig('figures/{}_heat_capacity_2.svg'.format(''.join(elements)), bbox_inches='tight')
 fig5.savefig('figures/{}_entropy.svg'.format(''.join(elements)), bbox_inches='tight')
 
-y_offset = -0.125
+y_offset = -0.135
 x_offset = 0.5
 
 hist_ax.tick_params(direction="in")
 cv_ax1.tick_params(direction="in")
 cv_ax2.tick_params(direction="in")
 
-hist_ax.set_xlabel(r'Energy $U$ (meV/atom)')
-hist_ax.set_ylabel(r'Probability P($U$)')
-cv_ax2.set_xlabel(r'Temperature (K)')
-cv_ax1.set_ylabel(r'$C$ ($k_B$/atom)')
-cv_ax2.set_ylabel(r'$C$ ($k_B$/atom)')
-cv_ax1_asro.set_ylabel(r'$\alpha^{pq}_1$')
-cv_ax2_asro.set_ylabel(r'$\alpha^{pq}_2$')
+label_size_offset = 3
+hist_ax.set_xlabel(r'Energy $U$ (meV/atom)', fontsize=font_size+label_size_offset)
+hist_ax.set_ylabel(r'Probability P($U$)', fontsize=font_size+label_size_offset)
+cv_ax2.set_xlabel(r'Temperature (K)', fontsize=font_size+label_size_offset)
+cv_ax1.set_ylabel(r'$C$ ($k_B$/atom)', fontsize=font_size+label_size_offset)
+cv_ax2.set_ylabel(r'$C$ ($k_B$/atom)', fontsize=font_size+label_size_offset)
+cv_ax1_asro.set_ylabel(r'$\alpha^{pq}_1$', fontsize=font_size+label_size_offset)
+cv_ax2_asro.set_ylabel(r'$\alpha^{pq}_2$', fontsize=font_size+label_size_offset)
 cv_ax1_asro.set_xticklabels([])
 cv_ax1.grid(True, axis='x')
 cv_ax2.grid(True, axis='x')
