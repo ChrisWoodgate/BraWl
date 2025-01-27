@@ -28,6 +28,7 @@ contains
 
     ! Loop integers and error handling variable
     integer :: i, j, ierr
+    integer :: iter, num_iter
 
     ! Temperature and temperature steps
     real(real64) :: temp, beta
@@ -54,13 +55,27 @@ contains
     real(real64), allocatable :: mpi_bin_edges(:), mpi_wl_hist(:), wl_logdos_buffer(:), wl_logdos_write(:)
     real(real64), allocatable :: rank_time(:), rank_time_buffer(:,:)
 
+    ! load balancing metrics
+    real(real64), allocatable :: lb_bins(:,:), lb_time(:,:), window_time(:), diffusion_prev(:)
+
     ! radial density across energy
     real(real64), allocatable :: rho_of_E(:,:,:,:), rho_of_E_buffer(:,:,:,:)
     integer, allocatable :: radial_record(:), radial_record_buffer(:)
+    logical, allocatable :: radial_record_bool(:)
     integer :: radial_mc_steps
 
     ! Minimum value in array to be considered
     min_val = wl_setup%tolerance*1e-1_real64
+
+    ! Number of WL iteration to be performed
+    num_iter = INT(FLOOR(LOG(2.0_real64*wl_setup%tolerance)/LOG(0.5_real64)))
+    allocate(lb_bins(num_iter, wl_setup%num_windows))
+    allocate(lb_time(num_iter, wl_setup%num_windows))
+    allocate(window_time(num_iter))
+    allocate(diffusion_prev(wl_setup%num_windows))
+    lb_bins = -1.0_real64
+    lb_time = -1.0_real64
+    window_time = -1.0_real64
 
     ! Radial densities as a function of energy
     allocate(rho_of_E(setup%n_species, setup%n_species, setup%wc_range, wl_setup%bins))
@@ -81,6 +96,7 @@ contains
     num_walkers = mpi_processes/num_windows
     wl_setup%radial_samples = INT(wl_setup%radial_samples/num_walkers)
     wl_setup%radial_samples = MAX(INT(wl_setup%radial_samples*num_walkers), 1)
+    
     if (MOD(mpi_processes, num_windows) /= 0) then
       if (my_rank == 0) then
         write (6, '(72("~"))')
@@ -104,6 +120,7 @@ contains
     ! allocate arrays
     allocate(radial_record(wl_setup%bins))
     allocate(radial_record_buffer(wl_setup%bins))
+    allocate(radial_record_bool(wl_setup%bins))
     allocate(bin_edges(bins + 1))
     allocate(wl_hist(bins))
     allocate(wl_logdos(bins))
@@ -131,6 +148,7 @@ contains
     mpi_wl_hist = 0.0_real64; wl_logdos_buffer = 0.0_real64; rank_time = 0.0_real64
     radial_record = 0
     radial_record_buffer = 0
+    radial_record_bool = .False.
     radial_mc_steps = 0
     rho_saved = .False.
 
@@ -161,6 +179,7 @@ contains
     !--------------------!
     ! Main Wang-Landau   !
     !--------------------!
+    iter = 0
     do while (wl_f > wl_setup%tolerance)
       if (pre_sampled .neqv. .True.) then ! First reset after system had time to explore
         if (minval(mpi_wl_hist) > 10.0_real64) then
@@ -171,14 +190,14 @@ contains
       end if
 
       call sweeps(setup, wl_setup, config, num_walkers, bin_edges, mpi_start_idx, mpi_end_idx, &
-                  mpi_wl_hist, wl_logdos, wl_f, mpi_index, window_intervals, radial_record, &
+                  mpi_wl_hist, wl_logdos, wl_f, mpi_index, window_intervals, radial_record, radial_record_bool, &
                   rho_of_E, rho_saved, radial_mc_steps, start)
 
       flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
       bins_min = count(mpi_wl_hist > min_val)/REAL(mpi_bins)
 
       if (pre_sampled .neqv. .True.) then
-        write (6, '(a,i0,a,f6.2,a)') "Rank: ", my_rank, " | bins visited: ", bins_min*100_real64, "%"
+        write (6, '(a,i3,a,f6.2,a)') "Rank: ", my_rank, " | bins visited: ", bins_min*100_real64, "%"
       end if
 
       if (pre_sampled .eqv. .True.) then
@@ -190,6 +209,8 @@ contains
 
           !Reset the histogram
           mpi_wl_hist = 0.0_real64
+          ! Increase iteration
+          iter = iter + 1
           !Reduce f
           wl_f = wl_f*1/2
           wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))!wl_logdos_min
@@ -222,21 +243,32 @@ contains
           call MPI_REDUCE(radial_record, radial_record_buffer, wl_setup%bins, MPI_INT, &
           MPI_SUM, 0, MPI_COMM_WORLD, ierror)
 
-          radial_min = 0
-          do i=1,wl_setup%bins
-            radial_min = radial_min + REAL(MIN(radial_record_buffer(i),wl_setup%radial_samples))
-          end do
-          radial_min = radial_min/REAL(wl_setup%radial_samples*wl_setup%bins)
+          if (my_rank == 0) then
+            radial_min = 0
+            do i=1,wl_setup%bins
+              radial_min = radial_min + REAL(MIN(radial_record_buffer(i),wl_setup%radial_samples))
+            end do
+            do i=1,wl_setup%bins
+              if (radial_record_buffer(i) >= wl_setup%radial_samples) then
+                radial_record_bool(i) = .True.
+              end if
+            end do
+            radial_min = radial_min/REAL(wl_setup%radial_samples*wl_setup%bins)
+          end if
           call MPI_BCAST(radial_min, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
+          call MPI_BCAST(radial_record_bool, wl_setup%bins, MPI_INTEGER, 0, MPI_COMM_WORLD, ierror)
 
           call comms_wait()
           if (my_rank == 0) then
             wl_logdos_write = wl_logdos
-            write (6, '(a,f20.18,a,f8.2,a)', advance='no') "Flatness reached for W-L F of: ", wl_f_prev, &
+            write (6, '(24("-"),x,a,i3,a,i3,x,24("-"))', advance='no') "Wang-Landau Iteration: ", iter, &
+            "/", num_iter
+            write (*, *)
+            write (6, '(a,f20.18,a,f8.2,a)', advance='no') "Flatness reached f of: ", wl_f_prev, &
                     " | Radial samples: ", radial_min*100_real64, "%"
               write (*, *)
             do i=1, wl_setup%num_windows
-              write (6, '(a,i0,a,f8.2,a,f8.2,a,f8.2,a)') "MPI Window: ", i, " | Avg. time: ", rank_time_buffer(i,1), &
+              write (6, '(a,i3,a,f8.2,a,f8.2,a,f8.2,a)') "MPI Window: ", i, " | Avg. time: ", rank_time_buffer(i,1), &
               "s | Time min: ", rank_time_buffer(i,2), "s Time max: " , rank_time_buffer(i,3), "s"
             end do
             write (*, *)
@@ -286,6 +318,16 @@ contains
           ! Subtract minimum value
           wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))
           wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
+
+          ! Store and save MPI metrics
+          if (my_rank == 0) then
+            lb_bins(iter, :) = REAL(window_indices(:, 2) - window_indices(:, 1) + 1)
+            lb_time(iter, :) = rank_time_buffer(:,1)
+            window_time(iter) = MAXVAL(rank_time_buffer(:,3))
+            call ncdf_writer_2d("wl_lb_bins.dat", ierr, lb_bins)
+            call ncdf_writer_2d("wl_lb_time.dat", ierr, lb_time)
+            call ncdf_writer_1d("wl_window_time.dat", ierr, window_time)
+          end if
           call comms_wait()
           start = mpi_wtime()
         end if
@@ -311,7 +353,8 @@ contains
 
   subroutine sweeps(setup, wl_setup, config, num_walkers, bin_edges, &
                          mpi_start_idx, mpi_end_idx, mpi_wl_hist, wl_logdos, wl_f, &
-                         mpi_index, window_intervals, radial_record, rho_of_E, rho_saved, radial_mc_steps, start)
+                         mpi_index, window_intervals, radial_record, radial_record_bool, &
+                         rho_of_E, rho_saved, radial_mc_steps, start)
     integer(int16), dimension(:, :, :, :) :: config
     class(run_params), intent(in) :: setup
     class(wl_params), intent(in) :: wl_setup
@@ -324,6 +367,7 @@ contains
     real(real64), intent(in) :: wl_f
     real(real64), intent(inout) :: start
     logical, intent(in) :: rho_saved
+    logical, dimension(:), intent(in) :: radial_record_bool
     integer, intent(inout) :: radial_mc_steps
 
     integer, dimension(4) :: rdm1, rdm2
@@ -360,14 +404,16 @@ contains
       if (jbin < wl_setup%bins + 1 .and. jbin > 0) then
         if (rho_saved .eqv. .False.) then
           if (radial_record(jbin) < MAX(wl_setup%radial_samples/num_walkers,1)) then
-            radial_mc_steps = radial_mc_steps + 1
-            if(radial_mc_steps >= setup%n_atoms) then
-              radial_mc_steps = 0
-              radial_record(jbin) = radial_record(jbin) + 1
-              radial_start = mpi_wtime()
-              rho_of_E(:,:,:,jbin) = rho_of_E(:,:,:,jbin) + radial_densities(setup, config, setup%wc_range, shells)
-              radial_end = mpi_wtime()
-              start = start + radial_end - radial_start
+            if (radial_record_bool(jbin) .eqv. .False.) then
+              radial_mc_steps = radial_mc_steps + 1
+              if(radial_mc_steps >= setup%n_atoms) then
+                radial_mc_steps = 0
+                radial_record(jbin) = radial_record(jbin) + 1
+                radial_start = mpi_wtime()
+                rho_of_E(:,:,:,jbin) = rho_of_E(:,:,:,jbin) + radial_densities(setup, config, setup%wc_range, shells)
+                radial_end = mpi_wtime()
+                start = start + radial_end - radial_start
+              end if
             end if
           end if
         end if
@@ -684,7 +730,7 @@ end subroutine dos_combine
     real(real64), dimension(:), allocatable, intent(inout) :: mpi_bin_edges, mpi_wl_hist
     
     ! Internal
-    integer :: i, j, ierror
+    integer :: i, j, ierror, min_bins
     real(real64) :: diffusion(wl_setup%num_windows)
     integer :: bins(wl_setup%num_windows)
     integer :: bins_max_indices(wl_setup%num_windows)
@@ -692,13 +738,15 @@ end subroutine dos_combine
 
     ! Perform window size adjustment then broadcast
     if (my_rank == 0) then
-      diffusion = SQRT((window_intervals(:,2) - window_intervals(:,1) + 1)**2/rank_all_time(:,1))
+      diffusion = (REAL((window_intervals(:,2) - window_intervals(:,1) + 1))) &
+      /(rank_all_time(:,1))
       bins = NINT(REAL(wl_setup%bins)*diffusion/SUM(diffusion))
 
-      ! Set all bins less than 2 to 2
+      ! Set all bins less than min_bins to min_bins
+      min_bins = 1
       do i = 1, wl_setup%num_windows
-        if (bins(i) < 2) then
-            bins(i) = 2
+        if (bins(i) < min_bins) then
+            bins(i) = min_bins
         end if
       end do
 
