@@ -190,7 +190,7 @@ contains
     radial_time = 0.0_real64
     do while (wl_f > wl_setup%tolerance)
       if (pre_sampled .neqv. .True.) then ! First reset after system had time to explore
-        if (minval(mpi_wl_hist) > 10.0_real64) then
+        if (minval(mpi_wl_hist) > 1.0_real64) then
           start = mpi_wtime()
           pre_sampled = .True.
           mpi_wl_hist = 0.0_real64
@@ -202,14 +202,14 @@ contains
                   rho_of_E, rho_saved, radial_mc_steps, radial_time, converged)
 
       flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
-      bins_min = count(mpi_wl_hist > min_val)/REAL(mpi_bins)
+      bins_min = count(mpi_wl_hist > 1.0_real64)/REAL(mpi_bins)
 
       if (pre_sampled .neqv. .True.) then
         write (6, '(a,i3,a,f6.2,a)') "Rank: ", my_rank, " | bins visited: ", bins_min*100_real64, "%"
       end if
 
       if (pre_sampled .eqv. .True.) then
-        if (converged == 0 .and. flatness > wl_setup%flatness .and. minval(mpi_wl_hist) > 10) then
+        if (converged == 0 .and. flatness > wl_setup%flatness .and. minval(mpi_wl_hist) > 1.0_real64) then
           ! End timer
           end = mpi_wtime()
           converged = 1
@@ -322,6 +322,16 @@ contains
             wl_logdos = wl_logdos_write
           end if
 
+          ! Store and save MPI metrics
+          if (my_rank == 0) then
+            lb_bins(iter, :) = REAL(window_indices(:, 2) - window_indices(:, 1) + 1)
+            lb_time(iter, :) = rank_time_buffer(:,1)
+            window_time(iter) = MAXVAL(rank_time_buffer(:,3))
+            call ncdf_writer_2d("wl_lb_bins.dat", ierr, lb_bins)
+            call ncdf_writer_2d("wl_lb_time.dat", ierr, lb_time)
+            call ncdf_writer_1d("wl_window_time.dat", ierr, window_time)
+          end if
+          
           call mpi_window_optimise(wl_setup, my_rank, bin_edges, window_intervals, window_indices, &
                                   mpi_bins, mpi_index, mpi_bin_edges, mpi_wl_hist, rank_time_buffer, num_walkers,&
                                   diffusion_prev, iter)
@@ -338,15 +348,6 @@ contains
           wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))
           wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
 
-          ! Store and save MPI metrics
-          if (my_rank == 0) then
-            lb_bins(iter, :) = REAL(window_indices(:, 2) - window_indices(:, 1) + 1)
-            lb_time(iter, :) = rank_time_buffer(:,1)
-            window_time(iter) = MAXVAL(rank_time_buffer(:,3))
-            call ncdf_writer_2d("wl_lb_bins.dat", ierr, lb_bins)
-            call ncdf_writer_2d("wl_lb_time.dat", ierr, lb_time)
-            call ncdf_writer_1d("wl_window_time.dat", ierr, window_time)
-          end if
           call comms_wait()
           start = mpi_wtime()
         end if
@@ -453,7 +454,9 @@ contains
           call pair_swap(config, rdm1, rdm2)
           jbin = ibin
         end if
-        mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
+        if (MOD(i,4) == 0) then
+          mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
+        end if
         wl_logdos(jbin) = wl_logdos(jbin) + wl_f
       else
         ! reject and reset
@@ -752,17 +755,19 @@ end subroutine dos_combine
     
     ! Internal
     integer :: i, j, ierror, min_bins
-    real(real64) :: diffusion(wl_setup%num_windows), diffusion_merge(wl_setup%num_windows), factor
+    real(real64) :: diffusion(wl_setup%num_windows), diffusion_merge(wl_setup%num_windows), factor, scaling
     integer :: bins(wl_setup%num_windows)
     integer :: bins_max_indices(wl_setup%num_windows)
     logical :: mk(wl_setup%num_windows)
 
     ! Perform window size adjustment then broadcast
     if (my_rank == 0) then
-      factor = 0.9_real64**iter
+      factor = 0.8_real64
+      scaling = 0.85_real64
+      factor = factor*(scaling**(iter-1))
       diffusion = (REAL((window_intervals(:,2) - window_intervals(:,1) + 1))) &
       /(rank_all_time(:,1))
-      diffusion_merge = diffusion_prev/sum(diffusion_prev)*(1-factor) + factor*diffusion/sum(diffusion)
+      diffusion_merge = diffusion_prev/sum(diffusion_prev)*(1.0_real64-factor) + factor*diffusion/sum(diffusion)
       diffusion_prev = diffusion_merge
       
       bins = NINT(REAL(wl_setup%bins)*diffusion_merge/SUM(diffusion_merge))
