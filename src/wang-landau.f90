@@ -867,49 +867,70 @@ end subroutine dos_combine
     end do
   end subroutine mpi_arrays
 
-  subroutine replica_exchange()
+  subroutine replica_exchange(wl_setup, config, my_rank, num_walkers, mpi_index, num_processes, mpi_start_idx, mpi_end_idx, &
+     e_unswapped, wl_f, bin_edges, mpi_wl_hist, wl_logdos)
+    ! Declare input arguments
+    integer(int16), dimension(:, :, :, :), intent(inout) :: config
+    class(wl_params), intent(in) :: wl_setup
+    integer, intent(in) :: num_walkers
+    integer, intent(in) :: mpi_start_idx, mpi_end_idx, mpi_index, my_rank, num_processes
+    real(real64), intent(inout) :: e_unswapped, e_swapped
+    real(real64), intent(inout) :: wl_logdos(:), wl_f
+    integer, intent(inout) :: mpi_wl_hist(:)
+    real(real64), dimension(:), intent(in) :: bin_edges
+    
+    ! Declare local variables
     integer, dimension(num_walkers, 2) :: overlap_lower, overlap_upper
     integer, dimension(num_walkers, 2) :: overlap_exchange
     integer :: i, j, exchange_index
-    integer :: exchange_count
-    logical :: exchange_match
-
+    integer :: exchange_count, ibin, jbin
+    logical :: exchange_match, accept
+    integer :: overlap_loc, status, request
+    integer :: exchange_index
+    integer :: overlap_mpi(2, num_processes), overlap_mpi_buffer(2, num_processes)
+    
+    ! Temporary variables for binning and other calculations
+    integer :: ibin, jbin
+    
+    ! Perform binning and initialize overlap_mpi
     ibin = bin_index(e_unswapped, bin_edges, wl_setup%bins)
-
+    overlap_mpi = 0
+  
     if (ibin > mpi_start_idx - 1 .and. ibin < mpi_start_idx + wl_setup%bin_overlap .and. mpi_index > 1) then
       overlap_loc = mpi_index - 1
-    elseif (ibin > mpi_end_idx - wl_setup%bin_overlap.and. ibin < mpi_start_idx + 1 .and. mpi_index < wl_setup%num_windows) then
+    elseif (ibin > mpi_end_idx - wl_setup%bin_overlap .and. ibin < mpi_start_idx + 1 .and. mpi_index < wl_setup%num_windows) then
       overlap_loc = mpi_index
     else
       overlap_loc = 0
     end if
-
-    overlap_mpi(my_rank+1, 1) = mpi_index
-    overlap_mpi(my_rank+1, 2) = my_rank
-    overlap_mpi(my_rank+1, 3) = overlap_loc
-
-    call MPI_REDUCE()
-
-    if (my_rank == 0) then
-      do i=1, wl_setup%num_windows-1
+  
+    overlap_mpi(my_rank+1, 1) = my_rank
+    overlap_mpi(my_rank+1, 2) = overlap_loc
+  
+    ! Reduce to find max overlap
+    call MPI_REDUCE(overlap_mpi, overlap_mpi_buffer, num_processes*2, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD, ierror)
+  
+    ! Exchange loop
+    do i=1, wl_setup%num_windows-1
+      if (my_rank == 0) then
         overlap_lower = overlap_mpi((i-1)*num_walkers+1:i*num_walkers)
         overlap_upper = overlap_mpi((i)*num_walkers+1:(i+1)*num_walkers)
-      
+  
         exchange_index = 0
         exchange_count = 1
-
+  
         call shuffle_rows(overlap_lower, num_walkers)
         call shuffle_rows(overlap_upper, num_walkers)
-
+  
         ! Loop to find matching rows until no more can be found
         do while (exchange_count > 0)
           exchange_count = 0
           exchange_match = .false.
-
+          
           ! Find matching rows in the shuffled arrays
           do i = 1, num_walkers
             if (overlap_lower(i, 2) == 0) cycle  ! Skip rows with 0
-            do j = 1, N
+            do j = 1, num_walkers
               if (overlap_upper(j, 2) == 0) cycle  ! Skip rows with 0
               if (overlap_lower(i, 2) == overlap_upper(j, 2)) then
                 ! Matching rows found
@@ -919,7 +940,7 @@ end subroutine dos_combine
                 exchange_index = exchange_index + 1
                 overlap_exchange(exchange_index, 1) = overlap_lower(i, 1)
                 overlap_exchange(exchange_index, 2) = overlap_upper(j, 1)
-                
+  
                 ! Set matching rows to 0
                 overlap_lower(i, :) = 0
                 overlap_upper(j, :) = 0
@@ -929,29 +950,55 @@ end subroutine dos_combine
             if (exchange_match) exit
           end do
         end do
-      end do
-
-      ! -------------------------------------------------------------------------------------------------------
-      ! MPI SEND RECV calls
-      jbin = bin_index(e_swapped, bin_edges, wl_setup%bins)
-
-      ! Add change in V into diff_energy
-      delta_e = e_swapped - e_unswapped
-
-      ! Accept or reject move
-      if (genrand() .lt. exp((wl_logdos(ibin) - wl_logdos(jbin)))) then
-        e_unswapped = e_swapped
-        ! swap configurations
-      else
-        jbin = ibin
       end if
-      mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
-      wl_logdos(jbin) = wl_logdos(jbin) + wl_f
-      ! -------------------------------------------------------------------------------------------------------
-
-    end if
-
+  
+      ! Broadcast exchange data
+      call MPI_BCAST(overlap_exchange, num_walkers*2, MPI_INT, 0, MPI_COMM_WORLD, ierror)
+  
+      ! MPI SEND RECV calls for replica exchange
+      do i=1, num_walkers
+        if (my_rank == overlap_exchange(i,1)) then
+          call MPI_RECV(e_swapped, 1, MPI_DOUBLE_PRECISION, overlap_exchange(i,2), 0, MPI_COMM_WORLD, status, ierror)
+          jbin = bin_index(e_swapped, bin_edges, wl_setup%bins)
+  
+          ! Add change in V into diff_energy
+          delta_e = e_swapped - e_unswapped
+  
+          ! Accept or reject move
+          if (genrand() .lt. exp((wl_logdos(ibin) - wl_logdos(jbin)))) then
+            accept = .True.
+            call MPI_ISEND(accept, 1, MPI_INT, overlap_exchange(i,2), 1, MPI_COMM_WORLD, request, ierror)
+            call MPI_ISEND(config, SIZE(config), MPI_SHORT, overlap_exchange(i,2), 2, MPI_COMM_WORLD, request, ierror)
+            call MPI_RECV(config, SIZE(config), MPI_SHORT, overlap_exchange(i,2), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+            e_unswapped = e_swapped
+          else
+            accept = .False.
+            call MPI_ISEND(accept, 1, MPI_INT, overlap_exchange(i,2), 1, MPI_COMM_WORLD, request, ierror)
+            jbin = ibin
+          end if
+  
+        elseif (my_rank == overlap_exchange(i,2)) then
+          call MPI_ISEND(e_unswapped, 1, MPI_DOUBLE_PRECISION, overlap_exchange(i,1), 0, MPI_COMM_WORLD, request, ierror)
+          call MPI_RECV(accept, 1, MPI_INT, overlap_exchange(i,1), 1, MPI_COMM_WORLD, status, ierror)
+  
+          ! Accept or reject move
+          if (accept) then
+            call MPI_ISEND(config, SIZE(config), MPI_SHORT, overlap_exchange(i,1), 2, MPI_COMM_WORLD, request, ierror)
+            call MPI_RECV(config, SIZE(config), MPI_SHORT, overlap_exchange(i,1), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+            e_unswapped = e_swapped
+          else
+            jbin = ibin
+          end if
+        end if
+  
+        ! Update histogram
+        mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
+        wl_logdos(jbin) = wl_logdos(jbin) + wl_f
+      end do
+    end do
+  
   end subroutine replica_exchange
+  
 
   ! Subroutine to shuffle the rows of the array
   subroutine shuffle_rows(array, num_walkers)
