@@ -286,7 +286,7 @@ contains
                     " | Radial samples: ", radial_min*100_real64, "%"
               write (*, *)
             do i=1, wl_setup%num_windows
-              write (6, '(a,i3,a,f8.2,a,f8.2,a,f8.2,a)') "MPI Window: ", i, " | Avg. time: ", rank_time_buffer(i,1), &
+              write (6, '(a,i3,a,f12.2,a,f12.2,a,f12.2,a)') "MPI Window: ", i, " | Avg. time: ", rank_time_buffer(i,1), &
               "s | Time min: ", rank_time_buffer(i,2), "s Time max: " , rank_time_buffer(i,3), "s"
             end do
             write (*, *)
@@ -572,16 +572,20 @@ contains
     ! values for equation to generate bin distribution
     ! factor derived from equation of form:
     ! y = Ax^B + C
-    power = 2
+    power = 1
     b = wl_setup%bins
-    n = wl_setup%num_windows + 1 ! +1 since "edges" are being obtained for window_intervals array
+    n = wl_setup%num_windows
 
     factor = (b-1.0_real64)/((n+1.0_real64)**power-1.0_real64)
 
     do i = 2, wl_setup%num_windows
-      window_intervals(i-1,2) = INT(FLOOR(factor*(i**power-1)+1))
-      window_intervals(i,1) = INT(FLOOR(factor*(i**power-1)+1) + 1)
+      window_intervals(i-1,2) = INT(FLOOR(factor*((i-1)**power)+1))
+      window_intervals(i,1) = window_intervals(i-1,2) + 1
     end do
+
+    if (my_rank == 0) then
+      print*, window_intervals(:,2) - window_intervals(:,1) + 1
+    end if
 
     ! Distribute MPI processes
     window_rank_index(1,1) = 0
