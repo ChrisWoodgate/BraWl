@@ -400,67 +400,70 @@ contains
     e_swapped = e_unswapped
 
     do i = 1, wl_setup%mc_sweeps*setup%n_atoms
+      if (MOD(i,setup%n_atoms) == 0) then
+          call replica_exchange()
+      else
+        ! Make one MC trial
+        ! Generate random numbers
+        rdm1 = setup%rdm_site()
+        rdm2 = setup%rdm_site()
 
-      ! Make one MC trial
-      ! Generate random numbers
-      rdm1 = setup%rdm_site()
-      rdm2 = setup%rdm_site()
+        ! Get what is on those sites
+        site1 = config(rdm1(1), rdm1(2), rdm1(3), rdm1(4))
+        site2 = config(rdm2(1), rdm2(2), rdm2(3), rdm2(4))
 
-      ! Get what is on those sites
-      site1 = config(rdm1(1), rdm1(2), rdm1(3), rdm1(4))
-      site2 = config(rdm2(1), rdm2(2), rdm2(3), rdm2(4))
+        call pair_swap(config, rdm1, rdm2)
 
-      call pair_swap(config, rdm1, rdm2)
+        ! Calculate energy if different species
+        if (site1 /= site2) then
+          e_swapped = setup%full_energy(config)
+        end if
 
-      ! Calculate energy if different species
-      if (site1 /= site2) then
-        e_swapped = setup%full_energy(config)
-      end if
+        ibin = bin_index(e_unswapped, bin_edges, wl_setup%bins)
+        jbin = bin_index(e_swapped, bin_edges, wl_setup%bins)
 
-      ibin = bin_index(e_unswapped, bin_edges, wl_setup%bins)
-      jbin = bin_index(e_swapped, bin_edges, wl_setup%bins)
-
-      ! Calculate radial density and add to appropriate location in array
-      radial_start = mpi_wtime()
-      if (jbin < wl_setup%bins + 1 .and. jbin > 0) then
-        if (rho_saved .eqv. .False.) then
-          if (radial_record(jbin) < MAX(wl_setup%radial_samples/num_walkers,1)) then
-            if (radial_record_bool(jbin) .eqv. .False.) then
-              radial_mc_steps = radial_mc_steps + 1
-              if(radial_mc_steps >= setup%n_atoms) then
-                radial_mc_steps = 0
-                radial_record(jbin) = radial_record(jbin) + 1
-                rho_of_E(:,:,:,jbin) = rho_of_E(:,:,:,jbin) + radial_densities(setup, config, setup%wc_range, shells)
-                radial_end = mpi_wtime()
-                if (converged == 0) then
-                  radial_time = radial_time + radial_end - radial_start
+        ! Calculate radial density and add to appropriate location in array
+        radial_start = mpi_wtime()
+        if (jbin < wl_setup%bins + 1 .and. jbin > 0) then
+          if (rho_saved .eqv. .False.) then
+            if (radial_record(jbin) < MAX(wl_setup%radial_samples/num_walkers,1)) then
+              if (radial_record_bool(jbin) .eqv. .False.) then
+                radial_mc_steps = radial_mc_steps + 1
+                if(radial_mc_steps >= setup%n_atoms) then
+                  radial_mc_steps = 0
+                  radial_record(jbin) = radial_record(jbin) + 1
+                  rho_of_E(:,:,:,jbin) = rho_of_E(:,:,:,jbin) + radial_densities(setup, config, setup%wc_range, shells)
+                  radial_end = mpi_wtime()
+                  if (converged == 0) then
+                    radial_time = radial_time + radial_end - radial_start
+                  end if
                 end if
               end if
             end if
           end if
         end if
-      end if
 
-      ! Only compute energy change if within limits where V is defined and within MPI region
-      if (jbin > mpi_start_idx - 1 .and. jbin < mpi_end_idx + 1) then
+        ! Only compute energy change if within limits where V is defined and within MPI region
+        if (jbin > mpi_start_idx - 1 .and. jbin < mpi_end_idx + 1) then
 
-        ! Add change in V into diff_energy
-        delta_e = e_swapped - e_unswapped
+          ! Add change in V into diff_energy
+          delta_e = e_swapped - e_unswapped
 
-        ! Accept or reject move
-        if (genrand() .lt. exp((wl_logdos(ibin) - wl_logdos(jbin)))) then
-          e_unswapped = e_swapped
+          ! Accept or reject move
+          if (genrand() .lt. exp((wl_logdos(ibin) - wl_logdos(jbin)))) then
+            e_unswapped = e_swapped
+          else
+            call pair_swap(config, rdm1, rdm2)
+            jbin = ibin
+          end if
+          if (MOD(i,4) == 0) then
+            mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
+          end if
+          wl_logdos(jbin) = wl_logdos(jbin) + wl_f
         else
+          ! reject and reset
           call pair_swap(config, rdm1, rdm2)
-          jbin = ibin
         end if
-        if (MOD(i,4) == 0) then
-          mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
-        end if
-        wl_logdos(jbin) = wl_logdos(jbin) + wl_f
-      else
-        ! reject and reset
-        call pair_swap(config, rdm1, rdm2)
       end if
     end do
 
@@ -863,5 +866,105 @@ end subroutine dos_combine
       j = j + 1
     end do
   end subroutine mpi_arrays
+
+  subroutine replica_exchange()
+    integer, dimension(num_walkers, 2) :: overlap_lower, overlap_upper
+    integer, dimension(num_walkers, 2) :: overlap_exchange
+    integer :: i, j, exchange_index
+    integer :: exchange_count
+    logical :: exchange_match
+
+    ibin = bin_index(e_unswapped, bin_edges, wl_setup%bins)
+
+    if (ibin > mpi_start_idx - 1 .and. ibin < mpi_start_idx + wl_setup%bin_overlap .and. mpi_index > 1) then
+      overlap_loc = mpi_index - 1
+    elseif (ibin > mpi_end_idx - wl_setup%bin_overlap.and. ibin < mpi_start_idx + 1 .and. mpi_index < wl_setup%num_windows) then
+      overlap_loc = mpi_index
+    else
+      overlap_loc = 0
+    end if
+
+    overlap_mpi(my_rank+1, 1) = mpi_index
+    overlap_mpi(my_rank+1, 2) = my_rank
+    overlap_mpi(my_rank+1, 3) = overlap_loc
+
+    call MPI_REDUCE()
+
+    if (my_rank == 0) then
+      do i=1, wl_setup%num_windows-1
+        overlap_lower = overlap_mpi((i-1)*num_walkers+1:i*num_walkers)
+        overlap_upper = overlap_mpi((i)*num_walkers+1:(i+1)*num_walkers)
+      
+        exchange_index = 0
+        exchange_count = 1
+
+        call shuffle_rows(overlap_lower, num_walkers)
+        call shuffle_rows(overlap_upper, num_walkers)
+
+        ! Loop to find matching rows until no more can be found
+        do while (exchange_count > 0)
+          exchange_count = 0
+          exchange_match = .false.
+
+          ! Find matching rows in the shuffled arrays
+          do i = 1, num_walkers
+            if (overlap_lower(i, 2) == 0) cycle  ! Skip rows with 0
+            do j = 1, N
+              if (overlap_upper(j, 2) == 0) cycle  ! Skip rows with 0
+              if (overlap_lower(i, 2) == overlap_upper(j, 2)) then
+                ! Matching rows found
+                exchange_match = .true.
+                exchange_count = exchange_count + 1
+                ! Store the matching row indices (first columns only)
+                exchange_index = exchange_index + 1
+                overlap_exchange(exchange_index, 1) = overlap_lower(i, 1)
+                overlap_exchange(exchange_index, 2) = overlap_upper(j, 1)
+                
+                ! Set matching rows to 0
+                overlap_lower(i, :) = 0
+                overlap_upper(j, :) = 0
+                exit
+              end if
+            end do
+            if (exchange_match) exit
+          end do
+        end do
+      end do
+
+      ! -------------------------------------------------------------------------------------------------------
+      ! MPI SEND RECV calls
+      jbin = bin_index(e_swapped, bin_edges, wl_setup%bins)
+
+      ! Add change in V into diff_energy
+      delta_e = e_swapped - e_unswapped
+
+      ! Accept or reject move
+      if (genrand() .lt. exp((wl_logdos(ibin) - wl_logdos(jbin)))) then
+        e_unswapped = e_swapped
+        ! swap configurations
+      else
+        jbin = ibin
+      end if
+      mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
+      wl_logdos(jbin) = wl_logdos(jbin) + wl_f
+      ! -------------------------------------------------------------------------------------------------------
+
+    end if
+
+  end subroutine replica_exchange
+
+  ! Subroutine to shuffle the rows of the array
+  subroutine shuffle_rows(array, num_walkers)
+    integer, dimension(num_walkers, 2) :: array
+    integer :: i, rand_index, temp(2)
+    ! Shuffle the rows in the array randomly
+    do i = num_walkers, 2, -1
+        rand_index = MIN(1+int(genrand()*i), num_walkers)  ! Generate random index between 1 and i
+        ! Swap rows i and rand_index
+        temp = array(i, :)
+        array(i, :) = array(rand_index, :)
+        array(rand_index, :) = temp
+    end do
+end subroutine
 
 end module wang_landau
