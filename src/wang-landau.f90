@@ -96,10 +96,6 @@ contains
     ! Check if number of MPI processes is divisible by number of windows
     bins = wl_setup%bins
     num_windows = wl_setup%num_windows
-    num_walkers = mpi_processes/num_windows
-    wl_setup%radial_samples = INT(wl_setup%radial_samples/num_walkers)
-    wl_setup%radial_samples = MAX(INT(wl_setup%radial_samples*num_walkers), 1)
-    
     if (MOD(mpi_processes, num_windows) /= 0) then
       if (my_rank == 0) then
         write (6, '(72("~"))')
@@ -109,6 +105,10 @@ contains
       call MPI_FINALIZE(ierror)
       call EXIT(0)
     end if
+
+    num_walkers = mpi_processes/num_windows
+    wl_setup%radial_samples = INT(wl_setup%radial_samples/num_walkers)
+    wl_setup%radial_samples = MAX(INT(wl_setup%radial_samples*num_walkers), 1)
 
     ! Get start and end indices for energy windows
     allocate(window_indices(num_windows, 2))
