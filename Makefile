@@ -49,7 +49,7 @@ OBJDIR=obj
 INCDIR=include
 
 ifeq ($(SYSTEM),Darwin)
-         FFLAGS +=-I$(shell nf-config --fflags)
+         FFLAGS += $(shell nf-config --fflags)
          LDFLAGS += $(shell nf-config --flibs) \
                     -lnetcdf -lnetcdff
 else
