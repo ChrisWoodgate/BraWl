@@ -22,7 +22,7 @@ where the factor of $\frac{1}{2}$ accounts for double-counting.
 
 In practice, it is assumed that interactions are isotropic (direction-independent) and homogeneous (translationally invariant). Moreover, it is assumed that interactions have some finite range (a 'cutoff' radius), beyond which they are set to zero. The Hamiltonian is therefore re-written as
 
-$$H(\{\xi_{i\alpha}\}) = \frac{1}{2}\sum_{i} \sum_{n} \left(\sum_{j \in n(i)} \sum_{\alpha \alpha'} V^{(n)}_{\alpha \alpha'} \xi_{i \alpha} \xi_{j \alpha'} \right),$$
+$$H(\{\xi_{i\alpha}\}) = \frac{1}{2}\sum_{i} \sum_{n} \left(\sum_{j \in n(i)} \sum_{\alpha \alpha'} V_{\alpha \alpha'}^{(n)} \xi_{i \alpha} \xi_{j \alpha'} \right),$$
 
 where $n(i)$ denotes the set of lattice sites which are $n$th nearest-neighbours to site $i$. This is the description which with BraWL works internally.
 
