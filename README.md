@@ -7,11 +7,18 @@ Copyright (C) The Authors 2019-2025. Released under the GNU Lesser General Publi
 ## Background
 
 The Bragg-Williams Hamiltonian is an on-lattice Ising-like Hamiltonian describing the internal energy of a general substitutional alloy. The configuration of the alloy is specified by the *site occupation numbers*, $\{\xi_{i\alpha}\}$, where $\xi_{i\alpha}=1$ if site $i$ is occupied by an atom of species $\alpha$, and $\xi_{i\alpha}=0$ otherwise. (These can be thought of as a little like the 'spins' of the Ising model.) Each lattice site must be constrained to have one (and only one) atom sitting on it, expressed as\
-$$ \sum_\alpha \xi_{i\alpha}=1 $$\
+
+$$\sum_\alpha \xi_{i\alpha}=1$$
+
 for all lattice sites $i$. The overall concentration of a chemical species, $c_\alpha$ is given by\
-$$ c_\alpha = \frac{1}{N} \sum_i \xi_{i\alpha}, $$\
+
+$$c_\alpha = \frac{1}{N} \sum_i \xi_{i\alpha}$$
+
 where $N$ is the total number of lattice sites in the system. The energy associated with an atom of species $\alpha$ on site $i$ interacting with an atom of species $\alpha'$ on site $j$, referred to as an atom-atom *effective pair interaction* is denoted $V_{i\alpha; j\alpha'}$. The Bragg-Williams Hamiltonian is then written\
-$$ H(\{\xi_{i\alpha}\}) = \frac{1}{2}\sum_{i \alpha; j\alpha'} V_{i\alpha; j\alpha'} \xi_{i \alpha} \xi_{j \alpha'}, $$\ where the factor of $\frac{1}{2}$ accounts for double-counting.
+
+$$H(\{\xi_{i\alpha}\}) = \frac{1}{2}\sum_{i \alpha; j\alpha'} V_{i\alpha; j\alpha'} \xi_{i \alpha} \xi_{j \alpha'},$$\ 
+
+where the factor of $\frac{1}{2}$ accounts for double-counting.
 
 ## Citations
 ANY publications/presentations/further work resulting from the use of this software should cite the original publication for which it was developed:
