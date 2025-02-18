@@ -24,7 +24,7 @@ In practice, it is assumed that interactions are isotropic (direction-independen
 
 $$H(\{\xi_{i\alpha}\}) = \frac{1}{2}\sum_{i} \sum_{n} \left(\sum_{j \in n(i)} \sum_{\alpha \alpha'} V_{\alpha \alpha'}^{(n)} \xi_{i \alpha} \xi_{j \alpha'} \right),$$
 
-where $n(i)$ denotes the set of lattice sites which are $n$th nearest-neighbours to site $i$. This is the description which with BraWL works internally.
+where $n(i)$ denotes the set of lattice sites which are $n$ th nearest-neighbours to site $i$, and $V_{\alpha \alpha'}^{(n)}$ denotes the interaction between species $\alpha$ and $\alpha'$ on coordination shell $n$. This is the description which with BraWL works internally.
 
 ## Citations
 ANY publications/presentations/further work resulting from the use of this software should cite the original publication for which it was developed:
