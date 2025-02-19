@@ -8,9 +8,11 @@ from matplotlib.colors import ListedColormap
 import matplotlib.colors as mcolors
 import copy
 import itertools
+from cycler import cycler
+font_size = 13
 np.set_printoptions(suppress=True)
 plt.rcParams.update({"text.usetex": True,
-                     "font.size": 12})
+                     "font.size": font_size})
 plt.rc('font', family='serif')
 plt.rc('text', usetex=True)
 
@@ -83,10 +85,9 @@ ev_to_ry = 13.605693122
 kb_ry = kb_ev/ev_to_ry
 n_atoms = 432
 ev_to_mev = 1000
-J = 0.001
-N = 6
 
 # unit conversion
+#kb_ev = kb_ry
 bin_edges = bin_edges*ev_to_ry # converts from Ryd to eV
 
 orig_temp = 3000
@@ -222,11 +223,16 @@ for itemp, new_temp in enumerate(temperatures):
         hist_prob = copy.deepcopy(prob)
         hist_prob[index_to_zero] = 0
         non_zero = np.nonzero(hist_prob)
-        ax1.stairs(hist_prob[np.min(non_zero):np.max(non_zero)], bin_edges[np.min(non_zero):np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=True)
-        hist_ax.stairs(hist_prob[np.min(non_zero):np.max(non_zero)], bin_edges[np.min(non_zero):np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=True)
-#        ax1.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=True)
-#        hist_ax.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=True)
-
+        #ax1.stairs(hist_prob[np.min(non_zero):np.max(non_zero)], bin_edges[np.min(non_zero):np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=True)
+        #hist_ax.stairs(hist_prob[np.min(non_zero):np.max(non_zero)], bin_edges[np.min(non_zero):np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=True)
+        ax1.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, fill=True, alpha=0.1)
+        hist_ax.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, fill=True, alpha=0.1)
+        ax1.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=False, alpha=1)
+        hist_ax.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=False, alpha=1)
+        #ax1.stairs(np.log(prob), bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, baseline=np.log(1e-5), fill=True, alpha=0.3)
+        #hist_ax.stairs(np.log(prob), bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, baseline=np.log(1e-5), fill=True, alpha=0.3)
+        #ax1.stairs(np.log(prob), bin_edges/n_atoms*ev_to_mev-zero_energy, baseline=None, fill=False)
+        #hist_ax.stairs(np.log(prob), bin_edges/n_atoms*ev_to_mev-zero_energy, baseline=None, fill=False)
         if (bin_edges[np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy > hist_max):
           hist_max = bin_edges[np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy
         if (bin_edges[np.min(non_zero)]/n_atoms*ev_to_mev-zero_energy < hist_min):
@@ -252,8 +258,11 @@ for itemp, new_temp in enumerate(temperatures):
         
     heat_caps[itemp] = np.dot(msq_dev, prob)*bin_width/(kb_ev*new_temp**2)
 
+heat_caps = np.gradient(mean_energies, temperatures)
+
 gibbs_energies[0] = mean_energies[0]
-for itemp in range(1,len(temperatures)):
+gibbs_energies[1] = mean_energies[0]
+for itemp in range(2,len(temperatures)):
 
   beta_i = 1.0/(kb_ev*temperatures[itemp])
   beta_j = 1.0/(kb_ev*temperatures[itemp-1])
@@ -262,6 +271,7 @@ for itemp in range(1,len(temperatures)):
 
 for itemp, new_temp in enumerate(temperatures):
   entropies[itemp] = (mean_energies[itemp]-gibbs_energies[itemp])/new_temp
+
 
 # Clear out nan
 #mean_energies = np.nan_to_num(mean_energies)
@@ -313,6 +323,8 @@ for x in local_max_indices:
   ax5.vlines(x=temperatures[x], ymin=np.min(heat_caps)-0.1*heat_cap_diff, ymax=np.max(heat_caps), color=colors["firebrick_red"], linestyle='--')
   ax7.vlines(x=temperatures[x], ymin=np.min(entropies)-0.1*entropies_diff, ymax=np.max(entropies), color=colors["firebrick_red"], linestyle='--')
 
+ax1.set_xlim(hist_min,hist_max)
+ax1.set_ylim(0, prob_max*1.01)
 ax2.set_ylim(np.min(mean_energies)-0.025*np.abs(mean_energies_diff), np.max(mean_energies)+0.025*np.abs(mean_energies_diff))
 ax3.set_ylim(np.min(heat_caps)-0.025*np.abs(heat_cap_diff), np.max(heat_caps)+0.025*np.abs(heat_cap_diff))
 ax5.set_ylim(np.min(heat_caps)-0.025*np.abs(heat_cap_diff), np.max(heat_caps)+0.025*np.abs(heat_cap_diff))
@@ -324,20 +336,21 @@ fig3.savefig('figures/{}_heat_capacity_1.svg'.format(''.join(elements)), bbox_in
 fig4.savefig('figures/{}_heat_capacity_2.svg'.format(''.join(elements)), bbox_inches='tight')
 fig5.savefig('figures/{}_entropy.svg'.format(''.join(elements)), bbox_inches='tight')
 
-y_offset = -0.125
+y_offset = -0.135
 x_offset = 0.5
 
 hist_ax.tick_params(direction="in")
 cv_ax1.tick_params(direction="in")
 cv_ax2.tick_params(direction="in")
 
-hist_ax.set_xlabel(r'Energy $U$ (meV/atom)')
-hist_ax.set_ylabel(r'Probability P($U$)')
-cv_ax2.set_xlabel(r'Temperature (K)')
-cv_ax1.set_ylabel(r'$C$ ($k_B$/atom)')
-cv_ax2.set_ylabel(r'$C$ ($k_B$/atom)')
-cv_ax1_asro.set_ylabel(r'$\alpha^{pq}_1$')
-cv_ax2_asro.set_ylabel(r'$\alpha^{pq}_2$')
+label_size_offset = 3
+hist_ax.set_xlabel(r'Energy $E$ (meV/atom)', fontsize=font_size+label_size_offset)
+hist_ax.set_ylabel(r'Probability Density P($E$) (meV$^{-1}$)', fontsize=font_size+label_size_offset)
+cv_ax2.set_xlabel(r'Temperature (K)', fontsize=font_size+label_size_offset)
+cv_ax1.set_ylabel(r'$C$ ($k_B$/atom)', fontsize=font_size+label_size_offset)
+cv_ax2.set_ylabel(r'$C$ ($k_B$/atom)', fontsize=font_size+label_size_offset)
+cv_ax1_asro.set_ylabel(r'$\alpha^{pq}_1$', fontsize=font_size+label_size_offset)
+cv_ax2_asro.set_ylabel(r'$\alpha^{pq}_2$', fontsize=font_size+label_size_offset)
 cv_ax1_asro.set_xticklabels([])
 cv_ax1.grid(True, axis='x')
 cv_ax2.grid(True, axis='x')
@@ -359,7 +372,7 @@ for ipair, pair in enumerate(pairs):
   if (np.min(asr_orders_2[ipair]) < asro_min):
     asro_min = np.min(asr_orders_2[ipair])
 
-cv_ticks = 200
+cv_ticks = 400
 x_ticks_subplots = np.arange(np.around(start_temp/cv_ticks, decimals=0)*cv_ticks, np.around(end_temp/cv_ticks, decimals=0)*cv_ticks+cv_ticks, cv_ticks)
 cv_ax1.set_xticks(x_ticks_subplots)
 cv_ax2.set_xticks(x_ticks_subplots)
@@ -369,9 +382,17 @@ x_ticks_subplots = np.arange(np.around((bin_edges[0]/n_atoms*ev_to_mev-zero_ener
 hist_ax.set_xticks(x_ticks_subplots)
 
 handles, labels = hist_ax.get_legend_handles_labels()
-hist_ax.legend(flip(handles, 4), flip(labels, 4), loc='upper center', bbox_to_anchor=(x_offset, y_offset), ncol=4)
-cv_ax2.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.225))
-cv_ax2_asro.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.025), ncol=int(len(pairs)/2))
+hist_ax_legend = hist_ax.legend(flip(handles, 4), flip(labels, 4), loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.05), ncol=4)
+cv_ax2.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.25))
+cv_ax2_asro.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.0275), ncol=int(len(pairs)/2))
+
+# Loop through the legend handles and change their linewidth
+for handle in hist_ax_legend.legendHandles:
+    handle.set_linewidth(3)  # Increase the line width for each legend line
+
+alternate_colors = list(colors.values())[::2]
+cv_ax1_asro.set_prop_cycle(cycler(color=alternate_colors))
+cv_ax2_asro.set_prop_cycle(cycler(color=alternate_colors))
 
 margin_pct = 0.05
 for ax in [hist_ax, cv_ax1, cv_ax2, cv_ax1_asro, cv_ax2_asro]:
@@ -403,8 +424,21 @@ cv_ax1.set_xlim(start_temp, end_temp)
 cv_ax1.set_ylim(0, cv_ax1.get_ylim()[1]*1.01)
 cv_ax1_asro.set_ylim(asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
 cv_ax2.set_xlim(start_temp, end_temp)
-cv_ax2.set_ylim(0, cv_ax2.get_ylim()[1])
+cv_ax2.set_ylim(0, cv_ax2.get_ylim()[1]*1.01)
 cv_ax2_asro.set_ylim(asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
 
+print("Hist y-limit", prob_max*1.01)
+print("SHC y-limit", cv_ax1.get_ylim()[1])
+print("ASRO y-limit", asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
+custom_h = 0.086391918197925
+custom_l = -1.9054801489853601
+custom_u = 1.028759512687277
+custom_c = 1.0270636004885352
+
+cv_ax1.set_ylim(0, custom_c)
+cv_ax2.set_ylim(0, custom_c)
+cv_ax1_asro.set_ylim(custom_l, custom_u)
+cv_ax2_asro.set_ylim(custom_l, custom_u)
+hist_ax.set_ylim(0, custom_h)
 
 cv_fig.savefig('figures/{}.svg'.format(''.join(elements)), bbox_inches='tight')

@@ -29,10 +29,11 @@ module energy_spectrum
     type(es_params) :: es_setup
 
     ! Integers used in calculations
-    integer :: ierr, unique_energy, i, energy_min_loc, energy_max_loc
+    integer :: ierr, unique_energy, i, energy_min_loc, energy_max_loc, ierror
 
     ! Temperature and temperature steps
-    real(real64) :: acceptance, step, energy_to_ry, min_energy
+    real(real64) :: acceptance, step, energy_to_ry, min_energy, min_change, max_change
+    real(real64) :: min_energy_buf, min_change_buf, max_change_buf
 
     energy_to_ry = setup%n_atoms/(eV_to_Ry*1000)
 
@@ -42,6 +43,8 @@ module energy_spectrum
     call lattice_shells(setup, shells, config)
 
     min_energy = setup%full_energy(config)
+    min_change = HUGE(min_change)
+    max_change = TINY(max_change)
 
     if (my_rank == 0) then
       write (6, '(/,72("-"),/)')
@@ -49,9 +52,17 @@ module energy_spectrum
       print *, "Number of atoms", setup%n_atoms
     end if
 
-    acceptance = run_es_sweeps(setup, es_setup, config, min_energy)
-
-    print *, "Energy Reached", min_energy/energy_to_ry, "meV"
+    acceptance = run_es_sweeps(setup, es_setup, config, min_energy, min_change, max_change)
+    call MPI_REDUCE(min_energy, min_energy_buf, 1, MPI_DOUBLE_PRECISION, &
+    MPI_MIN, 0, MPI_COMM_WORLD, ierror)
+    call MPI_REDUCE(min_change, min_change_buf, 1, MPI_DOUBLE_PRECISION, &
+    MPI_MIN, 0, MPI_COMM_WORLD, ierror)
+    call MPI_REDUCE(max_change, max_change_buf, 1, MPI_DOUBLE_PRECISION, &
+    MPI_MAX, 0, MPI_COMM_WORLD, ierror)
+    if (my_rank == 0) then
+      print *, "Energy Reached", min_energy/energy_to_ry, "meV Min change", min_change/energy_to_ry, &
+      "meV Max change", max_change/energy_to_ry, "meV"
+    end if
 
     call comms_wait()
     if (my_rank == 0) then
@@ -61,11 +72,11 @@ module energy_spectrum
 
   end subroutine es_main
 
-  function run_es_sweeps(setup, es_setup, config, min_energy) result(acceptance)
+  function run_es_sweeps(setup, es_setup, config, min_energy, min_change, max_change) result(acceptance)
     integer(int16), dimension(:, :, :, :) :: config
     class(run_params), intent(in) :: setup
     class(es_params), intent(in) :: es_setup
-    real(real64), intent(inout) :: min_energy
+    real(real64), intent(inout) :: min_energy, min_change, max_change
 
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, eps, delta_e
@@ -94,6 +105,12 @@ module energy_spectrum
         e_swapped = setup%full_energy(config)
 
         delta_e = e_swapped - e_unswapped
+        if (delta_e < min_change) then
+          min_change = ABS(delta_e)
+        end if
+        if (delta_e > max_change) then
+          max_change = ABS(delta_e)
+        end if
 
         ! Accept or reject move
         if (delta_e < 0) then

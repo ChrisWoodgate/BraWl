@@ -3,7 +3,7 @@
 !                                                                      !
 ! Module containing important shared data.                             !
 !                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
+! C. D. Woodgate,  Bristol                                        2025 !
 !----------------------------------------------------------------------!
 module shared_data
 
@@ -13,15 +13,28 @@ module shared_data
 
   save
 
-  ! Internally the code works in Rydbergs (for historical reasons).
-  ! These constants are hard-coded conversions used at various points.
+  !--------------------------------------------------------------------!
+  ! Hard-coded physical constants. Mainly for conversion of internal   !
+  ! units. (Internally the code works with Rydbergs.)                  !
+  !                                                                    !
+  ! Currently taken from the CODATA recommended values 2022            !
+  ! https://physics.nist.gov/cuu/Constants/index.html                  !
+  !                                                                    !
+  ! C. D. Woodgate,  Bristol                                      2025 !
+  !--------------------------------------------------------------------!
+
+  ! 2022 CODATA Value for k_b in eV/K
   real(real64), parameter :: k_b_in_eV &
                              =8.167333262e-5_real64
 
+  ! 2022 CODATA Value for k_b in eV/K 
+  ! 2022 CODATA value for Rydberg in eV
   real(real64), parameter :: k_b_in_Ry &
-                             =8.167333262e-5_real64/13.605693122_real64
+                             =8.167333262e-5_real64/13.605693122990_real64
 
+  ! 2022 CODATA value for Rydberg in eV
   real(real64), parameter :: eV_to_Ry = 13.605693122_real64
+
 
   ! Random number seed
   integer(8) :: seed
@@ -156,7 +169,7 @@ module shared_data
     ! Number of energy windows
     integer :: num_windows
     ! Number of bins in the overlap region
-    real :: bin_overlap
+    integer :: bin_overlap
     ! Tolerance for wang landau
     real :: tolerance
     ! Flatness for wang landau histogram
