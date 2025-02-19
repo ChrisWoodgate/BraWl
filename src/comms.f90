@@ -3,14 +3,13 @@
 !                                                                      !
 ! Module for handling calls to MPI library (used for parallelisation). !
 !                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
+! C. D. Woodgate,  Warwick                                        2025 !
 !----------------------------------------------------------------------!
 module comms
 
   use mpi
   use kinds
   use shared_data
-  use io
 
   implicit none
 
