@@ -77,7 +77,9 @@ module io
   !--------------------------------------------------------------------!
   ! Subroutine to parse control file                                   !
   !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2024 !
+  ! TODO: Tidy this routine up!                                        !
+  !                                                                    !
+  ! C. D. Woodgate,  Warwick                                      2025 !
   !--------------------------------------------------------------------!
   subroutine read_control_file(filename, parameters, my_rank)
 
