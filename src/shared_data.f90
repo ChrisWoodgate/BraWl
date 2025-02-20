@@ -197,9 +197,10 @@ module shared_data
   end type es_params
 
   !--------------------------------------------------------------------!
-  ! Interface for neighbour implementation                             !
+  ! Interfaces for various Hamiltonian and dynamics implementations    !
+  ! chosen at runtime.                                                 !
   !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
+  ! C. D. Woodgate,  Bristol                                      2025 !
   !--------------------------------------------------------------------!
   interface
 
@@ -214,14 +215,14 @@ module shared_data
     end function
 
     ! Neighbour
-    function neighbour(setup, config, site_i, site_j, site_k)
+    function neighbour(setup, config, site_b, site_i, site_j, site_k)
       use kinds
       import :: run_params
       !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
       integer(int16), dimension(:,:,:,:), intent(in) :: config
       real(real64) :: neighbour
       class(run_params), intent(in) :: setup
-      integer, intent(in) :: site_i, site_j, site_k
+      integer, intent(in) :: site_b, site_i, site_j, site_k
     end function
 
     ! Random site on the lattice
