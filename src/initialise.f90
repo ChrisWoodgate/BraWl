@@ -78,6 +78,9 @@ module initialise
       if (setup%interaction_range .eq. 1) then
         setup%nbr_energy => simple_cubic_energy_1shells
       else
+      else if (setup%interaction_range .eq. 2) then
+        setup%nbr_energy => simple_cubic_energy_2shells
+      else
         print*, 'Unsupported number of shells'
         stop
       end if
