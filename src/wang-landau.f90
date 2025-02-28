@@ -59,7 +59,7 @@ contains
     logical :: rank_burnt, flag_config, flag_stop
 
     ! load balancing metrics
-    real(real64), allocatable :: lb_bins(:,:), lb_time(:,:), window_time(:), diffusion_prev(:)
+    real(real64), allocatable :: lb_bins(:,:), lb_avg_time(:,:), lb_max_time(:,:), window_time(:), diffusion_prev(:)
     integer :: converged, converged_sum
 
     ! radial density across energy
@@ -81,21 +81,21 @@ contains
     end do
     wl_f = wl_setup%wl_f
     allocate(lb_bins(num_iter, wl_setup%num_windows))
-    allocate(lb_time(num_iter, wl_setup%num_windows))
+    allocate(lb_avg_time(num_iter, wl_setup%num_windows))
+    allocate(lb_max_time(num_iter, wl_setup%num_windows))
     allocate(window_time(num_iter))
     allocate(diffusion_prev(wl_setup%num_windows))
     allocate(pre_sampled(wl_setup%num_windows))
     allocate(pre_sampled_buffer(wl_setup%num_windows))
     lb_bins = -1.0_real64
-    lb_time = -1.0_real64
+    lb_avg_time = -1.0_real64
+    lb_max_time = -1.0_real64
     window_time = -1.0_real64
 
     ! Radial densities as a function of energy
     allocate(rho_of_E(setup%n_species, setup%n_species, setup%wc_range, wl_setup%bins))
-    if (my_rank == 0) then
-      allocate(rho_of_E_buffer(setup%n_species, setup%n_species, setup%wc_range, wl_setup%bins))
-      rho_of_E_buffer = 0.0_real64
-    end if
+    allocate(rho_of_E_buffer(setup%n_species, setup%n_species, setup%wc_range, wl_setup%bins))
+    rho_of_E_buffer = 0.0_real64
     rho_of_E = 0.0_real64
 
     ! Path to radial file and name of radial file
@@ -366,10 +366,12 @@ contains
         ! Store and save MPI metrics
         if (my_rank == 0) then
           lb_bins(iter, :) = REAL(window_indices(:, 2) - window_indices(:, 1) + 1)
-          lb_time(iter, :) = rank_time_buffer(:,1)
+          lb_avg_time(iter, :) = rank_time_buffer(:,1)
+          lb_max_time(iter, :) = rank_time_buffer(:,3)
           window_time(iter) = MAXVAL(rank_time_buffer(:,3))
           call ncdf_writer_2d("wl_lb_bins.dat", ierr, lb_bins)
-          call ncdf_writer_2d("wl_lb_time.dat", ierr, lb_time)
+          call ncdf_writer_2d("wl_lb_avg_time.dat", ierr, lb_avg_time)
+          call ncdf_writer_2d("wl_lb_max_time.dat", ierr, lb_max_time)
           call ncdf_writer_1d("wl_window_time.dat", ierr, window_time)
         end if
         
