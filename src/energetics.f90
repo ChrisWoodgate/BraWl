@@ -1523,6 +1523,28 @@ module energetics
   end function simple_cubic_energy_1shells
 
   !--------------------------------------------------------------------!
+  ! Function to compute the energy for an interaction up to the 2nd    !
+  ! coordination shell on the simple cubic lattice.                    !
+  !                                                                    !
+  ! C. D. Woodgate,  Bristol                                      2025 !
+  !--------------------------------------------------------------------!
+  function simple_cubic_energy_2shells(setup, config, site_b, site_i, site_j, site_k) &
+           result(energy)
+    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(int16) :: species
+
+    species = config(site_b, site_i, site_j, site_k)
+
+    energy = simple_cubic_1shell_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + simple_cubic_2shell_energy(setup, site_b, site_i, site_j, site_k, config, species)
+    
+  end function simple_cubic_energy_1shells
+
+  !--------------------------------------------------------------------!
   ! Function to compute the energetic cost of swapping a pair of atoms ! 
   !                                                                    !
   ! C. D. Woodgate,  Bristol                                      2025 !
