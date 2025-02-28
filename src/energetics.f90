@@ -1499,7 +1499,7 @@ module energetics
     end do
  
     deallocate(nbrs)
-  end function simple_cubic_1shell_energy
+  end function simple_cubic_2shell_energy
 
   !--------------------------------------------------------------------!
   ! Function to compute the energy for an interaction up to the 1st    !
@@ -1542,7 +1542,7 @@ module energetics
     energy = simple_cubic_1shell_energy(setup, site_b, site_i, site_j, site_k, config, species) &
            + simple_cubic_2shell_energy(setup, site_b, site_i, site_j, site_k, config, species)
     
-  end function simple_cubic_energy_1shells
+  end function simple_cubic_energy_2shells
 
   !--------------------------------------------------------------------!
   ! Function to compute the energetic cost of swapping a pair of atoms ! 
