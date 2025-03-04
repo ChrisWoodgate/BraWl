@@ -34,7 +34,7 @@ contains
     real(real64) :: temp, beta
 
     ! wl variables and arrays
-    integer :: bins, resets, pre_sampled_state
+    integer :: bins, resets, pre_sampled_state, flatness_converged
     real(real64) :: bin_width, energy_to_ry, wl_f, wl_f_prev, tolerance, flatness_tolerance
     real(real64) :: target_energy, min_val, flatness, bins_buffer, bins_min, radial_min, radial_min_buffer
     real(real64), allocatable :: bin_edges(:), wl_hist(:), wl_logdos(:), bin_energy(:)
@@ -176,6 +176,7 @@ contains
       write (6, '(/,72("-"),/)')
       write (6, '(24("-"),x,"Commencing Simulation!",x,24("-"),/)')
       print *, "Number of atoms", setup%n_atoms
+      print *, "Number of WL iterations", num_iter
     end if
     call comms_wait()
 
@@ -212,6 +213,7 @@ contains
     pre_sampled = 0
     pre_sampled_buffer = 0
     pre_sampled_state = 0
+    start = mpi_wtime()
     do while (SUM(pre_sampled_buffer) < wl_setup%num_windows)
       call sweeps(setup, wl_setup, config, num_walkers, bin_edges, mpi_start_idx, mpi_end_idx, &
       mpi_wl_hist, wl_logdos, wl_f, mpi_index, window_intervals, radial_record, radial_record_bool, &
@@ -223,6 +225,7 @@ contains
       call MPI_ALLREDUCE(pre_sampled, pre_sampled_buffer, wl_setup%num_windows, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ierror)
       if (pre_sampled_buffer(mpi_index) == 1) then
         if (pre_sampled_state == 0) then
+          end = mpi_wtime()
           pre_sampled_state = 1
           mpi_wl_hist = 2.0_real64
           write (6, '(a,i3,a,f6.2,a)') "Rank: ", INT(my_rank), " | bins visited: ", 100.0_real64, "%"
@@ -232,9 +235,41 @@ contains
         write (6, '(a,i3,a,f6.2,a)') "Rank: ", INT(my_rank), " | bins visited: ", REAL(bins_min*100.0_real64), "%"
       end if
     end do
+    
+    rank_time = 0.0_real64
+    rank_time(mpi_index) = end - start - radial_time
+    call MPI_ALLREDUCE(end - start, time_max, 1, MPI_DOUBLE_PRECISION, &
+    MPI_MAX, MPI_COMM_WORLD, ierror)
+    call MPI_REDUCE(end - start, time_min, 1, MPI_DOUBLE_PRECISION, &
+    MPI_MIN, 0, MPI_COMM_WORLD, ierror)
+    call MPI_REDUCE(rank_time/num_walkers, rank_time_buffer(:,1), wl_setup%num_windows, MPI_DOUBLE_PRECISION, &
+    MPI_SUM, 0, MPI_COMM_WORLD, ierror)
+    call MPI_REDUCE(rank_time, rank_time_buffer(:,3), wl_setup%num_windows, MPI_DOUBLE_PRECISION, &
+    MPI_MAX, 0, MPI_COMM_WORLD, ierror)
+    rank_time = time_max
+    rank_time(mpi_index) = end - start - radial_time
+    call MPI_REDUCE(rank_time, rank_time_buffer(:,2), wl_setup%num_windows, MPI_DOUBLE_PRECISION, &
+    MPI_MIN, 0, MPI_COMM_WORLD, ierror)
+    call MPI_BCAST(rank_time_buffer, wl_setup%num_windows*3, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
 
-    wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))!wl_logdos_min
+
+    call mpi_window_optimise(wl_setup, my_rank, bin_edges, window_intervals, window_indices, &
+    mpi_bins, mpi_index, mpi_bin_edges, mpi_wl_hist, rank_time_buffer, num_walkers,&
+    diffusion_prev, 1)
+    mpi_start_idx = window_indices(mpi_index, 1)
+    mpi_end_idx = window_indices(mpi_index, 2)
+    mpi_bins = mpi_end_idx - mpi_start_idx + 1
+    call burn_in(setup, config, MINVAL(mpi_bin_edges), MAXVAL(mpi_bin_edges), &
+    mpi_processes, num_walkers, my_rank, mpi_index, window_rank_index, .False., &
+    request_stop, request_config, rank_burnt)
+    call MPI_BCAST(wl_logdos, wl_setup%bins, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
+    ! Zero elements not worked on
+    wl_logdos(1:window_indices(mpi_index,1)-1) = 0.0_real64
+    wl_logdos(window_indices(mpi_index,2)+1:wl_setup%bins) = 0.0_real64
+    ! Subtract minimum value
+    wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))
     wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
+
     call dos_average(wl_setup, num_walkers, mpi_index, wl_logdos, wl_logdos_buffer)
 
     call comms_wait()
@@ -262,9 +297,13 @@ contains
       call replica_exchange(setup, wl_setup, config, my_rank, num_walkers, mpi_index, mpi_processes, mpi_start_idx, mpi_end_idx, &
       wl_f, bin_edges, mpi_wl_hist, wl_logdos)
 
-      flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
+      flatness = MIN(MINVAL(mpi_wl_hist)/(SUM(mpi_wl_hist)/mpi_bins), &
+      MAX(2.0_real64-MAXVAL(mpi_wl_hist)/(SUM(mpi_wl_hist)/mpi_bins), 0.0_real64))
 
-      if (converged == 0 .and. flatness > wl_setup%flatness .and. minval(mpi_wl_hist) > 1.0_real64) then
+      flatness_converged = ALL(ABS(mpi_wl_hist - SUM(mpi_wl_hist)/mpi_bins) <= &
+      (1.0_real64 - wl_setup%flatness) * SUM(mpi_wl_hist)/mpi_bins)
+
+      if (converged == 0 .and. flatness_converged == 1 .and. minval(mpi_wl_hist) > 1.0_real64) then
         ! End timer
         end = mpi_wtime()
         converged = 1
@@ -276,7 +315,7 @@ contains
         i = 0
         converged = 0
         converged_sum = 0
-        radial_time = 0.0_real64
+
         !Reset the histogram
         mpi_wl_hist = 0.0_real64
         ! Increase iteration
@@ -289,7 +328,6 @@ contains
         call dos_average(wl_setup, num_walkers, mpi_index, wl_logdos, wl_logdos_buffer)
         rank_time = 0.0_real64
         rank_time(mpi_index) = end - start - radial_time
-        radial_time = 0.0_real64
         call MPI_ALLREDUCE(end - start, time_max, 1, MPI_DOUBLE_PRECISION, &
         MPI_MAX, MPI_COMM_WORLD, ierror)
         call MPI_REDUCE(end - start, time_min, 1, MPI_DOUBLE_PRECISION, &
@@ -299,12 +337,13 @@ contains
         call MPI_REDUCE(rank_time, rank_time_buffer(:,3), wl_setup%num_windows, MPI_DOUBLE_PRECISION, &
         MPI_MAX, 0, MPI_COMM_WORLD, ierror)
         rank_time = time_max
-        rank_time(mpi_index) = end - start
+        rank_time(mpi_index) = end - start - radial_time
         call MPI_REDUCE(rank_time, rank_time_buffer(:,2), wl_setup%num_windows, MPI_DOUBLE_PRECISION, &
         MPI_MIN, 0, MPI_COMM_WORLD, ierror)
         call MPI_BCAST(rank_time_buffer, wl_setup%num_windows*3, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
         call MPI_REDUCE(radial_record, radial_record_buffer, wl_setup%bins, MPI_INT, &
         MPI_SUM, 0, MPI_COMM_WORLD, ierror)
+        radial_time = 0.0_real64
         if (rho_saved .eqv. .False.) then
           if (my_rank == 0) then
             radial_min = 0
@@ -803,8 +842,8 @@ end subroutine dos_combine
 
     ! Perform window size adjustment then broadcast
     if (my_rank == 0) then
-      factor = 0.9_real64
-      scaling = 0.95_real64
+      factor = 0.8_real64
+      scaling = 0.9_real64
       factor = factor*(scaling**(iter-1))
       diffusion = (REAL((window_intervals(:,2) - window_intervals(:,1) + 1))) &
       /(rank_all_time(:,1))
