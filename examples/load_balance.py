@@ -10,10 +10,11 @@ import itertools
 
 font_size = 12
 np.set_printoptions(suppress=True)
-plt.rcParams.update({"text.usetex": True,
-                     "font.size": font_size})
+#plt.rcParams.update({"text.usetex": True,
+#                     "font.size": font_size})
+plt.rcParams.update({"font.size": font_size})
 plt.rc('font', family='serif')
-plt.rc('text', usetex=True)
+#plt.rc('text', usetex=True)
 
 def flip(items, ncol):
     return itertools.chain(*[items[i::ncol] for i in range(ncol)])
@@ -53,9 +54,9 @@ filename = "{}/wl_lb_bins.dat".format(directory)
 wl_lb_bins = nc.Dataset(filename)
 wl_lb_bins = np.array(wl_lb_bins["grid data"][:], dtype=np.float64).T
 
-filename = "{}/wl_lb_time.dat".format(directory)
-wl_lb_time = nc.Dataset(filename)
-wl_lb_time = np.array(wl_lb_time["grid data"][:], dtype=np.float64).T
+filename = "{}/wl_lb_avg_time.dat".format(directory)
+wl_lb_avg_time = nc.Dataset(filename)
+wl_lb_avg_time = np.array(wl_lb_avg_time["grid data"][:], dtype=np.float64).T
 
 filename = "{}/wl_window_time.dat".format(directory)
 wl_window_time = nc.Dataset(filename)
@@ -77,11 +78,12 @@ plt.xticks(x_axis)
 handles, labels = plt.gca().get_legend_handles_labels()
 plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.125), ncol=columns)
 plt.tight_layout()
-plt.show()
+plt.savefig('figures/load_balance_1.svg', bbox_inches='tight')
+plt.close()
 
-time_adjusted = np.zeros(np.shape(wl_lb_time))
+time_adjusted = np.zeros(np.shape(wl_lb_avg_time))
 for i in range(iter):
-  time_adjusted[i] = wl_lb_time[i]/(np.sum(wl_lb_time[i])/window)
+  time_adjusted[i] = wl_lb_avg_time[i]/(np.sum(wl_lb_avg_time[i])/window)
 for i in range(window):
   plt.plot(x_axis, time_adjusted[0:iter,i], label=i+1)
 plt.title("Window Average Time Ratio")
@@ -94,15 +96,17 @@ plt.xticks(x_axis)
 handles, labels = plt.gca().get_legend_handles_labels()
 plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.125), ncol=columns)
 plt.tight_layout()
-plt.show()
+plt.savefig('figures/load_balance_2.svg', bbox_inches='tight')
+plt.close()
 
 time_std = np.zeros([iter])
 for i in range(iter):
-  time_std[i] = np.std(wl_lb_time[i]/(np.sum(wl_lb_time[i])/window))
+  time_std[i] = np.std(wl_lb_avg_time[i]/(np.sum(wl_lb_avg_time[i])/window))
 plt.title("Window Average Time Ratio Standard Deviation")
 plt.ylabel("Standard Deviation")
 plt.xlabel("W-L Iteration")
 plt.plot(x_axis, time_std)
 plt.xticks(x_axis)
 plt.tight_layout()
-plt.show()
+plt.savefig('figures/load_balance_3.svg', bbox_inches='tight')
+plt.close()
