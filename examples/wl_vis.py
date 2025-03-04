@@ -429,10 +429,10 @@ cv_ax2_asro.set_ylim(asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
 print("Hist y-limit", prob_max*1.01)
 print("SHC y-limit", cv_ax1.get_ylim()[1])
 print("ASRO y-limit", asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
-custom_h = 0.086391918197925
-custom_l = -1.9054801489853601
-custom_u = 1.028759512687277
-custom_c = 1.0270636004885352
+custom_h = 0.08726589159350963
+custom_l = -2.4415382996155444
+custom_u = 1.0340083694738986
+custom_c = 1.0103890210461517
 
 cv_ax1.set_ylim(0, custom_c)
 cv_ax2.set_ylim(0, custom_c)
