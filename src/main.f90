@@ -86,6 +86,15 @@ program main
 
   else if (setup%mode == 303) then
 
+    ! The variable 'p' is defined in comms.f90 and is the number of MPI
+    ! processes. The nested sampling algorithm is only implemented in
+    ! serial at present, so we terminate the programme if the user has
+    ! tried to execute in parallel
+    if (p .gt. 1) then
+      call comms_finalise()
+      stop ' Nested sampling is only implemented in serial'
+    end if
+
     ! Nested Sampling algorithm
     call nested_sampling_main(setup, ns_setup, my_rank)
 
