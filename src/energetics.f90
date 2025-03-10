@@ -1399,9 +1399,11 @@ module energetics
   end function simple_cubic_energy_1shells
 
   !--------------------------------------------------------------------!
-  ! Function to compute the energetic cost of swapping a pair of atoms ! 
+  ! Function to compute the energy associated with just one pair of    !
+  ! atoms. (This means we can avoid re-evaluating the full Hamiltonian !
+  ! for things like trial Metropolis-Kawasaki swaps                    !
   !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
+  ! C. D. Woodgate,  Bristol                                      2025 !
   !--------------------------------------------------------------------!
   function pair_energy(setup, config, idx1, idx2)&
        result(energy)
@@ -1410,11 +1412,11 @@ module energetics
     type(run_params), intent(in) :: setup
     integer, dimension(4), intent(in) :: idx1, idx2
     real(real64) :: energy
-    integer(int16) :: species1, species2
 
-    species1 = config(idx1(1), idx1(2), idx1(3), idx1(4))
-    species2 = config(idx2(1), idx2(2), idx2(3), idx2(4))
-
+    ! The function nbr_energy will only evaluate the portion of the
+    ! energy coming from the atoms around a site interacting with the
+    ! atom on that site. There is NO factor of 1/2 because there is no
+    ! double-counting in this routine.
     energy = setup%nbr_energy(config, idx1(2), idx1(3), idx1(4)) &
            + setup%nbr_energy(config, idx2(2), idx2(3), idx2(4))
   end function pair_energy
