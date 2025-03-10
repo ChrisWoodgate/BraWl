@@ -244,11 +244,11 @@ for itemp, new_temp in enumerate(temperatures):
     mean_energy = np.dot(bin_edges[:-1]+0.5*bin_width, prob)
     mean_energies[itemp] = mean_energy
 
-    for ipair, pair in enumerate(pairs):
-      asr_order_1 = np.dot(wcs[:,pair[0],pair[1],0], prob)
-      asr_orders_1[ipair,itemp] = asr_order_1
-      asr_order_2 = np.dot(wcs[:,pair[0],pair[1],1], prob)
-      asr_orders_2[ipair,itemp] = asr_order_2
+    #for ipair, pair in enumerate(pairs):
+    #  asr_order_1 = np.dot(wcs[:,pair[0],pair[1],0], prob)
+    #  asr_orders_1[ipair,itemp] = asr_order_1
+    #  asr_order_2 = np.dot(wcs[:,pair[0],pair[1],1], prob)
+    #  asr_orders_2[ipair,itemp] = asr_order_2
 
     # Compute heat capacity using the histogram
     msq_dev = np.zeros(len(bin_edges)-1)
