@@ -49,7 +49,7 @@ OBJDIR=obj
 INCDIR=include
 
 ifeq ($(SYSTEM),Darwin)
-         FFLAGS +=-I$(shell nf-config --fflags)
+         FFLAGS += $(shell nf-config --fflags)
          LDFLAGS += $(shell nf-config --flibs) \
                     -lnetcdf -lnetcdff
 else
@@ -106,11 +106,11 @@ $(OBJFILES): | $(OBJDIR)
 # Dependencies #
 ################
 shared_data.o: kinds.o
-io.o: kinds.o shared_data.o command_line.o display.o
+comms.o: kinds.o shared_data.o
+io.o: kinds.o shared_data.o command_line.o display.o comms.o
 write_netcdf.o: kinds.o shared_data.o
 write_xyz.o: shared_data.o kinds.o analytics.o
 write_diagnostics.o: shared_data.o kinds.o analytics.o
-comms.o: kinds.o shared_data.o io.o
 command_line.o: kinds.o
 c_functions.o: mt19937ar.o
 display.o: kinds.o shared_data.o

@@ -3,7 +3,7 @@
 !                                                                      !
 ! Module containing input/output routines.                             !
 !                                                                      !
-! C. D. Woodgate,  Warwick                                        2024 !
+! C. D. Woodgate,  Warwick                                        2025 !
 !----------------------------------------------------------------------!
 module io
 
@@ -12,6 +12,7 @@ module io
   use command_line
   use display
   use netcdf
+  use comms
   
   implicit none
 
@@ -20,7 +21,7 @@ module io
   !--------------------------------------------------------------------!
   ! Subroutine to write software version, date, and time               !
   !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
+  ! C. D. Woodgate,  Warwick                                      2025 !
   !--------------------------------------------------------------------!
   subroutine write_info(point)
 
@@ -77,7 +78,9 @@ module io
   !--------------------------------------------------------------------!
   ! Subroutine to parse control file                                   !
   !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2024 !
+  ! TODO: Tidy this routine up!                                        !
+  !                                                                    !
+  ! C. D. Woodgate,  Warwick                                      2025 !
   !--------------------------------------------------------------------!
   subroutine read_control_file(filename, parameters, my_rank)
 
@@ -107,6 +110,7 @@ module io
     inquire(file=trim(filename), exist=exists)
 
     if (.not. exists) then
+      call comms_finalise()
       stop 'Could not find input file ' // trim(filename)
     end if
 
@@ -232,6 +236,7 @@ module io
     close(15)
 
     if (.not. any(check)) then
+      call comms_finalise()
       stop 'Missing parameter in input file'
     end if
 
@@ -382,6 +387,7 @@ module io
     open(25, file=filename, iostat=ios)
 
     if (ios .ne. 0) then
+      call comms_finalise()
       stop 'Could not parse input file. Aborting...'
     end if
 
@@ -454,6 +460,7 @@ module io
     open(25, file=filename, iostat=ios)
 
     if (ios .ne. 0) then
+      call comms_finalise()
       stop 'Could not parse tmmc input file. Aborting...'
     end if
 
@@ -535,6 +542,7 @@ module io
     close(25)
 
     if (.not. any(check)) then
+      call comms_finalise()
       stop 'Missing parameter in tmmc input file'
     end if
 
@@ -560,6 +568,7 @@ module io
     open(25, file=filename, iostat=ios)
 
     if (ios .ne. 0) then
+      call comms_finalise()
       stop 'Could not parse wang landau input file. Aborting...'
     end if
 
@@ -660,6 +669,7 @@ module io
     close(25)
 
     if (.not. any(check)) then
+      call comms_finalise()
       stop 'Missing parameter in wang landau input file'
     end if
 
@@ -685,6 +695,7 @@ module io
     open(25, file=filename, iostat=ios)
 
     if (ios .ne. 0) then
+      call comms_finalise()
       stop 'Could not parse energy spectrum input file. Aborting...'
     end if
 
@@ -730,6 +741,7 @@ module io
     close(25)
 
     if (.not. any(check)) then
+      call comms_finalise()
       stop 'Missing parameter in energy spectrum input file'
     end if
 

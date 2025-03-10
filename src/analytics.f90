@@ -213,7 +213,7 @@ module analytics
   ! Function to compute radial densities, i.e. atomic short-range      !
   ! order parameters.                                                  !
   !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
+  ! C. D. Woodgate,  Bristol                                      2025 !
   !--------------------------------------------------------------------!
   function radial_densities(setup, configuration, n_shells,            &
                             shell_distances) result(r_densities)
@@ -230,7 +230,12 @@ module analytics
     real(real64) :: distance, d_x, d_y, d_z
 
     ! Array for counting the number of each species
+    ! Initialise it to zero
     particle_counts = 0
+
+    ! Output array of radial densities
+    ! Initialise it to zero
+    r_densities = 0.0_real64
 
     ! Count how many of each species there are
     do i_3=1, setup%n_3*2
@@ -246,6 +251,13 @@ module analytics
           end do
         end do
       end do
+    end do
+
+    ! Check that we won't divide by zero later
+    do l=1, setup%n_species
+      if (particle_counts(l) .eq. 0) then
+        print*, 'Warning, one or more particle counts are zero in radial_densities()'
+      end if
     end do
 
     ! For small systems, limit loop size to prevent double counting

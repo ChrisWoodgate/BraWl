@@ -3,7 +3,7 @@
 !                                                                      !
 ! Module for getting random lattice site and neighbour.                !
 !                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
+! C. D. Woodgate,  Bristol                                        2025 !
 !----------------------------------------------------------------------!
 module random_site
 
@@ -154,9 +154,11 @@ module random_site
     nbr(4) = modulo(nbr(4)-1, 2*setup%n_3) + 1
   end function fcc_random_nbr
 
-  !-----------------------------------------------!
-  ! Function to compute energy of swapping a pair !
-  !-----------------------------------------------!
+  !--------------------------------------------------------------------!
+  ! Function to swap a pair of atoms on the lattice.                   !
+  !                                                                    !
+  ! C. D. Woodgate,  Bristol                                      2025 !
+  !--------------------------------------------------------------------!
   subroutine pair_swap(config, idx1, idx2)
     !integer(int16), allocatable, dimension(:,:,:,:) :: config
     integer(int16), dimension(:,:,:,:) :: config
