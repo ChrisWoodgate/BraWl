@@ -688,8 +688,8 @@ contains
       window_indices(i, 1) = MAX(INT(window_intervals(i,1) - wl_setup%bin_overlap), 1)
       window_indices(i, 2) = MIN(INT(window_intervals(i,2) + wl_setup%bin_overlap), wl_setup%bins)
     end do
-    window_indices(wl_setup%num_windows, 1) = INT(window_intervals(wl_setup%num_windows,1) &
-                                    - wl_setup%bin_overlap)
+    window_indices(wl_setup%num_windows, 1) = MAX(INT(window_intervals(wl_setup%num_windows,1) &
+                                    - wl_setup%bin_overlap), 1)
     window_indices(wl_setup%num_windows,2) = window_intervals(wl_setup%num_windows,2)
 
     mpi_index = my_rank/num_walkers + 1
@@ -839,61 +839,63 @@ end subroutine dos_combine
     integer :: bins(wl_setup%num_windows)
     integer :: bins_max_indices(wl_setup%num_windows)
     logical :: mk(wl_setup%num_windows)
-
-    ! Perform window size adjustment then broadcast
-    if (my_rank == 0) then
-      factor = 0.8_real64
-      scaling = 0.9_real64
-      factor = factor*(scaling**(iter-1))
-      diffusion = (REAL((window_intervals(:,2) - window_intervals(:,1) + 1))) &
-      /(rank_all_time(:,1))
-      diffusion_merge = diffusion_prev/sum(diffusion_prev)*(1.0_real64-factor) + factor*diffusion/sum(diffusion)
-      diffusion_prev = diffusion_merge
-      
-      bins = NINT(REAL(wl_setup%bins)*diffusion_merge/SUM(diffusion_merge))
-      
-      ! Set all bins less than min_bins to min_bins
-      min_bins = 1
-      do i = 1, wl_setup%num_windows
-        if (bins(i) < min_bins) then
-            bins(i) = min_bins
-        end if
-      end do
-
-      mk = .True.
-      do i = 1, wl_setup%num_windows
-        bins_max_indices(i) = MAXLOC(bins,dim=1,mask=mk)
-        mk(MAXLOC(bins,mk)) = .FALSE.
-      end do
-
-      i = 0
-      j = 0
-      do while(SUM(bins) /= wl_setup%bins)
-        i = i + 1
-        do j = 1, MIN(i, wl_setup%num_windows)
-          if (SUM(bins) > wl_setup%bins .and. bins(bins_max_indices(j)) > 2) then
-            bins(bins_max_indices(j)) = bins(bins_max_indices(j)) - 1
-          end if
-          if (SUM(bins) < wl_setup%bins .and. bins(bins_max_indices(j)) > 2) then
-            bins(bins_max_indices(j)) = bins(bins_max_indices(j)) + 1
+    
+    if (wl_setup%num_windows > 1) then
+      ! Perform window size adjustment then broadcast
+      if (my_rank == 0) then
+        factor = 0.8_real64
+        scaling = 0.9_real64
+        factor = factor*(scaling**(iter-1))
+        diffusion = (REAL((window_intervals(:,2) - window_intervals(:,1) + 1))) &
+        /(rank_all_time(:,1))
+        diffusion_merge = diffusion_prev/sum(diffusion_prev)*(1.0_real64-factor) + factor*diffusion/sum(diffusion)
+        diffusion_prev = diffusion_merge
+        
+        bins = NINT(REAL(wl_setup%bins)*diffusion_merge/SUM(diffusion_merge))
+        
+        ! Set all bins less than min_bins to min_bins
+        min_bins = 1
+        do i = 1, wl_setup%num_windows
+          if (bins(i) < min_bins) then
+              bins(i) = min_bins
           end if
         end do
-      end do
 
-      window_intervals(1, 2) = bins(1)
-      do i=2, wl_setup%num_windows
-        window_intervals(i, 1) = window_intervals(i-1, 2) + 1
-        window_intervals(i, 2) = window_intervals(i, 1) + bins(i) - 1
-      end do
-      window_intervals(wl_setup%num_windows, 1) = window_intervals(wl_setup%num_windows-1, 2) + 1
-      window_intervals(wl_setup%num_windows, 2) = wl_setup%bins
+        mk = .True.
+        do i = 1, wl_setup%num_windows
+          bins_max_indices(i) = MAXLOC(bins,dim=1,mask=mk)
+          mk(MAXLOC(bins,mk)) = .FALSE.
+        end do
+
+        i = 0
+        j = 0
+        do while(SUM(bins) /= wl_setup%bins)
+          i = i + 1
+          do j = 1, MIN(i, wl_setup%num_windows)
+            if (SUM(bins) > wl_setup%bins .and. bins(bins_max_indices(j)) > 2) then
+              bins(bins_max_indices(j)) = bins(bins_max_indices(j)) - 1
+            end if
+            if (SUM(bins) < wl_setup%bins .and. bins(bins_max_indices(j)) > 2) then
+              bins(bins_max_indices(j)) = bins(bins_max_indices(j)) + 1
+            end if
+          end do
+        end do
+
+        window_intervals(1, 2) = bins(1)
+        do i=2, wl_setup%num_windows
+          window_intervals(i, 1) = window_intervals(i-1, 2) + 1
+          window_intervals(i, 2) = window_intervals(i, 1) + bins(i) - 1
+        end do
+        window_intervals(wl_setup%num_windows, 1) = window_intervals(wl_setup%num_windows-1, 2) + 1
+        window_intervals(wl_setup%num_windows, 2) = wl_setup%bins
+      end if
+
+      call MPI_BCAST(window_intervals, wl_setup%num_windows*2, MPI_INT, 0, MPI_COMM_WORLD, ierror)
+
+      ! Populate MPI arrays and indlude MPI window overlap
+      call mpi_arrays(wl_setup, my_rank, bin_edges, window_intervals, window_indices, &
+                      mpi_bin_edges, mpi_wl_hist, mpi_bins, mpi_index, num_walkers)
     end if
-
-    call MPI_BCAST(window_intervals, wl_setup%num_windows*2, MPI_INT, 0, MPI_COMM_WORLD, ierror)
-
-    ! Populate MPI arrays and indlude MPI window overlap
-    call mpi_arrays(wl_setup, my_rank, bin_edges, window_intervals, window_indices, &
-                    mpi_bin_edges, mpi_wl_hist, mpi_bins, mpi_index, num_walkers)
   end subroutine mpi_window_optimise
 
   subroutine mpi_arrays(wl_setup, my_rank, bin_edges, window_intervals, window_indices, &
@@ -962,6 +964,7 @@ end subroutine dos_combine
    integer :: overlap_loc, request
    integer :: overlap_mpi(mpi_processes, 2), overlap_mpi_buffer(mpi_processes, 2)
    real(real64) :: delta_e, e_swapped, e_unswapped
+   integer(int16) :: config_buffer(SIZE(config, 1), SIZE(config, 2), SIZE(config, 3), SIZE(config, 4))
    
    ! Perform binning and initialize overlap_mpi
    e_unswapped = setup%full_energy(config)
@@ -1031,8 +1034,9 @@ end subroutine dos_combine
         if (genrand() .lt. exp((wl_logdos(ibin) - wl_logdos(jbin)))) then
           accept = .True.
           call MPI_SEND(accept, 1, MPI_INT, overlap_exchange(j,2), 1, MPI_COMM_WORLD, ierror)
-          call MPI_ISEND(config, SIZE(config), MPI_SHORT, overlap_exchange(j,2), 2, MPI_COMM_WORLD, request, ierror)
-          call MPI_RECV(config, SIZE(config), MPI_SHORT, overlap_exchange(j,2), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+          call MPI_SEND(config, SIZE(config), MPI_SHORT, overlap_exchange(j,2), 2, MPI_COMM_WORLD, ierror)
+          call MPI_RECV(config_buffer, SIZE(config), MPI_SHORT, overlap_exchange(j,2), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+          config = config_buffer
         else
           call MPI_SEND(accept, 1, MPI_INT, overlap_exchange(j,2), 1, MPI_COMM_WORLD, ierror)
         end if
@@ -1040,8 +1044,9 @@ end subroutine dos_combine
         call MPI_SEND(e_unswapped, 1, MPI_DOUBLE_PRECISION, overlap_exchange(j,1), 0, MPI_COMM_WORLD, ierror)
         call MPI_RECV(accept, 1, MPI_INT, overlap_exchange(j,1), 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
         if (accept) then
-          call MPI_ISEND(config, SIZE(config), MPI_SHORT, overlap_exchange(j,1), 2, MPI_COMM_WORLD, request, ierror)
-          call MPI_RECV(config, SIZE(config), MPI_SHORT, overlap_exchange(j,1), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+          call MPI_RECV(config_buffer, SIZE(config), MPI_SHORT, overlap_exchange(j,1), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+          call MPI_SEND(config, SIZE(config), MPI_SHORT, overlap_exchange(j,1), 2, MPI_COMM_WORLD, ierror)
+          config = config_buffer
         end if
       end if
     end do
