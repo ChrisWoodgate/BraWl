@@ -7,6 +7,7 @@ import os
 from matplotlib.colors import ListedColormap
 import matplotlib.colors as mcolors
 import itertools
+from scipy.optimize import curve_fit
 
 font_size = 12
 np.set_printoptions(suppress=True)
@@ -50,26 +51,47 @@ print("Available directories:")
 print(subfolders)
 elements = input("Input elements to pull data from: ")
 
-windows = np.array([1, 2, 4, 6, 8])
+windows = np.array([1, 2, 4, 6, 8, 10, 12])
 directories = np.empty_like(windows, dtype='<U32')
-sums = np.zeros(np.shape(windows))
+sums = np.zeros([len(windows), 3])
 
 for i in range(len(windows)):
   directories[i] = "{}_{:02d}".format(elements, windows[i])
 
-for i, directory in enumerate(directories):
-    filename = "{}/wl_lb_max_time.dat".format(directory)
-    wl_lb_max_time = nc.Dataset(filename)
-    wl_lb_max_time = np.array(wl_lb_max_time["grid data"][:], dtype=np.float64).T
-    
-    row_sums = np.max(wl_lb_max_time, axis=1)
-    total_sum = np.sum(row_sums)
-            
-    sums[i] = total_sum
-sums = sums/60/60
-plt.plot(windows, sums)
-plt.xscale('log', base=2)
+for i in range(len(windows)):
+    total_sum = 0
+    for j in range(1,3+1):
+        filename = "{}_{}_{:02d}/wl_lb_max_time.dat".format(elements, j, windows[i])
+        wl_lb_max_time = nc.Dataset(filename)
+        wl_lb_max_time = np.array(wl_lb_max_time["grid data"][:], dtype=np.float64).T
+
+        row_sums = np.max(wl_lb_max_time, axis=1)
+        print(windows[i], j, row_sums)
+        sums[i, j-1] = np.sum(row_sums)
+
+sums /= 60
+sums_mean = np.mean(sums, axis=1)
+sums_error = np.std(sums, axis=1)
+
+plt.errorbar(windows, sums_mean, yerr=sums_error, capsize=3, ecolor = "red")
 plt.xticks(windows, labels=windows)
 plt.xlabel("Windows")
-plt.ylabel("Time Taken (hrs)")
+plt.ylabel("Time Taken (mins)")
+plt.show()
+
+sums = np.mean(sums[0])/sums
+sums_mean = np.mean(sums, axis=1)
+sums_error = np.std(sums, axis=1)
+
+def linear(x, m):
+    return m*x + (1-m)
+
+params, covariance = curve_fit(linear, windows, sums_mean)
+
+plt.plot(windows, linear(windows, params))
+plt.errorbar(windows, sums_mean, yerr=sums_error, capsize=3, ecolor = "#D62728", ls='none', fmt='o', color = "#D62728")
+plt.xticks(windows, labels=windows)
+plt.xlabel("Windows")
+plt.ylabel("Speed Up")
+plt.text(0.02, 0.98, f"Slope: {params[0]:.2f}", transform=plt.gca().transAxes, verticalalignment='top', horizontalalignment='left')
 plt.show()
