@@ -53,6 +53,7 @@ module energy_spectrum
     end if
 
     acceptance = run_es_sweeps(setup, es_setup, config, min_energy, min_change, max_change)
+    
     call MPI_REDUCE(min_energy, min_energy_buf, 1, MPI_DOUBLE_PRECISION, &
     MPI_MIN, 0, MPI_COMM_WORLD, ierror)
     call MPI_REDUCE(min_change, min_change_buf, 1, MPI_DOUBLE_PRECISION, &
@@ -79,7 +80,7 @@ module energy_spectrum
     real(real64), intent(inout) :: min_energy, min_change, max_change
 
     integer, dimension(4) :: rdm1, rdm2
-    real(real64) :: e_swapped, e_unswapped, eps, delta_e
+    real(real64) :: e_swapped, e_unswapped, pair_swapped, pair_unswapped, eps, delta_e, beta
     integer :: acceptance, i, cycle_loop, reject
     integer(int16) :: site1, site2
 
@@ -88,6 +89,7 @@ module energy_spectrum
     e_swapped = e_unswapped
 
     acceptance = 0.0_real64
+    beta = 1.0_real64/(k_b_in_Ry*1)
 
     do i = 1, es_setup%mc_sweeps*setup%n_atoms
       ! Make one MC trial
@@ -101,8 +103,12 @@ module energy_spectrum
 
       ! Calculate energy if different species
       if (site1 /= site2) then
+        pair_unswapped = pair_energy(setup, config, rdm1, rdm2)
+
         call pair_swap(config, rdm1, rdm2)
-        e_swapped = setup%full_energy(config)
+
+        pair_swapped = pair_energy(setup, config, rdm1, rdm2)
+        e_swapped = e_unswapped - pair_unswapped + pair_swapped
 
         delta_e = e_swapped - e_unswapped
         if (delta_e < min_change) then
@@ -118,7 +124,7 @@ module energy_spectrum
           if (e_swapped < min_energy) then
             min_energy = e_swapped
           end if
-        else if (genrand() .lt. 0.001_real64) then ! to prevent getting stuck in local minimum
+        else if (genrand() .lt. exp(-beta*delta_e)) then ! to prevent getting stuck in local minimum
           e_unswapped = e_swapped
         else
           call pair_swap(config, rdm1, rdm2)
@@ -126,6 +132,7 @@ module energy_spectrum
       end if
     end do
 
+    !print*, "Energy Drift: ", ABS(setup%full_energy(config) - e_unswapped)/ABS(setup%full_energy(config))
   end function run_es_sweeps
 end module energy_spectrum
 
