@@ -77,6 +77,7 @@ plt.errorbar(windows, sums_mean, yerr=sums_error, capsize=3, ecolor = "red")
 plt.xticks(windows, labels=windows)
 plt.xlabel("Windows")
 plt.ylabel("Time Taken (mins)")
+plt.savefig('../figures/{}_time.pdf'.format(''.join(elements)), bbox_inches='tight')
 plt.show()
 
 sums = np.mean(sums[0])/sums
@@ -94,4 +95,5 @@ plt.xticks(windows, labels=windows)
 plt.xlabel("Windows")
 plt.ylabel("Speed Up")
 plt.text(0.02, 0.98, f"Slope: {params[0]:.2f}", transform=plt.gca().transAxes, verticalalignment='top', horizontalalignment='left')
+plt.savefig('../figures/{}_speedup.pdf'.format(''.join(elements)), bbox_inches='tight')
 plt.show()
