@@ -61,7 +61,7 @@ bin_edges = np.array(bin_edges["grid data"][:], dtype=np.float64)
 filename = "{}/wl_dos.dat".format(directory)
 wl_logdos = nc.Dataset(filename)
 wl_logdos = np.array(wl_logdos["grid data"][:], dtype=np.float64)
-#print(wl_logdos)
+print(wl_logdos)
 
 filename = "{}/radial_densities/rho_of_E.dat".format(directory)  
 rho_of_E = nc.Dataset(filename)
@@ -83,7 +83,7 @@ wl_hist = np.array(wl_hist["grid data"][:], dtype=np.float64)
 kb_ev = 8.167333262e-5
 ev_to_ry = 13.605693122
 kb_ry = kb_ev/ev_to_ry
-n_atoms = 432
+n_atoms = 2000
 ev_to_mev = 1000
 
 # unit conversion
@@ -244,11 +244,11 @@ for itemp, new_temp in enumerate(temperatures):
     mean_energy = np.dot(bin_edges[:-1]+0.5*bin_width, prob)
     mean_energies[itemp] = mean_energy
 
-    #for ipair, pair in enumerate(pairs):
-    #  asr_order_1 = np.dot(wcs[:,pair[0],pair[1],0], prob)
-    #  asr_orders_1[ipair,itemp] = asr_order_1
-    #  asr_order_2 = np.dot(wcs[:,pair[0],pair[1],1], prob)
-    #  asr_orders_2[ipair,itemp] = asr_order_2
+    for ipair, pair in enumerate(pairs):
+      asr_order_1 = np.dot(wcs[:,pair[0],pair[1],0], prob)
+      asr_orders_1[ipair,itemp] = asr_order_1
+      asr_order_2 = np.dot(wcs[:,pair[0],pair[1],1], prob)
+      asr_orders_2[ipair,itemp] = asr_order_2
 
     # Compute heat capacity using the histogram
     msq_dev = np.zeros(len(bin_edges)-1)
