@@ -89,7 +89,7 @@ module energy_spectrum
     e_swapped = e_unswapped
 
     acceptance = 0.0_real64
-    beta = 1.0_real64/(k_b_in_Ry*1)
+    beta = 1.0_real64/(k_b_in_Ry*10.0_real64)
 
     do i = 1, es_setup%mc_sweeps*setup%n_atoms
       ! Make one MC trial
@@ -119,15 +119,14 @@ module energy_spectrum
         end if
 
         ! Accept or reject move
-        if (delta_e < 0) then
-          e_unswapped = e_swapped
-          if (e_swapped < min_energy) then
-            min_energy = e_swapped
-          end if
-        else if (genrand() .lt. exp(-beta*delta_e)) then ! to prevent getting stuck in local minimum
+        if (genrand() .lt. exp(-delta_e*beta)) then
           e_unswapped = e_swapped
         else
           call pair_swap(config, rdm1, rdm2)
+        end if
+
+        if (e_unswapped < min_energy) then
+          min_energy = e_unswapped
         end if
       end if
     end do
