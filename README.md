@@ -61,6 +61,8 @@ and run it in a directory with a suitable input file via
 ```
 (Note that the code, by default, will look for a file called `input.txt` as its input.)
 
+On Bristol's `bluepebble` cluster, the relevant modules are (as of 2025/03) `gcc/12.3.0 openmpi/5.0.3 netcdf-c/4.9.2 netcdf-fortran`.
+
 ## Running the code
 If you navigate to the `examples` subdirectory, you should find two examples demonstrating the code's usage which can be run inside those directories.
 
