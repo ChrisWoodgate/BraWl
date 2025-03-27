@@ -74,6 +74,9 @@ Most of the options specified in the input file are fairly self-explanatory. The
 - Livia B. Pártay
 - Christopher D. Woodgate
 
+## Contributors
+- David Quigley
+
 ## Contributing
 Any/all contributions are welcome via pull requests. 
 
