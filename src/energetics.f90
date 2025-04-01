@@ -64,8 +64,8 @@ module energetics
     ! energy coming from the atoms around a site interacting with the
     ! atom on that site. There is NO factor of 1/2 because there is no
     ! double-counting in this routine.
-    energy = setup%nbr_energy(config, idx1(2), idx1(3), idx1(4)) &
-           + setup%nbr_energy(config, idx2(2), idx2(3), idx2(4))
+    energy = setup%nbr_energy(config, idx1(1), idx1(2), idx1(3), idx1(4)) &
+           + setup%nbr_energy(config, idx2(1), idx2(2), idx2(3), idx2(4))
   end function pair_energy
 
   !--------------------------------------------------------------------!
