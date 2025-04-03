@@ -78,20 +78,21 @@ module io
   !--------------------------------------------------------------------!
   ! Subroutine to parse control file                                   !
   !                                                                    !
-  ! TODO: Tidy this routine up!                                        !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2025 !
+  ! C. D. Woodgate,  Bristol                                      2025 !
   !--------------------------------------------------------------------!
   subroutine read_control_file(filename, parameters, my_rank)
 
     character(len=*), intent(in) :: filename
-    logical, dimension(11) :: check
+    logical, dimension(12) :: check
+    logical, dimension(2) :: cs_or_counts
     type(run_params) :: parameters
-    character(len=100) :: buffer, label
+    character(len=144) :: buffer, label, first_char
     integer :: line, pos, ios, my_rank
     logical :: exists
 
+    ! Set my checking_array to be false initially
     check = .false.
+    cs_or_counts = .false.
 
     ios=0; line=0
 
@@ -107,19 +108,24 @@ module io
     parameters%dump_grids = .false.
     parameters%burn_in_steps = 1000
 
+    ! See if the relevant file exists
     inquire(file=trim(filename), exist=exists)
 
+    ! Exit cleanly if we can't find it
     if (.not. exists) then
       call comms_finalise()
-      stop 'Could not find input file ' // trim(filename)
+      stop 'Could not find control file ' // trim(filename)
     end if
 
+    ! If we can find it, output that we are reading it
     if(my_rank == 0) then
-      write(6,'(26("-"),x,"Parsing input file",x,26("-"),/)')
+      write(6,'(26("-"),x,"Parsing control file",x,26("-"),/)')
     end if
 
+    ! Open it for reading
     open(15, file=filename, iostat=ios)
 
+    ! Read line by line from the buffer until we hit the end of the file
     do while (ios==0)
 
       read(15, "(A)", iostat=ios) buffer
@@ -127,70 +133,82 @@ module io
       if(ios==0) then
         line=line+1
 
+        ! Check if the first non-whitespace character is a hash.
+        ! If so, this is a comment line---ignore it.
+        first_char = trim(buffer)
+        if (first_char(1:1) .eq. '#') then
+          continue
+        end if
+
         pos = scan(buffer, '=')
         label=buffer(1:pos-1)
         buffer = buffer(pos+1:)
 
         select case (label)
-        case ('mode')  
+        case ('mode')
           read(buffer, *, iostat=ios) parameters%mode
           check(1) = .true.
-        case ('n_1')  
-          read(buffer, *, iostat=ios) parameters%n_1
+        case ('lattice')
+          read(buffer, *, iostat=ios) parameters%lattice
           check(2) = .true.
-        case ('n_2')  
-          read(buffer, *, iostat=ios) parameters%n_2
+        case ('lattice_parameter')
+          read(buffer, *, iostat=ios) parameters%lattice_parameter
           check(3) = .true.
-        case ('n_3')  
-          read(buffer, *, iostat=ios) parameters%n_3
+        case ('n_1')
+          read(buffer, *, iostat=ios) parameters%n_1
           check(4) = .true.
-        case ('burn_in')  
-          read(buffer, *, iostat=ios) parameters%burn_in
-        case ('burn_in_steps')  
-          read(buffer, *, iostat=ios) parameters%burn_in_steps
-        case ('n_mc_steps')  
-          read(buffer, *, iostat=ios) parameters%mc_steps
+        case ('n_2')
+          read(buffer, *, iostat=ios) parameters%n_2
           check(5) = .true.
-        case ('sample_steps')  
+        case ('n_3')
+          read(buffer, *, iostat=ios) parameters%n_3
+          check(6) = .true.
+        case ('n_species')
+          read(buffer, *, iostat=ios) parameters%n_species
+          check(7) = .true.
+        case ('nbr_swap')
+          read(buffer, *, iostat=ios) parameters%nbr_swap
+          check(8) = .true.
+        case ('interaction_file')
+          read(buffer, *, iostat=ios) parameters%interaction_file
+          check(9) = .true.
+        case ('interaction_range')
+          read(buffer, *, iostat=ios) parameters%interaction_range
+          check(10) = .true.
+        case ('wc_range')
+          read(buffer, *, iostat=ios) parameters%wc_range
+        ! Below here parameters only relate to Metropolis routines
+        ! TODO: Move these to separate read-in file?
+        case ('burn_in')
+          read(buffer, *, iostat=ios) parameters%burn_in
+        case ('burn_in_steps')
+          read(buffer, *, iostat=ios) parameters%burn_in_steps
+        case ('n_mc_steps')
+          read(buffer, *, iostat=ios) parameters%mc_steps
+        case ('sample_steps')
           read(buffer, *, iostat=ios) parameters%sample_steps
         case ('radial_sample_steps')
           read(buffer, *, iostat=ios) parameters%radial_sample_steps
-        case ('n_species')  
-          read(buffer, *, iostat=ios) parameters%n_species
-          check(6) = .true.
-        case ('lattice')  
-          read(buffer, *, iostat=ios) parameters%lattice
-          check(7) = .true.
-        case ('lattice_parameter')  
-          read(buffer, *, iostat=ios) parameters%lattice_parameter
-          check(8) = .true.
-        case ('interaction_file')  
-          read(buffer, *, iostat=ios) parameters%interaction_file
-          check(9) = .true.
-        case ('interaction_range')  
-          read(buffer, *, iostat=ios) parameters%interaction_range
-          check(10) = .true.
-        case ('wc_range')  
-          read(buffer, *, iostat=ios) parameters%wc_range
-        case ('T')  
+        case ('T')
           read(buffer, *, iostat=ios) parameters%T
           check(11) = .true.
-        case ('delta_T')  
+        case ('delta_T')
           read(buffer, *, iostat=ios) parameters%delta_T
-        case ('T_steps')  
+        case ('T_steps')
           read(buffer, *, iostat=ios) parameters%T_steps
-        case ('dump_grids')  
+        case ('dump_grids')
           read(buffer, *, iostat=ios) parameters%dump_grids
-        case ('lro')  
+        case ('lro')
           read(buffer, *, iostat=ios) parameters%lro
-        case ('nbr_swap')  
-          read(buffer, *, iostat=ios) parameters%nbr_swap
         case default
         end select
       end if
     end do
 
+    close(15)
 
+    ! Now we know how many species there are, we can go back and read
+    ! the concentrations/n_atoms of each species, and their labels
     allocate(parameters%species_names(parameters%n_species))
     allocate(parameters%species_concentrations(0:parameters%n_species))
     allocate(parameters%species_numbers(parameters%n_species))
@@ -199,16 +217,15 @@ module io
        parameters%radial_sample_steps = parameters%sample_steps
     end if
 
+    ! Set these arrays to be zero initially
     parameters%species_concentrations = 0.0_real64
     parameters%species_numbers = 0
 
     line=0
 
-    close(15)
-
     open(15, file=filename, iostat=ios)
 
-
+    ! Read line by line from the buffer until we hit the end of the file
     do while (ios==0)
 
       read(15, "(A)", iostat=ios) buffer
@@ -216,18 +233,29 @@ module io
       if(ios==0) then
         line=line+1
 
+        ! Check if the first non-whitespace character is a hash.
+        ! If so, this is a comment line---ignore it.
+        first_char = trim(buffer)
+        if (first_char(1:1) .eq. '#') then
+          continue
+        end if
+
         pos = scan(buffer, '=')
         label=buffer(1:pos-1)
         buffer = buffer(pos+1:)
 
         select case (label)
-        case ('species_names')  
+        case ('species_names')
           read(buffer, *, iostat=ios) parameters%species_names
-          check(1) = .true.
-        case ('species_concentrations')  
+          check(11) = .true.
+        case ('species_concentrations')
           read(buffer, *, iostat=ios) parameters%species_concentrations(1:)
-        case ('species_numbers')  
+          cs_or_counts(1) = .true.
+          check(12) = .true.
+        case ('species_numbers')
           read(buffer, *, iostat=ios) parameters%species_numbers(:)
+          cs_or_counts(2) = .true.
+          check(12) = .true.
         case default
         end select
       end if
@@ -235,9 +263,45 @@ module io
 
     close(15)
 
-    if (.not. any(check)) then
+    ! Check that the user has specified either the concentrations of each species
+    ! or the number of atoms of each species, but not both.
+    if (cs_or_counts(1) .and. cs_or_counts(2)) then
       call comms_finalise()
-      stop 'Missing parameter in input file'
+      stop 'You cannot specify both chemical concentrations and numbers of atoms!'
+    else if ((.not. cs_or_counts(1)) .and. (.not. cs_or_counts(2))) then
+      call comms_finalise()
+      stop 'You must specify either chemical concentrations or numbers of atoms.'
+    end if
+
+    ! Check that the user has provided all the necessary inputs
+    ! Exit and tell them which is missing if needed
+    if (.not. all(check)) then
+      call comms_finalise()
+      if (.not. check(1)) then
+        stop "Missing 'mode' in system file"
+      else if (.not. check(2)) then
+        stop "Missing 'lattice' in system file"
+      else if (.not. check(3)) then
+        stop "Missing 'lattice_parameter' in system file"
+      else if (.not. check(4)) then
+        stop "Missing 'n_1' in system file"
+      else if (.not. check(5)) then
+        stop "Missing 'n_2' in system file"
+      else if (.not. check(6)) then
+        stop "Missing 'n_3' in system file"
+      else if (.not. check(7)) then
+        stop "Missing 'n_species' in system file"
+      else if (.not. check(8)) then
+        stop "Missing 'nbr_swap' in system file"
+      else if (.not. check(9)) then
+        stop "Missing 'interaction_file' in system file"
+      else if (.not. check(10)) then
+        stop "Missing 'interaction_range' in system file"
+      else if (.not. check(11)) then
+        stop "Missing 'species_names' in system file"
+      else
+      stop 'Missing parameter in system file'
+      end if
     end if
 
   end subroutine read_control_file
