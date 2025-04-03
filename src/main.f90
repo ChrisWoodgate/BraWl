@@ -29,6 +29,9 @@ program main
   ! Runtime parameters type
   type(run_params) :: setup
 
+  ! Metropolis parameters type
+  type(metropolis_params) :: metropolis_setup
+
   ! Nested Sampling parameters type
   type(ns_params) :: ns_setup
 
@@ -65,9 +68,6 @@ program main
   ! Make directories for data
   call make_data_directories(my_rank)
 
-  ! Initialise some global arrays
-  call initialise_global_arrays(setup)
-
   ! Initialise some local arrays
   call initialise_local_arrays(setup)
 
@@ -77,12 +77,12 @@ program main
   if (setup%mode == 301) then
 
     ! Metropolis with Kawasaki dynamics
-    call metropolis_simulated_annealing(setup, my_rank)
+    call metropolis_simulated_annealing(setup, metropolis_setup, my_rank)
 
   else if (setup%mode == 302) then
 
     ! Draw decorrelated samples
-    call metropolis_decorrelated_samples(setup, my_rank)
+    call metropolis_decorrelated_samples(setup, metropolis_setup, my_rank)
 
   else if (setup%mode == 303) then
 
@@ -126,9 +126,6 @@ program main
    print*, ' Unrecognised mode', setup%mode
 
   end if
-
-  ! Clean up
-  call global_clean_up()
 
   ! Clean up
   call clean_up_interaction()
