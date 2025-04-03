@@ -47,19 +47,20 @@ module initialise
   !                                                                    !
   ! C. D. Woodgate,  Warwick                                      2023 !
   !--------------------------------------------------------------------!
-  subroutine initialise_global_arrays(setup)
+  subroutine initialise_global_metropolis_arrays(setup, metropolis)
     type(run_params), intent(inout) :: setup
+    type(metropolis_params), intent(inout) :: metropolis
     ! Array for storing energy as a function of temperature
-    allocate(av_energies_of_T(setup%T_steps))
+    allocate(av_energies_of_T(metropolis%T_steps))
     ! Array for storing energy as a function of temperature
-    allocate(av_C_of_T(setup%T_steps))
+    allocate(av_C_of_T(metropolis%T_steps))
     ! Array for storing energy as a function of temperature
-    allocate(av_acceptance_of_T(setup%T_steps))
+    allocate(av_acceptance_of_T(metropolis%T_steps))
     ! Radial densities as a function of temperature
     allocate(av_rho_of_T(setup%n_species, setup%n_species, &
-                     setup%wc_range, setup%T_steps))
+                     setup%wc_range, metropolis%T_steps))
     av_rho_of_T = 0.0_real64
-  end subroutine initialise_global_arrays
+  end subroutine initialise_global_metropolis_arrays
 
   !--------------------------------------------------------------------!
   ! Subroutine to initialise function pointers                         !
@@ -184,33 +185,43 @@ module initialise
   !--------------------------------------------------------------------!
   ! Subroutine to allocate memory for all processors                   !
   !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
+  ! C. D. Woodgate,  Bristol                                      2025 !
   !--------------------------------------------------------------------!
   subroutine initialise_local_arrays(setup)
     type(run_params), intent(inout) :: setup
-    ! Array for storing energy as a function of temperature
-    allocate(energies_of_T(setup%T_steps))
-    energies_of_T = 0.0_real64
-    ! Array for storing energy as a function of temperature
-    allocate(C_of_T(setup%T_steps))
-    C_of_T = 0.0_real64
-    ! Array for storing energy as a function of temperature
-    allocate(acceptance_of_T(setup%T_steps))
-    acceptance_of_T = 0.0_real64
-    ! Radial densities as a function of temperature
-    allocate(rho_of_T(setup%n_species, setup%n_species, &
-                     setup%wc_range, setup%T_steps))
-    rho_of_T = 0.0_real64
     ! On-shell distances
     allocate(shells(setup%wc_range))
     shells = 0.0_real64
-    ! Array for storing temperatures
-    allocate(temperature(setup%T_steps))
-    temperature = 0.0_real64
     ! Allocate array for storing configuration
     allocate(config(setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3))
     config = 0_int16
   end subroutine initialise_local_arrays
+
+  !--------------------------------------------------------------------!
+  ! Subroutine to allocate memory for all processors                   !
+  !                                                                    !
+  ! C. D. Woodgate,  Bristol                                      2025 !
+  !--------------------------------------------------------------------!
+  subroutine initialise_local_metropolis_arrays(setup, metropolis)
+    type(run_params), intent(inout) :: setup
+    type(metropolis_params), intent(inout) :: metropolis
+    ! Array for storing energy as a function of temperature
+    allocate(energies_of_T(metropolis%T_steps))
+    energies_of_T = 0.0_real64
+    ! Array for storing energy as a function of temperature
+    allocate(C_of_T(metropolis%T_steps))
+    C_of_T = 0.0_real64
+    ! Array for storing energy as a function of temperature
+    allocate(acceptance_of_T(metropolis%T_steps))
+    acceptance_of_T = 0.0_real64
+    ! Radial densities as a function of temperature
+    allocate(rho_of_T(setup%n_species, setup%n_species, &
+                     setup%wc_range, metropolis%T_steps))
+    rho_of_T = 0.0_real64
+    ! Array for storing temperatures
+    allocate(temperature(metropolis%T_steps))
+    temperature = 0.0_real64
+  end subroutine initialise_local_metropolis_arrays
 
   !--------------------------------------------------------------------!
   ! Subroutine to clean up interaction array                           !
@@ -226,27 +237,36 @@ module initialise
   !--------------------------------------------------------------------!
   ! Subroutine to clean up local arrays                                !
   !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
+  ! C. D. Woodgate,  Bristol                                      2025 !
   !--------------------------------------------------------------------!
   subroutine local_clean_up(setup)
     type(run_params), intent(inout) :: setup
-    deallocate(rho_of_T)
     deallocate(shells)
-    deallocate(temperature)
     deallocate(config)
-    deallocate(energies_of_T, C_of_T, acceptance_of_T)
     deallocate(setup%species_names, setup%species_concentrations)
   end subroutine local_clean_up
 
   !--------------------------------------------------------------------!
+  ! Subroutine to clean up local Metropolis arrays                     !
+  !                                                                    !
+  ! C. D. Woodgate,  Bristol                                      2025 !
+  !--------------------------------------------------------------------!
+  subroutine local_metropolis_clean_up(setup)
+    type(run_params), intent(inout) :: setup
+    deallocate(rho_of_T)
+    deallocate(temperature)
+    deallocate(energies_of_T, C_of_T, acceptance_of_T)
+  end subroutine local_metropolis_clean_up
+
+  !--------------------------------------------------------------------!
   ! Subroutine to clean up average arrays                              !
   !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
+  ! C. D. Woodgate,  Bristol                                      2025 !
   !--------------------------------------------------------------------!
-  subroutine global_clean_up()
+  subroutine global_metropolis_clean_up()
     deallocate(av_rho_of_T)
     deallocate(av_energies_of_T, av_C_of_T, av_acceptance_of_T)
-  end subroutine global_clean_up
+  end subroutine global_metropolis_clean_up
 
   !--------------------------------------------------------------------!
   ! Subroutine to initialise the grid with a random configuration      !
