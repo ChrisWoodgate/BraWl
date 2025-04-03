@@ -605,7 +605,7 @@ module io
     end if
     close(25)
 
-    if (.not. any(check)) then
+    if (.not. all(check)) then
       call comms_finalise()
       stop 'Missing parameter in tmmc input file'
     end if
@@ -732,7 +732,7 @@ module io
     end if
     close(25)
 
-    if (.not. any(check)) then
+    if (.not. all(check)) then
       call comms_finalise()
       stop 'Missing parameter in wang landau input file'
     end if
@@ -804,7 +804,7 @@ module io
     end if
     close(25)
 
-    if (.not. any(check)) then
+    if (.not. all(check)) then
       call comms_finalise()
       stop 'Missing parameter in energy spectrum input file'
     end if
