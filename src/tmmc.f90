@@ -123,7 +123,7 @@ contains
     end if
 
     ! Set temperature in appropriate units for simulation
-    temp = setup%T*k_b_in_Ry
+    temp = tmmc_setup%T*k_b_in_Ry
     beta = 1.0_real64/temp
 
     ! Conversion meV/atom to Rydberg
