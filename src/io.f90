@@ -83,7 +83,7 @@ module io
   subroutine read_control_file(filename, parameters, my_rank)
 
     character(len=*), intent(in) :: filename
-    logical, dimension(12) :: check
+    logical, dimension(11) :: check
     logical, dimension(2) :: cs_or_counts
     type(run_params) :: parameters
     character(len=144) :: buffer, label, first_char
@@ -98,15 +98,6 @@ module io
 
     ! Defaults if these are not specified.
     parameters%wc_range = 2
-    parameters%delta_T = 1
-    parameters%T_steps = 1
-    parameters%lro = .false.
-    parameters%nbr_swap = .false.
-    parameters%sample_steps = 1000
-    parameters%radial_sample_steps = 0
-    parameters%burn_in = .false.
-    parameters%dump_grids = .false.
-    parameters%burn_in_steps = 1000
 
     ! See if the relevant file exists
     inquire(file=trim(filename), exist=exists)
@@ -119,7 +110,7 @@ module io
 
     ! If we can find it, output that we are reading it
     if(my_rank == 0) then
-      write(6,'(26("-"),x,"Parsing control file",x,26("-"),/)')
+      write(6,'(25("-"),x,"Parsing control file",x,25("-"),/)')
     end if
 
     ! Open it for reading
@@ -166,40 +157,14 @@ module io
         case ('n_species')
           read(buffer, *, iostat=ios) parameters%n_species
           check(7) = .true.
-        case ('nbr_swap')
-          read(buffer, *, iostat=ios) parameters%nbr_swap
-          check(8) = .true.
         case ('interaction_file')
           read(buffer, *, iostat=ios) parameters%interaction_file
-          check(9) = .true.
+          check(8) = .true.
         case ('interaction_range')
           read(buffer, *, iostat=ios) parameters%interaction_range
-          check(10) = .true.
+          check(9) = .true.
         case ('wc_range')
           read(buffer, *, iostat=ios) parameters%wc_range
-        ! Below here parameters only relate to Metropolis routines
-        ! TODO: Move these to separate read-in file?
-        case ('burn_in')
-          read(buffer, *, iostat=ios) parameters%burn_in
-        case ('burn_in_steps')
-          read(buffer, *, iostat=ios) parameters%burn_in_steps
-        case ('n_mc_steps')
-          read(buffer, *, iostat=ios) parameters%mc_steps
-        case ('sample_steps')
-          read(buffer, *, iostat=ios) parameters%sample_steps
-        case ('radial_sample_steps')
-          read(buffer, *, iostat=ios) parameters%radial_sample_steps
-        case ('T')
-          read(buffer, *, iostat=ios) parameters%T
-          check(11) = .true.
-        case ('delta_T')
-          read(buffer, *, iostat=ios) parameters%delta_T
-        case ('T_steps')
-          read(buffer, *, iostat=ios) parameters%T_steps
-        case ('dump_grids')
-          read(buffer, *, iostat=ios) parameters%dump_grids
-        case ('lro')
-          read(buffer, *, iostat=ios) parameters%lro
         case default
         end select
       end if
@@ -212,10 +177,6 @@ module io
     allocate(parameters%species_names(parameters%n_species))
     allocate(parameters%species_concentrations(0:parameters%n_species))
     allocate(parameters%species_numbers(parameters%n_species))
-
-    if (parameters%radial_sample_steps .lt. 1) then
-       parameters%radial_sample_steps = parameters%sample_steps
-    end if
 
     ! Set these arrays to be zero initially
     parameters%species_concentrations = 0.0_real64
@@ -247,15 +208,15 @@ module io
         select case (label)
         case ('species_names')
           read(buffer, *, iostat=ios) parameters%species_names
-          check(11) = .true.
+          check(10) = .true.
         case ('species_concentrations')
           read(buffer, *, iostat=ios) parameters%species_concentrations(1:)
           cs_or_counts(1) = .true.
-          check(12) = .true.
+          check(11) = .true.
         case ('species_numbers')
           read(buffer, *, iostat=ios) parameters%species_numbers(:)
           cs_or_counts(2) = .true.
-          check(12) = .true.
+          check(11) = .true.
         case default
         end select
       end if
@@ -292,12 +253,10 @@ module io
       else if (.not. check(7)) then
         stop "Missing 'n_species' in system file"
       else if (.not. check(8)) then
-        stop "Missing 'nbr_swap' in system file"
-      else if (.not. check(9)) then
         stop "Missing 'interaction_file' in system file"
-      else if (.not. check(10)) then
+      else if (.not. check(9)) then
         stop "Missing 'interaction_range' in system file"
-      else if (.not. check(11)) then
+      else if (.not. check(10)) then
         stop "Missing 'species_names' in system file"
       else
       stop 'Missing parameter in system file'
@@ -332,18 +291,11 @@ module io
     print*, ' Read n_2 = ', parameters%n_2
     print*, ' Read n_3 = ', parameters%n_3
     print*, ' Read n_basis = ', parameters%n_basis
-    print*, ' Read n_steps = ', parameters%mc_steps
     print*, ' Read n_species = ', parameters%n_species
     print*, ' Read lattice parameter = ', parameters%lattice_parameter
     print*, ' Read lattice = ', parameters%lattice
     print*, ' Read interaction_file = ', parameters%interaction_file
     print*, ' Read wc_range = ', parameters%wc_range
-    print*, ' Read T = ', parameters%T
-    print*, ' Read delta_T = ', parameters%delta_T
-    print*, ' Read T_steps = ', parameters%T_steps
-    print*, ' Read dump_grids = ', parameters%dump_grids
-    print*, ' Read lro = ', parameters%lro
-    print*, ' Read nbr_swap = ', parameters%nbr_swap
 
     ! Print specified concentrations/numbers of atoms
     if (abs(sum(parameters%species_concentrations)-1.0_real64) &
@@ -431,7 +383,202 @@ module io
 
   end subroutine parse_inputs
 
-  
+  !--------------------------------------------------------------------!
+  ! Subroutine to parse command-line arguments and look for input file !
+  !                                                                    !
+  ! C. D. Woodgate,  Bristol                                      2024 !
+  !--------------------------------------------------------------------!
+  subroutine parse_metropolis_inputs(metropolis, my_rank)
+    type(metropolis_params) :: metropolis
+    integer :: my_rank
+    character(len=30) :: control = ' '
+
+    ! Parse the command line arguments
+    call parse_args()
+
+    ! Parse the name of the input file
+    if(my_rank == 0) then
+      write(6,'(/,17("-"),x,"Parsing name of Metropolis input file",x,16("-"),/)')
+    end if
+      if(.not. get_arg('control', control)) then
+        if (my_rank == 0) then
+          print*, ' Metropolis input file not specified with "metropolis=<name>"'
+          print*, ' '
+          print*, ' Defaulting to searching for "metropolis.inp"'
+          print*, ' '
+        end if
+        control = 'metropolis.inp'
+      else
+        if (my_rank == 0) then
+          print*, 'Input file name is: ', control
+          print*, ' '
+        end if
+      end if
+
+    ! Read the input file
+    call read_metropolis_file(control, metropolis, my_rank)
+
+    if(my_rank == 0) then
+      call echo_metropolis_file(metropolis)
+      write(6,'(/,15("-"),x,"Parsed Metropolis input file successfully",x,14("-"),/)')
+    end if
+
+  end subroutine parse_metropolis_inputs
+
+
+  !--------------------------------------------------------------------!
+  ! Subroutine to parse Metropolis MC input file                       !
+  !                                                                    !
+  ! C. D. Woodgate,  Bristol                                      2025 !
+  !--------------------------------------------------------------------!
+  subroutine read_metropolis_file(filename, metropolis, my_rank)
+
+    character(len=*), intent(in) :: filename
+    logical, dimension(4) :: check
+    type(metropolis_params) :: metropolis
+    character(len=144) :: buffer, label, first_char
+    integer :: line, pos, ios, my_rank
+    logical :: exists
+
+    ! Set my checking_array to be false initially
+    check = .false.
+
+    ios=0; line=0
+
+    ! Defaults if these are not specified.
+    metropolis%burn_in = .False.
+    metropolis%burn_in_steps = 0
+    metropolis%radial_sample_steps = 0
+    metropolis%asro = .false.
+    metropolis%alro = .false.
+    metropolis%asro = .false.
+    metropolis%dump_grids = .false.
+    metropolis%T_steps = 1
+    metropolis%delta_T = 1
+    metropolis%nbr_swap = .false.
+
+    ! See if the relevant file exists
+    inquire(file=trim(filename), exist=exists)
+
+    ! Exit cleanly if we can't find it
+    if (.not. exists) then
+      call comms_finalise()
+      stop 'Could not find Metropolis control file: ' // trim(filename)
+    end if
+
+    ! If we can find it, output that we are reading it
+    if(my_rank == 0) then
+      write(6,'(/,19("-"),x,"Parsing Metropolis control file",x,20("-"),/)')
+    end if
+
+    ! Open it for reading
+    open(15, file=filename, iostat=ios)
+
+    ! Read line by line from the buffer until we hit the end of the file
+    do while (ios==0)
+
+      read(15, "(A)", iostat=ios) buffer
+
+      if(ios==0) then
+        line=line+1
+
+        ! Check if the first non-whitespace character is a hash.
+        ! If so, this is a comment line---ignore it.
+        first_char = trim(buffer)
+        if (first_char(1:1) .eq. '#') then
+          continue
+        end if
+
+        pos = scan(buffer, '=')
+        label=buffer(1:pos-1)
+        buffer = buffer(pos+1:)
+
+        select case (label)
+        case ('mode')
+          read(buffer, *, iostat=ios) metropolis%mode
+          check(1) = .true.
+        case ('burn_in')
+          read(buffer, *, iostat=ios) metropolis%burn_in
+        case ('burn_in_steps')
+          read(buffer, *, iostat=ios) metropolis%burn_in_steps
+        case ('n_mc_steps')
+          read(buffer, *, iostat=ios) metropolis%mc_steps
+          check(2) = .true.
+        case ('sample_steps')
+          read(buffer, *, iostat=ios) metropolis%sample_steps
+          check(3) = .true.
+        case ('radial_sample_steps')
+          read(buffer, *, iostat=ios) metropolis%radial_sample_steps
+        case ('dump_grids')
+          read(buffer, *, iostat=ios) metropolis%dump_grids
+        case ('asro')
+          read(buffer, *, iostat=ios) metropolis%asro
+        case ('alro')
+          read(buffer, *, iostat=ios) metropolis%alro
+        case ('T')
+          read(buffer, *, iostat=ios) metropolis%T
+          check(4) = .true.
+        case ('T_steps')
+          read(buffer, *, iostat=ios) metropolis%T_steps
+        case ('delta_T')
+          read(buffer, *, iostat=ios) metropolis%delta_T
+        case ('nbr_swap')
+          read(buffer, *, iostat=ios) metropolis%nbr_swap
+        case default
+        end select
+      end if
+    end do
+
+    close(15)
+
+
+    if (metropolis%radial_sample_steps .eq. 0) then
+      metropolis%radial_sample_steps = metropolis%sample_steps
+    endif
+
+    ! Check that the user has provided all the necessary inputs
+    ! Exit and tell them which is missing if needed
+    if (.not. all(check)) then
+      call comms_finalise()
+      if (.not. check(1)) then
+        stop "Missing 'mode' in Metropolis input file"
+      else if (.not. check(2)) then
+        stop "Missing 'n_mc_steps' in Metropolis input file"
+      else if (.not. check(3)) then
+        stop "Missing 'sample_steps' in Metropolis input file"
+      else if (.not. check(4)) then
+        stop "Missing 'T' in Metropolis input file"
+      else
+        stop "Missing something in Metropolis input file"
+      end if
+    end if
+
+  end subroutine read_metropolis_file
+
+  !--------------------------------------------------------------------!
+  ! Subroutine to echo the Metropolis input file to the screen         !
+  !                                                                    !
+  ! C. D. Woodgate,  Bristol                                      2025 !
+  !--------------------------------------------------------------------!
+  subroutine echo_metropolis_file(metropolis)
+    type(metropolis_params) :: metropolis
+
+    print*, ' Using mode =          ', metropolis%mode
+    print*, ' Using burn_in =       ', metropolis%burn_in
+    print*, ' Using burn_in_steps = ', metropolis%burn_in_steps
+    print*, ' Using n_mc_steps =    ', metropolis%mc_steps
+    print*, ' Using sample_steps =  ', metropolis%sample_steps
+    print*, ' Using n_species =     ', metropolis%radial_sample_steps
+    print*, ' Using dump_grids =    ', metropolis%dump_grids
+    print*, ' Using asro =          ', metropolis%asro
+    print*, ' Using alro =          ', metropolis%alro
+    print*, ' Using T =             ', metropolis%T
+    print*, ' Using T_steps =       ', metropolis%T_steps
+    print*, ' Using delta_T =       ', metropolis%delta_T
+    print*, ' Using nbr_swap =      ', metropolis%nbr_swap
+
+  end subroutine echo_metropolis_file
+
   !--------------------------------------------------------------------!
   ! Subroutine to read and parse nested sampling control file          !
   !                                                                    !
@@ -512,7 +659,7 @@ module io
   subroutine read_tmmc_file(filename, parameters, my_rank)
     integer :: my_rank
     character(len=*), intent(in) :: filename
-    logical, dimension(7) :: check
+    logical, dimension(8) :: check
     type(tmmc_params) :: parameters
     character(len=100) :: buffer, label
     integer :: line, pos, ios
@@ -591,6 +738,12 @@ module io
             print*, '# Read energy_max = ', parameters%energy_max
           end if
           check(7) = .true.
+        case ('T')
+          read(buffer, *, iostat=ios) parameters%T
+          if (my_rank == 0) then
+            print*, '# Read T = ', parameters%T
+          end if
+          check(8) = .true.
         case default
           if (my_rank == 0) then
             print*, '# Skipping invalid label'
