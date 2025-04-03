@@ -4,7 +4,7 @@
 ! Module containing routines relating to the Metropolis algorithm      !
 ! using Kawasaki dynamics.                                             !
 !                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
+! C. D. Woodgate,  Bristol                                        2025 !
 !----------------------------------------------------------------------!
 module metropolis
 
@@ -29,23 +29,24 @@ module metropolis
   ! Runs Metropolis with Kawasaki dynamics and performs simulated      !
   ! annealing.                                                         !
   !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
+  ! C. D. Woodgate,  Bristol                                      2025 !
   !--------------------------------------------------------------------!
-  subroutine metropolis_simulated_annealing(setup, my_rank)
+  subroutine metropolis_simulated_annealing(setup, metropolis, my_rank)
 
     ! Rank of this processor
     integer, intent(in) :: my_rank
 
-    ! Arrays for storing data
+    ! Derived type describing simulation setup
     type(run_params) :: setup
-  
+    type(metropolis_params) :: metropolis
+
     ! Integers used in calculations
     integer :: i,j, div_steps, accept, n_save_energy, n_save_radial
-    
+
     ! Temperature and temperature steps
     real(real64) :: beta, temp, sim_temp, current_energy, step_E,     &
                     step_Esq, C, acceptance
-  
+
     ! Name of file for grid state and xyz file at this temperature
     !character(len=34) :: grid_file
     character(len=36) :: xyz_file
@@ -59,20 +60,29 @@ module metropolis
     ! Radial densities at each temperature step
     real(real64), allocatable, dimension(:,:,:) :: r_densities
   
+    ! Read the Metropolis control file
+    call parse_metropolis_inputs(metropolis, my_rank)
+
+    ! Initialise some global arrays
+    call initialise_global_metropolis_arrays(setup, metropolis)
+
+    ! Initialise some global arrays
+    call initialise_local_metropolis_arrays(setup, metropolis)
+
     ! Set up the lattice
     call initial_setup(setup, config)
 
     call lattice_shells(setup, shells, config)
 
-    n_save_energy = floor(real(setup%mc_steps)/real(setup%sample_steps))
+    n_save_energy = floor(real(metropolis%mc_steps)/real(metropolis%sample_steps))
 
-    n_save_radial = floor(real(setup%mc_steps)                         &
-                          /real(setup%radial_sample_steps))
+    n_save_radial = floor(real(metropolis%mc_steps)                         &
+                          /real(metropolis%radial_sample_steps))
 
-    div_steps = setup%mc_steps/1000
+    div_steps = metropolis%mc_steps/1000
   
     ! Are we swapping neighbours or on the whole lattice?
-    if (setup%nbr_swap) then
+    if (metropolis%nbr_swap) then
       setup%mc_step => monte_carlo_step_nbr
     else
       setup%mc_step => monte_carlo_step_lattice
@@ -88,13 +98,13 @@ module metropolis
     end if
 
     ! Loop over temperature steps
-    do j=1, setup%T_steps
+    do j=1, metropolis%T_steps
   
       step_E = 0.0_real64; step_Esq=0.0_real64
       acceptance = 0.0_real64; r_densities = 0.0_real64
     
       ! Work out the temperature and corresponding beta
-      temp = setup%T + real(j-1, real64)*setup%delta_T
+      temp = metropolis%T + real(j-1, real64)*metropolis%delta_T
       sim_temp = temp*k_b_in_Ry
       beta = 1.0_real64/sim_temp
     
@@ -104,8 +114,8 @@ module metropolis
       !---------!
       ! Burn in !
       !---------!
-      if (setup%burn_in) then
-        do i=1, setup%burn_in_steps
+      if (metropolis%burn_in) then
+        do i=1, metropolis%burn_in_steps
           ! Make one MC move
           accept = setup%mc_step(config, beta)
         end do 
@@ -114,7 +124,7 @@ module metropolis
       !-----------------------!
       ! Main Monte Carlo loop !
       !-----------------------!
-      do i=1, setup%mc_steps
+      do i=1, metropolis%mc_steps
     
         ! Make one MC move
         accept = setup%mc_step(config, beta)
@@ -122,7 +132,7 @@ module metropolis
         acceptance = acceptance + accept
 
         ! Store data for averaging if requested
-        if (mod(i, setup%sample_steps) .eq. 0) then
+        if (mod(i, metropolis%sample_steps) .eq. 0) then
 
           ! Current energy
           current_energy = setup%full_energy(config)
@@ -133,7 +143,7 @@ module metropolis
           ! Add square to total for averaging
           step_Esq = step_Esq + current_energy**2
 
-          if (mod(i, setup%radial_sample_steps) .eq. 0) then
+          if (mod(i, metropolis%radial_sample_steps) .eq. 0) then
             ! Add radial densities for averaging
             r_densities = r_densities                     &
                         + radial_densities(setup, config, &
@@ -153,13 +163,13 @@ module metropolis
       C = (step_Esq/n_save_energy - (step_E/n_save_energy)**2)/(sim_temp*temp)/setup%n_atoms
 
       ! Acceptance rate at this temperature
-      acceptance_of_T(j) = acceptance/real(setup%mc_steps)
+      acceptance_of_T(j) = acceptance/real(metropolis%mc_steps)
   
       ! Store the specific heat capacity at this temperature
       C_of_T(j) = C
     
       ! Dump grids if needed
-      if (setup%dump_grids) then
+      if (metropolis%dump_grids) then
          if (my_rank .le. 1) then
  !       write(grid_file, '(A11 I3.3 A11 I4.4 F2.1 A3)') 'grids/proc_', my_rank, '_grid_at_T_', &
  !                                            int(temp), temp-int(temp), '.nc'
@@ -206,7 +216,7 @@ module metropolis
                                   shells, temperature, energies_of_T, setup)
 
     ! Average results across the simulation
-    call comms_reduce_results(setup)
+    call comms_reduce_metropolis_results(setup, metropolis)
 
     if (my_rank .eq. 0) then
       ! Write energy diagnostics
@@ -216,6 +226,12 @@ module metropolis
       call ncdf_radial_density_writer('radial_densities/av_radial_density.nc', av_rho_of_T, &
                                     shells, temperature, av_energies_of_T, setup)
     end if
+
+    ! Clean up
+    call local_metropolis_clean_up(setup)
+
+    ! Clean up
+    call global_metropolis_clean_up()
 
     if(my_rank == 0) then
       write(6,'(25("-"),x,"Simulation Complete!",x,25("-"))')
@@ -228,15 +244,16 @@ module metropolis
   ! to a target temperature then draws samples N steps apart, where N  !
   ! is chosen by the user.                                             !
   !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
+  ! C. D. Woodgate,  Bristol                                      2025 !
   !--------------------------------------------------------------------!
-  subroutine metropolis_decorrelated_samples(setup, my_rank)
+  subroutine metropolis_decorrelated_samples(setup, metropolis, my_rank)
 
     ! Rank of this processor
     integer, intent(in) :: my_rank
 
-    ! Arrays for storing data
+    ! Derived type describing simulation setup
     type(run_params) :: setup
+    type(metropolis_params) :: metropolis
   
     ! Integers used in calculations
     integer :: i,j, div_steps, accept, n_save_energy, n_save_radial
@@ -247,20 +264,29 @@ module metropolis
     ! Name of xyz file
     character(len=42) :: xyz_file
 
+    ! Read the Metropolis control file
+    call parse_metropolis_inputs(metropolis, my_rank)
+
     ! Set up the lattice
     call initial_setup(setup, config)
 
+    ! Initialise some global arrays
+    call initialise_global_metropolis_arrays(setup, metropolis)
+
+    ! Initialise some global arrays
+    call initialise_local_metropolis_arrays(setup, metropolis)
+
     call lattice_shells(setup, shells, config)
 
-    n_save_energy = floor(real(setup%mc_steps)/real(setup%sample_steps))
+    n_save_energy = floor(real(metropolis%mc_steps)/real(metropolis%sample_steps))
 
-    n_save_radial = floor(real(setup%mc_steps)                         &
-                          /real(setup%radial_sample_steps))
+    n_save_radial = floor(real(metropolis%mc_steps)                         &
+                          /real(metropolis%radial_sample_steps))
 
-    div_steps = setup%mc_steps/1000
+    div_steps = metropolis%mc_steps/1000
   
     ! Are we swapping neighbours or on the whole lattice?
-    if (setup%nbr_swap) then
+    if (metropolis%nbr_swap) then
       setup%mc_step => monte_carlo_step_nbr
     else
       setup%mc_step => monte_carlo_step_lattice
@@ -274,19 +300,19 @@ module metropolis
     !---------------------------------------------------!
     ! Burn-in at each temperature (simulated annealing) !
     !---------------------------------------------------!
-    do j=1, setup%T_steps
+    do j=1, metropolis%T_steps
   
       ! Work out the temperature and corresponding beta
-      temp = setup%T + real(j-1, real64)*setup%delta_T
+      temp = metropolis%T + real(j-1, real64)*metropolis%delta_T
       sim_temp = temp*k_b_in_Ry
       beta = 1.0_real64/sim_temp
     
       ! Burn in
-      if (setup%burn_in) then
+      if (metropolis%burn_in) then
 
         acceptance = 0.0_real64
 
-        do i=1, setup%burn_in_steps
+        do i=1, metropolis%burn_in_steps
           ! Make one MC move
           accept = setup%mc_step(config, beta)
           acceptance = acceptance + accept
@@ -299,7 +325,7 @@ module metropolis
           " Accepted ", int(acceptance), " Monte Carlo moves at this temperature,"
           write(6,'(a,f7.2,a,/)',advance='yes') &
           " Corresponding to an acceptance rate of ", &
-          100.0*acceptance/float(setup%burn_in_steps), " %"
+          100.0*acceptance/float(metropolis%burn_in_steps), " %"
         end if
 
       end if
@@ -312,7 +338,7 @@ module metropolis
  
     acceptance=0
 
-    do i=1, setup%mc_steps
+    do i=1, metropolis%mc_steps
     
         ! Make one MC move
         accept = setup%mc_step(config, beta)
@@ -320,14 +346,14 @@ module metropolis
         acceptance = acceptance + accept
 
         ! Draw samples
-        if (mod(i, setup%radial_sample_steps) .eq. 0) then
+        if (mod(i, metropolis%radial_sample_steps) .eq. 0) then
 
           ! Get the energy of this configuration
           current_energy = setup%full_energy(config)
 
           write(xyz_file, '(A11 I3.3 A8 I4.4 A6 I4.4 F2.1 A4)') &
           'grids/proc_', my_rank, '_config_',                   &
-          int(i/setup%radial_sample_steps), '_at_T_', int(temp),&
+          int(i/metropolis%radial_sample_steps), '_at_T_', int(temp),&
           temp-int(temp),'.xyz'
 
           ! Write xyz file
@@ -343,6 +369,12 @@ module metropolis
         end if
     
       end do
+
+    ! Clean up
+    call local_metropolis_clean_up(setup)
+
+    ! Clean up
+    call global_metropolis_clean_up()
 
     if(my_rank == 0) then
       write(6,'(25("-"),x,"Simulation Complete!",x,25("-"))')
@@ -422,7 +454,7 @@ module metropolis
   !--------------------------------------------------------------------!
   ! Runs one MC step assuming only neighbours can be swapped           !
   !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
+  ! C. D. Woodgate,  Bristol                                      2025 !
   !--------------------------------------------------------------------!
   function monte_carlo_step_nbr(setup, config, beta) result(accept)
     !integer(int16), allocatable, dimension(:,:,:,:) :: config
