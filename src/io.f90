@@ -400,7 +400,7 @@ module io
     if(my_rank == 0) then
       write(6,'(/,17("-"),x,"Parsing name of Metropolis input file",x,16("-"),/)')
     end if
-      if(.not. get_arg('control', control)) then
+      if(.not. get_arg('metropolis', control)) then
         if (my_rank == 0) then
           print*, ' Metropolis input file not specified with "metropolis=<name>"'
           print*, ' '
