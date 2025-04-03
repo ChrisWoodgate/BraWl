@@ -64,10 +64,6 @@ module write_netcdf
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Number of Species', setup%n_species))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Number of MC steps', setup%mc_steps))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Temperature', setup%T))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Interaction file', setup%interaction_file))
@@ -156,10 +152,6 @@ module write_netcdf
                             'N_3', setup%n_3))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Number of Species', setup%n_species))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Number of MC steps', setup%mc_steps))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Temperature', setup%T))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
@@ -260,10 +252,6 @@ module write_netcdf
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Number of Species', setup%n_species))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Number of MC steps', setup%mc_steps))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Temperature', setup%T))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Interaction file', setup%interaction_file))
@@ -357,10 +345,6 @@ module write_netcdf
                             'N_3', setup%n_3))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Number of Species', setup%n_species))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Number of MC steps', setup%mc_steps))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Temperature', setup%T))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
@@ -487,10 +471,6 @@ module write_netcdf
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Number of Species', setup%n_species))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Number of MC steps', setup%mc_steps))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Temperature', setup%T))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'temperature', temperature))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
@@ -590,10 +570,6 @@ module write_netcdf
                             'N_3', setup%n_3))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Number of Species', setup%n_species))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Number of MC steps', setup%mc_steps))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Temperature', setup%T))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &

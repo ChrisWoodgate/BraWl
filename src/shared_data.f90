@@ -54,17 +54,6 @@ module shared_data
     integer :: n_species
     ! Number of atoms
     integer :: n_atoms
-    ! Burn in if doing simulated annealing?
-    logical :: burn_in
-    ! Number of burn-in steps (at each temperature if annealing)
-    integer :: burn_in_steps
-    ! Number of monte carlo steps (at each temperature if annealing)
-    integer :: mc_steps
-    ! Number of monte carlo steps between drawing energies
-    integer :: sample_steps
-    ! Number of monte carlo steps between drawing radial densities
-    ! (MUST be a multiple of sample_steps)
-    integer :: radial_sample_steps
     ! Fixed or time-based random seed
     integer :: seedtime=1
     ! Lattice type - name, e.g. fcc, bcc, hcp, ...
@@ -83,14 +72,6 @@ module shared_data
     integer(real64), dimension(:), allocatable :: species_numbers
     ! Atom-atom interchange interaction file name
     character(len=50) :: interaction_file
-    ! Inverse temperature
-    real(real64) :: beta
-    ! Temperature of simulation (or start temperature if annealing)
-    real(real64) :: T
-    ! Temperature step size if annealing
-    real(real64) :: delta_T
-    ! Number of temperature steps (if annealing)
-    integer :: T_steps
     ! Interaction range (number of coordination shells)
     integer :: interaction_range
     ! Number of coordination shells for Warren-Cowley parameters
@@ -101,19 +82,68 @@ module shared_data
     procedure(neighbour), pointer, pass :: nbr_energy => null()
     ! Random site function to use
     procedure(rand_site), pointer, pass :: rdm_site => null()
-    ! Atom swap flag
-    ! If True then only swap neighbouring pairs of atoms
-    ! If False then permit swaps across the lattice
-    logical :: nbr_swap
-    ! Do we want to store long range order parameters
-    logical :: lro
-    ! Do we want to store grids
-    logical :: dump_grids
     ! Random neighbour function to use
     procedure(rand_neighbour), pointer, pass :: rdm_nbr => null()
     ! Monte Carlo step to call. (Neighbour swap or whole lattice swap)
     procedure(monte_carlo), pointer, pass :: mc_step => null()
   end type run_params
+
+  !--------------------------------------------------------------------!
+  ! Type storing parameters defining Metropolis simulation             !
+  ! (used at runtime)                                                  !
+  !                                                                    !
+  ! C. D. Woodgate,  Bristol                                      2025 !
+  !--------------------------------------------------------------------!
+  type metropolis_params
+    ! Paramater defining the mode of Metropolis operation
+    ! Current options are:
+    !  - 'equilibrate'
+    !    - This option runs the Metropolis algorithm at a given
+    !      temperature and tracks the simulation energy and atomic
+    !      order parameters as a function of number of trial moves.
+    !      Optionally, you can dump a 'trajectory' showing how the
+    !      alloy configuration evolves.
+    !  - 'simulated_annealing'
+    !    - This option uses simulated annealing to examine atomic
+    !      short- and long-range order parameters, simulation energy,
+    !      and specific heat capacity as a function of temperature for a
+    !      given system. Optionally, you can dump the simulation
+    !      configuration at the end of each temperature.
+    !  - 'decorrelated_samples'
+    !    - This option draws grid configurations a set number of steps
+    !      apart (for producing indicative equilibrated atomic configs
+    !      at a given temperature.
+    character(len=20) :: mode
+    ! Burn in if doing simulated annealing?
+    logical :: burn_in
+    ! Number of burn-in steps (at each temperature if annealing)
+    integer :: burn_in_steps
+    ! Number of monte carlo steps (at each temperature if annealing)
+    integer :: mc_steps
+    ! Number of monte carlo steps between drawing energies
+    integer :: sample_steps
+    ! Number of monte carlo steps between drawing radial densities
+    ! (MUST be a multiple of sample_steps)
+    integer :: radial_sample_steps
+    ! Do we want to store atomic short-range order parameters
+    logical :: asro
+    ! Do we want to store atomic long-range order parameters
+    logical :: alro
+    ! Do we want to store grids
+    logical :: dump_grids
+    ! Inverse temperature
+    real(real64) :: beta
+    ! Temperature of simulation (or start temperature if annealing)
+    real(real64) :: T
+    ! Number of temperature steps (if annealing)
+    integer :: T_steps
+    ! Temperature step size if annealing
+    real(real64) :: delta_T
+    ! Atom swap flag
+    ! If True then only swap neighbouring pairs of atoms
+    ! If False then permit swaps across the lattice
+    logical :: nbr_swap
+  end type metropolis_params
 
   !--------------------------------------------------------------------!
   ! Type storing parameters defining NS simulation (used at runtime)   !
@@ -153,6 +183,8 @@ module shared_data
     real :: energy_min
     ! Energy range maximum
     real :: energy_max
+    ! Temperature of dynamics
+    real :: T
   end type tmmc_params
 
   !--------------------------------------------------------------------!

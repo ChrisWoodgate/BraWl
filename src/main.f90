@@ -29,6 +29,9 @@ program main
   ! Runtime parameters type
   type(run_params) :: setup
 
+  ! Metropolis parameters type
+  type(metropolis_params) :: metropolis_setup
+
   ! Nested Sampling parameters type
   type(ns_params) :: ns_setup
 
@@ -65,9 +68,6 @@ program main
   ! Make directories for data
   call make_data_directories(my_rank)
 
-  ! Initialise some global arrays
-  call initialise_global_arrays(setup)
-
   ! Initialise some local arrays
   call initialise_local_arrays(setup)
 
@@ -77,14 +77,23 @@ program main
   if (setup%mode == 301) then
 
     ! Metropolis with Kawasaki dynamics
-    call metropolis_simulated_annealing(setup, my_rank)
+    call metropolis_simulated_annealing(setup, metropolis_setup, my_rank)
 
   else if (setup%mode == 302) then
 
     ! Draw decorrelated samples
-    call metropolis_decorrelated_samples(setup, my_rank)
+    call metropolis_decorrelated_samples(setup, metropolis_setup, my_rank)
 
   else if (setup%mode == 303) then
+
+    ! The variable 'p' is defined in comms.f90 and is the number of MPI
+    ! processes. The nested sampling algorithm is only implemented in
+    ! serial at present, so we terminate the programme if the user has
+    ! tried to execute in parallel
+    if (p .gt. 1) then
+      call comms_finalise()
+      stop ' Nested sampling is only implemented in serial'
+    end if
 
     ! Nested Sampling algorithm
     call nested_sampling_main(setup, ns_setup, my_rank)
@@ -117,9 +126,6 @@ program main
    print*, ' Unrecognised mode', setup%mode
 
   end if
-
-  ! Clean up
-  call global_clean_up()
 
   ! Clean up
   call clean_up_interaction()

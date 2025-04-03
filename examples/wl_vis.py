@@ -272,7 +272,6 @@ for itemp in range(2,len(temperatures)):
 for itemp, new_temp in enumerate(temperatures):
   entropies[itemp] = (mean_energies[itemp]-gibbs_energies[itemp])/new_temp
 
-
 # Clear out nan
 #mean_energies = np.nan_to_num(mean_energies)
 #heat_caps = np.nan_to_num(heat_caps)
