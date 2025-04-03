@@ -1,0 +1,11 @@
+mode = simulated_annealing
+burn_in= .true.
+burn_in_steps=2048
+n_mc_steps=20480
+sample_steps=2048
+radial_sample_steps=2048
+T = 1200
+delta_T = -100
+T_steps = 12
+lro = .false.
+dump_grids = .false.
