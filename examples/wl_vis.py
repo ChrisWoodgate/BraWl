@@ -61,7 +61,7 @@ bin_edges = np.array(bin_edges["grid data"][:], dtype=np.float64)
 filename = "{}/wl_dos.dat".format(directory)
 wl_logdos = nc.Dataset(filename)
 wl_logdos = np.array(wl_logdos["grid data"][:], dtype=np.float64)
-#print(wl_logdos)
+plt.plot(wl_logdos)
 
 filename = "{}/radial_densities/rho_of_E.dat".format(directory)  
 rho_of_E = nc.Dataset(filename)
@@ -74,7 +74,6 @@ n_species = 4
 concentrations = 1.0/n_species*np.ones(n_species)
 
 wl_logdos = wl_logdos - np.max(wl_logdos)
-wl_logdos = np.log(np.exp(wl_logdos)/np.sum(np.exp(wl_logdos)))
 
 filename = "{}/wl_hist.dat".format(directory)
 wl_hist = nc.Dataset(filename)
@@ -83,9 +82,8 @@ wl_hist = np.array(wl_hist["grid data"][:], dtype=np.float64)
 kb_ev = 8.167333262e-5
 ev_to_ry = 13.605693122
 kb_ry = kb_ev/ev_to_ry
-n_atoms = 432
+n_atoms = 128
 ev_to_mev = 1000
-
 # unit conversion
 #kb_ev = kb_ry
 bin_edges = bin_edges*ev_to_ry # converts from Ryd to eV
@@ -100,9 +98,6 @@ temperatures_plot = np.arange(start_temp, end_temp+200, 200).astype(np.int32)
 temperatures[0] = 1e-64
 print(temperatures_plot)
 
-plt.plot(np.exp(wl_logdos))
-#plt.show()
-plt.close()
 # ------------------------------------------------
 
 bin_width = bin_edges[1] - bin_edges[0]
@@ -219,7 +214,7 @@ for itemp, new_temp in enumerate(temperatures):
     # Only plot every 5th histogram to avoid crowding the axes
     if np.isin(temperatures_plot, int(new_temp)).any() == True:
         strlabel = "T={} K".format(int(new_temp))
-        index_to_zero = np.where(prob < 1e-5)
+        index_to_zero = np.where(prob < 1e-8)
         hist_prob = copy.deepcopy(prob)
         hist_prob[index_to_zero] = 0
         non_zero = np.nonzero(hist_prob)
@@ -429,10 +424,10 @@ cv_ax2_asro.set_ylim(asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
 print("Hist y-limit", prob_max*1.01)
 print("SHC y-limit", cv_ax1.get_ylim()[1])
 print("ASRO y-limit", asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
-custom_h = 0.086391918197925
-custom_l = -1.9054801489853601
-custom_u = 1.028759512687277
-custom_c = 1.0270636004885352
+custom_h = 0.23301609938053558
+custom_l = -2.616536458333333
+custom_u = 1.0366145833333336
+custom_c = 1.1793471814868697
 
 cv_ax1.set_ylim(0, custom_c)
 cv_ax2.set_ylim(0, custom_c)

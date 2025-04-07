@@ -104,4 +104,10 @@ def slice(filename, indices=[1,1,1], size=30):
     return
 
 param_size = int(sys.argv[1])
-slice('AlTiVNb/grids/config0010.00.xyz', indices=[1,0,1], size=param_size)
+slice('AlTiVNb/grids/proc_000config_at_T_0050.0.xyz', indices=[1,0,1], size=param_size)
+slice('AlTiVNb/grids/proc_000config_at_T_1200.0.xyz', indices=[1,0,1], size=param_size)
+slice('AlTiVNb/grids/proc_000config_at_T_3000.0.xyz', indices=[1,0,1], size=param_size)
+
+slice('AlTiCrMo/grids/proc_000config_at_T_0050.0.xyz', indices=[1,0,1], size=param_size)
+slice('AlTiCrMo/grids/proc_000config_at_T_1200.0.xyz', indices=[1,0,1], size=param_size)
+slice('AlTiCrMo/grids/proc_000config_at_T_3000.0.xyz', indices=[1,0,1], size=param_size)
