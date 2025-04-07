@@ -1,0 +1,13 @@
+mode=303
+n_1=3
+n_2=3
+n_3=3
+n_species = 5
+lattice = fcc
+lattice_parameter = 3.605
+interaction_file = 'fcc_al_1.00_crfeconi_V_ijs.txt'
+interaction_range = 4
+wc_range = 4
+nbr_swap = .false.
+species_names = Al Cr Fe Co Ni
+species_concentrations =0.2    0.2    0.2    0.2    0.2   
