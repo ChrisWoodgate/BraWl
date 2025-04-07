@@ -1,10 +1,14 @@
-!----------------------------------------------------------------------!
-! analytics.f90                                                        !
-!                                                                      !
-! Various routines and tools for analysing the simulation              !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
-!----------------------------------------------------------------------!
+!> @file    analytics.f90
+!>
+!> @brief   Assorted routines and tools for analysing a simulation
+!>
+!> @details This module contains routines for analysing various aspects
+!>          of a simulation, including counting the number of particles,
+!>          calculating the neighbours of a given site on the lattice,
+!>          and calculating the atomic short-range order parameters.
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2025
 module analytics
 
   use kinds
@@ -16,11 +20,19 @@ module analytics
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Routine to add this state to the average (for LRO)                 !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to add this configuration to the average
+  !>
+  !> @details This is needed to compute the average occupancy of each
+  !>          lattice site at the end of a simulation.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  averages Array of floats where averages are being stored
+  !> @param  config Current atomic configuration
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine store_state(averages, config, setup)
     !integer(int16), allocatable, dimension(:,:,:), intent(in) :: config
     integer(int16), dimension(:,:,:), intent(in) :: config
@@ -41,11 +53,20 @@ module analytics
     end do
   end subroutine store_state
 
-  !--------------------------------------------------------------------!
-  ! Routine to compute the average (for LRO)                           !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to compute average occupancies
+  !>
+  !> @details At the end of the simulation, divide the stored
+  !>          occupancies by the number of times we stored them, to get
+  !>          the average occupancy of each lattice site.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  averages Array of floats where averages are being stored
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  n_steps Number of steps at which the state was stored
+  !>
+  !> @return None
   subroutine average_state(averages, setup, n_steps)
     type(run_params), intent(in) :: setup
     integer, intent(in) :: n_steps
@@ -57,11 +78,19 @@ module analytics
     end do
   end subroutine average_state
   
-  !--------------------------------------------------------------------!
-  ! Routine to count the number of particles (used for testing)        !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to count the total number of particles in the box
+  !>
+  !> @details This function was mainly used for testing during code
+  !>          development, to make sure no particles were dissapearing.
+  !>
+  !> @author  C. D. Woodgate
+  !> @author  A. N. Example
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  config Current atomic configuration
+  !>
+  !> @return The total number of particles in the simulation cell
   function total_particle_count(setup, config) result(total_count)
     !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
     integer(int16), dimension(:,:,:,:), intent(in) :: config

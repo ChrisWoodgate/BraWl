@@ -1,10 +1,12 @@
-!----------------------------------------------------------------------!
-! write_xyz.f90                                                        !
-!                                                                      !
-! Module for writing xyz file                                          !
-!                                                                      !
+!> @file    write_xyz.f90
+!>
+!> @brief   Module for writing xyz file                             
+!>
+!> @details This module contains a routine to produce a configuration file in xyz format 
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2025
 ! C. D. Woodgate,  Warwick                                        2023 !
-!----------------------------------------------------------------------!
 module write_xyz
 
   use kinds
@@ -15,13 +17,21 @@ module write_xyz
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Routine to write xyz file, with option to append configurations in !
-  ! a single trajectory file.                                          !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2024 !
-  ! L. B. Partay,    Warwick                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to write xyz file                         
+  !>
+  !> @details This is routine writes an xyz file of the current configuration, in the extended xyz format, 
+  !>          (incl. lattice, element type and coordinates) with option to append configurations in a 
+  !>          single trajectory file.
+  !>
+  !> @author  C. D. Woodgate & L. B. Partay
+  !> @date    2024
+  !>
+  !> @param  filename Name of file to be created                                          
+  !> @param  configuration Current atomic configuration
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  trajectory Logical type, if true, configuration will be appended to the end of the file
+  !>
+  !> @return None
   subroutine xyz_writer(filename, configuration, setup, trajectory)
     ! Simulation setup information
     type(run_params), intent(in) :: setup

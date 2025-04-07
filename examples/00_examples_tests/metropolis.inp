@@ -1,0 +1,7 @@
+mode= simulated_annealing
+burn_in= .true.
+burn_in_steps=32
+n_mc_steps=32000
+sample_steps=32
+radial_sample_steps=320
+T = 2000.0

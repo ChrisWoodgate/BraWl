@@ -1,18 +1,15 @@
+# Mode tells us how to set the system up
 mode=301
 n_1=2
 n_2=2
 n_3=2
 n_basis=1
-burn_in= .true.
-burn_in_steps=32
-n_mc_steps=32000
-sample_steps=32
-radial_sample_steps=320
 n_species = 2
 lattice = fcc
 lattice_parameter = 3.57
 interaction_file = 'epis.txt'
 interaction_range = 1
+# WC range tells us how long-ranged to make the Warren-Cowley calculation 
 wc_range = 3
 T = 2000
 delta_T = -1
@@ -21,4 +18,4 @@ nbr_swap = .false.
 lro = .false.
 dump_grids = .true.
 species_names = A B
-species_concentrations =0.5 0.5
+species_concentrations = 0.5 0.5
