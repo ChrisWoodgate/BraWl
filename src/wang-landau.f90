@@ -182,7 +182,7 @@ contains
       write (6, '(/,72("-"),/)')
       write (6, '(24("-"),x,"Commencing Simulation!",x,24("-"),/)')
       print *, "Number of atoms", setup%n_atoms
-      print *, "Number of iteratiosn", num_iter
+      print *, "Number of iterations", num_iter
     end if
     call comms_wait()
 
@@ -227,7 +227,7 @@ contains
       mpi_wl_hist, wl_logdos, wl_f, mpi_index, window_intervals, radial_record, radial_record_bool, &
       rho_of_E, rho_saved, radial_mc_steps, radial_time, converged, mpi_processes)
 
-      if (minval(mpi_wl_hist) > 10.0_real64) then
+      if (minval(mpi_wl_hist) > REAL(setup%n_atoms) .and. pre_sampled_state == 0) then
         pre_sampled(mpi_index) = 1
       end if
       call MPI_ALLREDUCE(pre_sampled, pre_sampled_buffer, wl_setup%num_windows, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ierror)
@@ -235,7 +235,7 @@ contains
         if (pre_sampled_state == 0) then
           end = mpi_wtime() - radial_time
           pre_sampled_state = 1
-          mpi_wl_hist = 2.0_real64
+          mpi_wl_hist = REAL(setup%n_atoms) + 1.0_real64
           write (6, '(a,i3,a,f6.2,a)') "Rank: ", INT(my_rank), " | bins visited: ", 100.0_real64, "%"
         end if
       else
@@ -384,8 +384,10 @@ contains
       call sweeps(setup, wl_setup, config, num_walkers, bin_edges, mpi_start_idx, mpi_end_idx, &
                   mpi_wl_hist, wl_logdos, wl_f, mpi_index, window_intervals, radial_record, radial_record_bool, &
                   rho_of_E, rho_saved, radial_mc_steps, radial_time, converged, mpi_processes)
-      !call replica_exchange(setup, wl_setup, config, my_rank, num_walkers, mpi_index, mpi_processes, mpi_start_idx, mpi_end_idx, &
-      !wl_f, bin_edges, mpi_wl_hist, wl_logdos)
+      if (MOD(i_sweeps, 10) == 0) then        
+        call replica_exchange(setup, wl_setup, config, my_rank, num_walkers, mpi_index, mpi_processes, mpi_start_idx, mpi_end_idx, &
+        wl_f, bin_edges, mpi_wl_hist, wl_logdos)
+      end if
 
       flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
 
@@ -459,7 +461,6 @@ contains
             write (6, '(a,i3,a,f12.2,a,f12.2,a,f12.2,a)') "MPI Window: ", i, " | Avg. time: ", rank_time_buffer(i,1), &
             "s | Time min: ", rank_time_buffer(i,2), "s Time max: " , rank_time_buffer(i,3), "s"
           end do
-          write (*, *)
           wl_f_prev = wl_f
         end if
         ! MPI send and recieve calls for combining window DoS
@@ -550,6 +551,10 @@ contains
         wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))
         wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
         call comms_wait()
+        if (my_rank == 0) then
+          write (6, '(24("-"),x,a,x,24("-"))') "Load Balancing Complete"
+          write (*, *)
+        end if
         start = mpi_wtime()
       end if
     end do
@@ -675,10 +680,11 @@ contains
     real(real64), dimension(:,:), intent(in) :: mean_energy
 
     integer, dimension(4) :: rdm1, rdm2
-    real(real64) :: e_swapped, e_unswapped, pair_swapped, pair_unswapped, delta_e, target_energy, condition, beta
+    real(real64) :: e_swapped, e_unswapped, pair_swapped, pair_unswapped, delta_e, target_energy, condition
+    real(real64) :: beta, beta_min, beta_max, weight
     integer(int16) :: site1, site2
     logical :: stop_burn_in, flag
-    integer :: rank, rank_index, request, ierror, status
+    integer :: rank, rank_index, request, ierror, status, i_steps, i_sweeps, sweeps
 
     stop_burn_in = .False.
     flag = .False.
@@ -691,16 +697,32 @@ contains
     ! Establish total energy before any moves
     e_unswapped = setup%full_energy(config)
 
+
     if (e_unswapped < target_energy) then
       beta = 1.0_real64/(k_B_in_Ry*30000.0_real64)
+      beta_max = beta
+      beta_min = mean_energy(minloc(abs(mean_energy(:,1) - min_e), DIM=1),2)
     else 
-      beta = 1.0_real64/(k_B_in_Ry*1.0_real64)
+      beta = 1.0_real64/(k_B_in_Ry*30000.0_real64)
+      beta_max = beta
+      beta_min = 1.0_real64/(k_B_in_Ry*1.0_real64)
     end if
 
     ! Non-blocking MPI receive
     call MPI_IRECV(stop_burn_in, 1, MPI_LOGICAL, MPI_ANY_SOURCE, 10000, MPI_COMM_WORLD, request, ierror)
 
+    i_steps = 0
+    i_sweeps = 0
+    sweeps = 100
     do while(.True.)
+      i_steps = i_steps + 1
+      if (MOD(i_steps, setup%n_atoms) == 0) then
+        i_steps = 0
+        i_sweeps = i_sweeps + 1
+        weight = MAX(REAL(i_sweeps) / REAL(sweeps), 1.0_real64)
+        beta = (1.0_real64 - weight) * beta_max + weight * beta_min
+      end if
+
       ! Check if MPI message received
       call MPI_TEST(request, flag, MPI_STATUS_IGNORE, ierror)
 
@@ -975,12 +997,9 @@ end subroutine dos_combine
     ! Perform window size adjustment then broadcast
     if (wl_setup%num_windows > 1) then
       if (my_rank == 0) then
-        factor = 0.50_real64
-        scaling = 0.80_real64
-        factor = factor*(scaling**(iter-1))
-        if (iter == 0) then
-          factor = 1.0_real64
-        end if
+        factor = 1.0_real64
+        scaling = 0.8_real64
+        factor = factor*(scaling**(iter))
         diffusion = (REAL((window_intervals(:,2) - window_intervals(:,1) + 1))) &
         /(rank_all_time(:,1))
         diffusion_merge = diffusion_prev/sum(diffusion_prev)*(1.0_real64-factor) + factor*diffusion/sum(diffusion)
