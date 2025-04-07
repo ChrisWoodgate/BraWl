@@ -114,12 +114,15 @@ module analytics
 
   end function total_particle_count
 
-  !--------------------------------------------------------------------!
-  ! Routine to print the number of particles of each species (used for !
-  ! testing)                                                           !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to print the number of atoms of each species
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2023
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  config Current atomic configuration
+  !>
+  !> @return None
   subroutine print_particle_count(setup, config)
     !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
     integer(int16), dimension(:,:,:,:), intent(in) :: config
@@ -358,12 +361,21 @@ module analytics
   end function radial_densities
 
 
-  !--------------------------------------------------------------------!
-  ! Quicksort routine.                                                 !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Implementation of the quicksort algorithm for arrays
+  !>
+  !> @details Puts an array of real numbers into size order from
+  !>          smallest to largest. Note that this operates *on* the
+  !>          input array---if you would like to keep the unsorted
+  !>          array, make a copy of it.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2023
+  !>
+  !> @param  array Array of real (real64) numbers to sort
+  !>
+  !> @return None
   recursive subroutine quicksort(array)
+
     real(real64), intent(inout)::array(:)
     real(real64) :: temp,pivot
     integer :: i,j,last,left,right
