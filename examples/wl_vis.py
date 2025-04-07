@@ -82,7 +82,7 @@ wl_hist = np.array(wl_hist["grid data"][:], dtype=np.float64)
 kb_ev = 8.167333262e-5
 ev_to_ry = 13.605693122
 kb_ry = kb_ev/ev_to_ry
-n_atoms = 1024
+n_atoms = 128
 ev_to_mev = 1000
 # unit conversion
 #kb_ev = kb_ry
@@ -424,10 +424,10 @@ cv_ax2_asro.set_ylim(asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
 print("Hist y-limit", prob_max*1.01)
 print("SHC y-limit", cv_ax1.get_ylim()[1])
 print("ASRO y-limit", asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
-custom_h = 0.06567678308136232
-custom_l = -2.337405598958333
-custom_u = 1.0330436197916668
-custom_c = 1.0248779451190533
+custom_h = 0.23301609938053558
+custom_l = -2.616536458333333
+custom_u = 1.0366145833333336
+custom_c = 1.1793471814868697
 
 cv_ax1.set_ylim(0, custom_c)
 cv_ax2.set_ylim(0, custom_c)
