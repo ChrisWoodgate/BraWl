@@ -1,11 +1,12 @@
-!----------------------------------------------------------------------!
-! nested_sampling.f90                                                  !
-!                                                                      !
-! Module containing routines implementing the Nested Sampling          !
-! algorithm.                                                           !
-!                                                                      !
-! L. B. Partay,  Warwick                                          2024 !
-!----------------------------------------------------------------------!
+!> @file    nested_sampling.f90                                  
+!>
+!> @brief   Assorted routines and tools to perform Nested Sampling                                                                      !
+!>
+!> @details This module contains routines necessary for the Nested Sampling
+!>          calculations.                                                           
+!>
+!> @author  L. B. Partay
+!> @date    2024  
 module nested_sampling
 
   use initialise
@@ -26,11 +27,24 @@ module nested_sampling
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Main nested sampling routine.                                      !
-  !                                                                    !
-  ! L. B. Partay,  Warwick                                        2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Main nested sampling routine.  
+  !>
+  !> @details This routine performs the nested sampling calculation. Input parameters (such as
+  !>          the number of walkers, random walk parameters...etc.) are read from the "ns_input.txt" 
+  !>          file. The first section of the routine generate the initial random configurations, which is
+  !>          followed by the main nested sampling cycle: recording and discarding the highest energy
+  !>          configuration, replacing it with a new one, generated from an existing walker via a series
+  !>          of random swaps.
+  !>          The routine makes use of the pair_swap subroutine to calculate energies.
+  !> 
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  nested_sampling Derived type containing nested sampling parameters
+  !> @param  my_rank Rank of this process. Redundant as current implementation is serial.
+  !> 
+  !> @return None
+  !>
+  !> @author  L. B. Partay
+  !> @date    2024  
   subroutine nested_sampling_main(setup, nested_sampling, my_rank)
 
     ! Arrays for storing instances of the system, as nested sampling walkers
