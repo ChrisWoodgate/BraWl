@@ -581,11 +581,15 @@ module io
 
   end subroutine echo_metropolis_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read and parse nested sampling control file          !
-  !                                                                    !
-  ! L. B. Partay, Warwick                                         2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read and parse nested sampling control file
+  !>
+  !> @param  filename Name of the nested sampling input file (expected to be "ns_input.txt")    
+  !> @param  parameters Derived type of ns_params, containing nested sampling parameters
+  !>
+  !> @return None
+  !>
+  !> @author  L. B. Partay
+  !> @date    2024
   subroutine read_ns_file(filename, parameters)
     character(len=*), intent(in) :: filename
     logical, dimension(8) :: check

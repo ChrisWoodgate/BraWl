@@ -1,10 +1,11 @@
-!----------------------------------------------------------------------!
-! shared_data.f90                                                      !
-!                                                                      !
-! Module containing important shared data.                             !
-!                                                                      !
-! C. D. Woodgate,  Bristol                                        2025 !
-!----------------------------------------------------------------------!
+!> @file    shared_data.f90
+!>
+!> @brief   Module containing important shared data.
+!>
+!> @details 
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2025
 module shared_data
 
   use kinds
@@ -145,11 +146,19 @@ module shared_data
     logical :: nbr_swap
   end type metropolis_params
 
-  !--------------------------------------------------------------------!
-  ! Type storing parameters defining NS simulation (used at runtime)   !
-  !                                                                    !
-  ! L. B. Partay,  Warwick                                        2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Derived type for nested sampling parameters.  
+  !>
+  !> @details ns_params is a structure consiting various data for nested sampling. 
+  !> 
+  !> @param  n_walkers Number of nested sampling walkers
+  !> @param  n_steps Number of steps required for walk generating a new configuration
+  !> @param  n_iter Number of NS iterations before sampling is finished                   
+  !> @param  traj_freq Frequency of writing configuration (every traj_freq-th NS iteration)
+  !> @param  outfile_ener Output filename for energies
+  !> @param  outfile_traj Output filename for configurations
+  !> 
+  !> @author  L. B. Partay
+  !> @date    2024  
   type ns_params
     ! Number of nested sampling walkers
     integer :: n_walkers

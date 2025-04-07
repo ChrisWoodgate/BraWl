@@ -62,7 +62,17 @@ filename = "{}/wl_window_time.dat".format(directory)
 wl_window_time = nc.Dataset(filename)
 wl_window_time = np.array(wl_window_time["grid data"][:], dtype=np.float64)
 
-iter = np.where(wl_lb_bins[:,0] == -1)[0][0]
+try:
+  iter = np.where(wl_lb_bins[:,0] == -1)[0][0]
+except:
+  iter = np.shape(wl_lb_bins)[0]
+
+filename = "{}//wl_lb_max_time.dat".format(directory)
+wl_lb_max_time = nc.Dataset(filename)
+wl_lb_max_time = np.array(wl_lb_max_time["grid data"][:], dtype=np.float64).T
+
+print(np.sum(np.max(wl_lb_max_time, axis=1))/60)
+
 window = np.shape(wl_lb_bins)[1]
 
 x_axis = np.arange(1,iter+1,1).astype(np.int32)
@@ -76,7 +86,7 @@ plt.ylabel("Bins")
 plt.xlabel("W-L Iteration")
 plt.xticks(x_axis)
 handles, labels = plt.gca().get_legend_handles_labels()
-plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.125), ncol=columns)
+plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=columns)
 plt.tight_layout()
 plt.savefig('figures/load_balance_1.svg', bbox_inches='tight')
 plt.close()
@@ -94,7 +104,7 @@ plt.axhline(1, linestyle='--', color='red')
 plt.axhline(1.25, linestyle='--', color='red', alpha=0.5)
 plt.xticks(x_axis)
 handles, labels = plt.gca().get_legend_handles_labels()
-plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.125), ncol=columns)
+plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=columns)
 plt.tight_layout()
 plt.savefig('figures/load_balance_2.svg', bbox_inches='tight')
 plt.close()
