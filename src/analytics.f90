@@ -84,7 +84,6 @@ module analytics
   !>          development, to make sure no particles were dissapearing.
   !>
   !> @author  C. D. Woodgate
-  !> @author  A. N. Example
   !> @date    2019-2025
   !>
   !> @param  setup Derived type containing simulation parameters
@@ -163,13 +162,21 @@ module analytics
 
   end subroutine print_particle_count
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to compute on-shell distances. Could just calculate     !
-  ! these once, but this is good for a variety of lattices.            !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to compute lattice shell distances
+  !>
+  !> @details Could just calculate these once, but this routine is good
+  !>          for a variety of lattice types.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  shells Array where shell distances will be stored
+  !> @param  config Current atomic configuration
+  !>
+  !> @return None
   subroutine lattice_shells(setup, shells, configuration)
+
     !integer(int16), dimension(:,:,:,:), allocatable :: configuration
     integer(int16), dimension(:,:,:,:) :: configuration
     type(run_params), intent(in) :: setup
@@ -241,12 +248,22 @@ module analytics
 
   end subroutine lattice_shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute radial densities, i.e. atomic short-range      !
-  ! order parameters.                                                  !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to compute radial densities (ASRO parameters)
+  !>
+  !> @details This routine computes the conditional probabilities of
+  !>          one type of atom neighbouring another type of atom. These
+  !>          are *not* the Warren-Cowley ASRO parameters, but you can
+  !>          convert to them using a simple rescaling.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  configuration Current atomic configuration
+  !> @param  n_shells Number of shells on which to compute probabilities
+  !> @param  shell_distances Array of lattice shell distances
+  !>
+  !> @return The computed radial densities (conditional probabilities)
   function radial_densities(setup, configuration, n_shells,            &
                             shell_distances) result(r_densities)
     type(run_params), intent(in) :: setup
