@@ -1,12 +1,13 @@
-!----------------------------------------------------------------------!
-! c_functions.f90                                                      !
-!                                                                      !
-! Module to interface with Mersenne Twiseter PNRG. (Used to also       !
-! interface with some other routines that have now been ported to      !
-! Fortran                                                              !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
-!----------------------------------------------------------------------!
+!> @file    c_functions.f90
+!>
+!> @brief   Interfaces for routines written in C
+!>
+!> @details This module contains interfaces for routines written in C.
+!>          Currently this is just the Mersenne Twister PNRG, but other
+!>          interfaces can be added in future as needed.
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2025
 module c_functions
   use iso_c_binding
 
