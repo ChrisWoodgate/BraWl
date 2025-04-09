@@ -26,7 +26,7 @@ module wang_landau
   integer :: mpi_bins, mpi_start_idx, mpi_end_idx, mpi_index, mpi_start_idx_buffer
   integer :: mpi_end_idx_buffer, beta_index, status(MPI_STATUS_SIZE), mpi_counter, i_sweeps
   real(real64) :: scale_factor, scale_count, wl_logdos_min, bin_overlap, beta_diff, beta_original, beta_merge
-  real(real64), allocatable :: mpi_bin_edges(:), mpi_wl_hist(:), wl_logdos_buffer(:), wl_logdos_write(:)
+  real(real64), allocatable :: mpi_bin_edges(:), mpi_wl_hist(:), wl_logdos_buffer(:), wl_logdos_combine(:)
   real(real64), allocatable :: rank_time(:), rank_time_buffer(:,:)
   character, allocatable :: discard(:)
   logical :: flag
@@ -84,10 +84,10 @@ module wang_landau
   !>          
   !>          The routine makes use of the pair_swap subroutine to calculate energies.
   !> 
-  !> @param  setup Derived type containing simulation parameters
-  !> @param  wl_setup Derived type containing Wang Landau sampling parameters
+  !> @param   setup Derived type containing simulation parameters
+  !> @param   wl_setup Derived type containing Wang Landau sampling parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -217,13 +217,14 @@ module wang_landau
         wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
         !Average DoS across walkers
         call dos_average()
+        call dos_combine()
 
-        call reduce_time()
+        call reduce_time(start, end, radial_time)
 
         call comms_wait()
-
+        ! MPI send and recieve calls for combining window DoS
+        
         if (my_rank == 0) then
-          wl_logdos_write = wl_logdos
           write (6, '(20("-"),x,a,i3,a,i3,x,20("-"))', advance='no') "Wang-Landau Iteration: ", iter, &
           "/", num_iter
           write (*, *)
@@ -237,19 +238,17 @@ module wang_landau
           wl_f_prev = wl_f
         end if
 
-        ! MPI send and recieve calls for combining window DoS
-        call dos_combine()
+        call save_rho_E(rho_saved, radial_record)
 
-        call save_rho_E()
-
-        call save_output_data()
+        call save_wl_data(bin_edges, wl_logdos, wl_hist)
+        call save_load_balance_data(window_indices, rank_time_buffer)
         
         call mpi_window_optimise(iter)
 
-        call compute_mean_energy()
+        call compute_mean_energy(wl_logdos)
         call enter_energy_window()
 
-        call zero_subtract_logdos()
+        call zero_subtract_logdos(wl_logdos)
         call comms_wait()
         if (my_rank == 0) then
           call print_centered_message("Load Balancing Complete!", "-")
@@ -266,17 +265,17 @@ module wang_landau
 
   end subroutine wl_main
 
-  !> @brief   
-  !>
-  !> @details 
+  !> @brief   Reducing MPI timing across processes
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine reduce_time()
+  subroutine reduce_time(start, end, radial_time)
+    real(real64), intent(in) :: start, end
+    real(real64), intent(inout) :: radial_time
     rank_time = 0.0_real64
     rank_time(mpi_index) = end - start - radial_time
     call MPI_ALLREDUCE(end - start, time_max, 1, MPI_DOUBLE_PRECISION, &
@@ -293,22 +292,29 @@ module wang_landau
     call MPI_REDUCE(rank_time, rank_time_buffer(:,2), wl_setup_internal%num_windows, MPI_DOUBLE_PRECISION, &
     MPI_MIN, 0, MPI_COMM_WORLD, ierror)
     call MPI_BCAST(rank_time_buffer, wl_setup_internal%num_windows*3, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
-    call MPI_REDUCE(radial_record, radial_record_buffer, wl_setup_internal%bins, MPI_INT, &
-    MPI_SUM, 0, MPI_COMM_WORLD, ierror)
   end subroutine reduce_time
 
-  !> @brief   
+  !> @brief   Saving radial density as a function of energy
   !>
-  !> @details 
+  !> @details Routine that checks if the requisite number of radial density samples
+  !>          has been recorded and then saves to output file. Once data has been saved
+  !>          the routine is not executed.
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   rho_saved Boolean that indicates whether radial density has been written to file
+  !> @param   radial_record Integer 1D array Indivial MPI process storage array of how many radial density samples
+  !>          have been taken in each energy bin
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine save_rho_E()
+  subroutine save_rho_E(rho_saved, radial_record)
+    logical, intent(inout) :: rho_saved
+    integer, intent(in) :: radial_record(:)
+    
     if (.not. rho_saved) then
+      call MPI_REDUCE(radial_record, radial_record_buffer, wl_setup_internal%bins, MPI_INT, &
+      MPI_SUM, 0, MPI_COMM_WORLD, ierror)
       if (my_rank == 0) then
         radial_min = 0
         do i=1,wl_setup_internal%bins
@@ -342,23 +348,43 @@ module wang_landau
     end if
   end subroutine save_rho_E
 
-  !> @brief   
+  !> @brief   Save Wang Landau data
   !>
-  !> @details 
+  !> @details Routine that saves the energy binning, density of states and hit histogram
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   bin_edges Double 1D array containing energy bin edges
+  !> @param   wl_logdos Double 1D array containing density of states
+  !> @param   wl_hist Double 1D array contining histogram of energy hits
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine save_output_data()
+  subroutine save_wl_data(bin_edges, wl_logdos, wl_hist)
+    real(real64), allocatable, intent(in) :: bin_edges(:), wl_logdos(:), wl_hist(:)
     if (my_rank == 0) then
       ! Write output files
       call ncdf_writer_1d("wl_dos_bins.dat", ierror, bin_edges)
-      call ncdf_writer_1d("wl_dos.dat", ierror, wl_logdos_write)
+      call ncdf_writer_1d("wl_dos.dat", ierror, wl_logdos)
       call ncdf_writer_1d("wl_hist.dat", ierror, wl_hist)
-      wl_logdos = wl_logdos_write
+    end if
+  end subroutine save_wl_data
+
+  !> @brief   Save load balancing data
+  !>
+  !> @details Routine that saves data relevant to performance analysis.
+  !>          
+  !> @param   window_indices Integer 2D array containing energy bin edges
+  !> @param   rank_time_buffer Double 2D array containing density of states
+  !> 
+  !> @return  None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
+  subroutine save_load_balance_data(window_indices, rank_time_buffer)
+    integer, intent(in) :: window_indices(:, :)
+    real(real64), intent(in) :: rank_time_buffer(:, :)
+    if (my_rank == 0) then
       lb_bins(iter, :) = REAL(window_indices(:, 2) - window_indices(:, 1) + 1)
       lb_avg_time(iter, :) = rank_time_buffer(:,1)
       lb_max_time(iter, :) = rank_time_buffer(:,3)
@@ -368,23 +394,20 @@ module wang_landau
       call ncdf_writer_2d("wl_lb_max_time.dat", ierror, lb_max_time)
       call ncdf_writer_1d("wl_window_time.dat", ierror, window_time)
     end if
-  end subroutine save_output_data
+  end subroutine save_load_balance_data
 
-  !> @brief   
+  !> @brief   Computes the mean energy of the system
   !>
-  !> @details 
+  !> @details Routine that computes the mean energy of the sytem.
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   wl_logdos Double 1D array containing density of states
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine compute_mean_energy()
-    if (my_rank == 0) then
-      wl_logdos = wl_logdos_write
-    end if
-    call MPI_BCAST(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
+  subroutine compute_mean_energy(wl_logdos)
+    real(real64), allocatable, intent(in) :: wl_logdos(:)
     wl_logdos_buffer = wl_logdos - maxval(wl_logdos)
     do itemp = 1, 300
       beta = 1.0_real64 / (k_b_in_Ry * itemp * 10.0_real64)
@@ -405,17 +428,20 @@ module wang_landau
     wl_logdos_buffer = wl_logdos
   end subroutine compute_mean_energy
 
-  !> @brief   
+  !> @brief   Scales density of states for each process
   !>
-  !> @details 
+  !> @details Routine that takes the density of states array and subtracts the minimum value
+  !>          within the array from the array and then zeroes elements beyond energy window
+  !>          of process
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   wl_logdos Double 1D array containing density of states
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine zero_subtract_logdos()
+  subroutine zero_subtract_logdos(wl_logdos)
+    real(real64), allocatable, intent(in) :: wl_logdos(:)
     ! Zero elements not worked on
     wl_logdos(1:window_indices(mpi_index,1)-1) = 0.0_real64
     wl_logdos(window_indices(mpi_index,2)+1:wl_setup_internal%bins) = 0.0_real64
@@ -424,13 +450,15 @@ module wang_landau
     wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
   end subroutine zero_subtract_logdos
 
-  !> @brief   
+  !> @brief   Finds index of energy bin given energy
   !>
-  !> @details 
-  !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @details Routine that outputs the index of the energy bin of given energy
+  !>      
+  !> @param   energy Double that contains current energy of system  
+  !> @param   bin_edges Double 1D array containing energy bin edges
+  !> @param   bins Integer that indicates number of energy bins
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -444,17 +472,22 @@ module wang_landau
     index = int(((energy - bin_edges(1))/(bin_range))*real(bins)) + 1
   end function bin_index
 
-  !> @brief   
+  !> @brief   Main routine that performs Monte Carlo sweeps
   !>
-  !> @details 
+  !> @details The routine performs a user set number of Monte Carlo sweeps and
+  !>          records and updates data relevant to the Wang Landau sampling process
+  !>          (density of states and hit histogram).
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   wl_logdos Double 1D array containing density of states
+  !> @param   mpi_wl_hist Double 1D array containing energy bin visit information
+  !>          for working MPI process
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine sweeps()
+  subroutine sweeps(wl_logdos, mpi_wl_hist)
+    real(real64), allocatable, intent(inout) :: wl_logdos(:), mpi_wl_hist(:)
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, pair_unswapped, pair_swapped, delta_e, radial_start, radial_end
     integer :: i, ibin, jbin, iradial
@@ -534,16 +567,16 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
   subroutine enter_energy_window()
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, pair_swapped, pair_unswapped, delta_e, target_energy, condition
-    real(real64) :: beta, beta_min, beta_max, weight, min_e, max_e
+    real(real64) :: beta, beta_end, beta_start, weight, min_e, max_e
     integer(int16) :: site1, site2
     logical :: stop_enter_energy_window, flag
     integer :: rank, rank_index, request, ierror, status, i_steps, i_sweeps, sweeps
@@ -556,20 +589,19 @@ module wang_landau
     target_energy = (min_e + max_e)/2.0_real64
     condition = ABS(max_e - min_e)*0.1_real64
 
-    beta = mean_energy(minloc(abs(mean_energy(:,1) - min_e), DIM=1),2)
+    !beta = mean_energy(minloc(abs(mean_energy(:,1) - min_e), DIM=1),2)
 
     ! Establish total energy before any moves
     e_unswapped = setup_internal%full_energy(config)
 
-
     if (e_unswapped < target_energy) then
       beta = 1.0_real64/(k_B_in_Ry*30000.0_real64)
-      beta_max = beta
-      beta_min = mean_energy(minloc(abs(mean_energy(:,1) - min_e), DIM=1),2)
+      beta_start = beta
+      beta_end = beta!mean_energy(minloc(abs(mean_energy(:,1) - min_e), DIM=1),2)
     else 
       beta = 1.0_real64/(k_B_in_Ry*30000.0_real64)
-      beta_max = beta
-      beta_min = 1.0_real64/(k_B_in_Ry*1.0_real64)
+      beta_start = beta
+      beta_end = 1.0_real64/(k_B_in_Ry*1.0_real64)
     end if
 
     ! Non-blocking MPI receive
@@ -584,7 +616,7 @@ module wang_landau
         i_steps = 0
         i_sweeps = i_sweeps + 1
         weight = MAX(REAL(i_sweeps) / REAL(sweeps), 1.0_real64)
-        beta = (1.0_real64 - weight) * beta_max + weight * beta_min
+        beta = (1.0_real64 - weight) * beta_start + weight * beta_end
       end if
 
       ! Check if MPI message received
@@ -652,9 +684,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -685,15 +717,15 @@ module wang_landau
         write (6, '(a,i3,a,f6.2,a)') "Rank: ", INT(my_rank), " | bins visited: ", REAL(bins_min*100.0_real64), "%"
       end if
     end do
-    call save_rho_E()
-    call zero_subtract_logdos()
+    call save_rho_E(rho_saved, radial_record)
+    call zero_subtract_logdos(wl_logdos)
     call dos_average()
     call dos_combine()
     
-    call compute_mean_energy()
+    call compute_mean_energy(wl_logdos)
 
     radial_time = 0.0_real64 ! radial time already accounted for
-    call reduce_time()
+    call reduce_time(start, end, radial_time)
     
     call mpi_window_optimise(0)
 
@@ -712,16 +744,16 @@ module wang_landau
 
     call enter_energy_window()
 
-    call zero_subtract_logdos()
+    call zero_subtract_logdos(wl_logdos)
   end subroutine pre_sampling
 
   !> @brief   
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -766,9 +798,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -800,9 +832,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -833,9 +865,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -882,9 +914,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -896,7 +928,7 @@ module wang_landau
     allocate(rank_time_buffer(num_windows,3))
 
     if (my_rank == 0) then
-      allocate(wl_logdos_write(bins))
+      allocate(wl_logdos_combine(bins))
     end if
   end subroutine
 
@@ -904,9 +936,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -954,9 +986,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -998,9 +1030,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -1011,7 +1043,7 @@ module wang_landau
     integer :: mpi_start_idx, mpi_end_idx
 
     if (my_rank == 0) then
-      wl_logdos_write = wl_logdos
+      wl_logdos_combine = wl_logdos
     end if
 
     do i = 2, wl_setup_internal%num_windows
@@ -1028,7 +1060,7 @@ module wang_landau
         scale_factor = 0.0_real64
         beta_diff = HUGE(beta_diff)
         do j = 0,  window_indices(i-1, 2) - window_indices(i, 1) - 1
-          beta_original = wl_logdos_write(mpi_start_idx + j + 1) - wl_logdos_write(mpi_start_idx + j)
+          beta_original = wl_logdos_combine(mpi_start_idx + j + 1) - wl_logdos_combine(mpi_start_idx + j)
           beta_merge = wl_logdos_buffer(mpi_start_idx + j + 1) - wl_logdos_buffer(mpi_start_idx + j)
           if (ABS(beta_original - beta_merge) < beta_diff) then
             beta_diff = ABS(beta_original - beta_merge)
@@ -1037,19 +1069,24 @@ module wang_landau
         end do
 
         do j = beta_index, mpi_end_idx
-          wl_logdos_write(j) = wl_logdos_buffer(j) + wl_logdos_write(beta_index) - wl_logdos_buffer(beta_index)
+          wl_logdos_combine(j) = wl_logdos_buffer(j) + wl_logdos_combine(beta_index) - wl_logdos_buffer(beta_index)
         end do
       end if
     end do
+
+    if (my_rank == 0) then
+      wl_logdos = wl_logdos_combine
+    end if
+    call MPI_BCAST(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
   end subroutine dos_combine
 
   !> @brief   
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -1128,9 +1165,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -1184,9 +1221,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -1292,9 +1329,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
@@ -1317,9 +1354,9 @@ module wang_landau
   !>
   !> @details 
   !>          
-  !> @param  setup Derived type containing simulation parameters
+  !> @param   setup Derived type containing simulation parameters
   !> 
-  !> @return None
+  !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
