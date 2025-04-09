@@ -1,11 +1,11 @@
 !----------------------------------------------------------------------!
-! energetics.f90                                                       !
+! hamiltonian.f90                                                      !
 !                                                                      !
 ! Module implementing the Bragg-Williams Hamiltonian.                  !
 !                                                                      !
 ! C. D. Woodgate,  Bristol                                        2025 !
 !----------------------------------------------------------------------!
-module energetics
+module bw_hamiltonian
 
   use kinds
   use shared_data
@@ -1489,4 +1489,4 @@ module energetics
     
   end function simple_cubic_energy_1shells
 
-end module energetics
+end module bw_hamiltonian

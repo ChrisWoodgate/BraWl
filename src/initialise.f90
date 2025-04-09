@@ -11,7 +11,7 @@ module initialise
   use shared_data
   use io
   use c_functions
-  use energetics
+  use bw_hamiltonian
   use random_site
   use comms
   
