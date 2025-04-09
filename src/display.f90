@@ -73,7 +73,7 @@ module display
         do j=1, setup%n_species
           write(*, '(A, A)', advance='no') ' ', setup%species_names(j)
           do k=1, setup%n_species
-            write(*, '(A, F8.3, A)', advance='no') '  ', 1000*13.606*V_ex(k,j,i), '  '
+            write(*, '(A, F8.3, A)', advance='no') '  ', 1000*Ry_to_eV*V_ex(k,j,i), '  '
             if (k .eq. setup%n_species) write(*,'(a)') ''
           end do
           if (j .eq. setup%n_species) write(*,'(a)') ''
