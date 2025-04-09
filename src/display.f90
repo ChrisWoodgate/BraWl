@@ -1,10 +1,10 @@
-!----------------------------------------------------------------------!
-! display.f90                                                          !
-!                                                                      !
-! Module for displaying some things to the screen.                     !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
-!----------------------------------------------------------------------!
+!> @file    display.f90
+!>
+!> @brief   Assorted routines and tools for printing simulation
+!>          information to the screen.
+!>
+!> @author  C. D. Woodgate
+!> @date    2020-2023
 module display
 
   use kinds
@@ -14,11 +14,19 @@ module display
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Routine to print the read in exchange coefficients to the screen   !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to print atom-atom effective pair interactions
+  !>          to the screen in a human-readable format.
+  !>
+  !> @details User has choice of units to use. Default is meV, but also
+  !>          support mRy.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2023
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  units Optional argument specifying the units to use
+  !>
+  !> @return None
   subroutine pretty_print_exchange(setup, units)
     integer :: i,j,k
     character(len=*), optional :: units
@@ -76,11 +84,21 @@ module display
 
   end subroutine pretty_print_exchange
 
-  !--------------------------------------------------------------------!
-  ! Routine to print the current state of the grid                     !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to print the current state of the grid to the
+  !>          screen, layer by layer.
+  !>
+  !> @details Currently supports the cubic representation of the fcc and
+  !           bcc lattice types, as well as simple cubic.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2023
+  !>
+  !> @param  grid Current simulation configuration
+  !> @param  show_borders Optional argument controlling display of 
+  !>                      borders
+  !> @param  title Optional argument specifying the title to display
+  !>
+  !> @return None
   subroutine display_grid(grid, show_borders, title)
 
     integer(kind=int16), intent(in), dimension(:,:,:,:) :: grid
