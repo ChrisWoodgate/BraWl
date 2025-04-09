@@ -35,7 +35,7 @@ module energy_spectrum
     real(real64) :: acceptance, step, energy_to_ry, min_energy, min_change, max_change
     real(real64) :: min_energy_buf, min_change_buf, max_change_buf
 
-    energy_to_ry = setup%n_atoms/(eV_to_Ry*1000)
+    energy_to_ry = setup%n_atoms/(Ry_to_eV*1000)
 
     ! Set up the lattice
     call initial_setup(setup, config)

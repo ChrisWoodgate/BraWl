@@ -864,7 +864,7 @@ contains
     real(real64) :: energy_to_ry, bin_width
 
     ! Conversion meV/atom to Rydberg
-    energy_to_ry = setup%n_atoms/(eV_to_Ry*1000)
+    energy_to_ry = setup%n_atoms/(Ry_to_eV*1000)
     ! Create energy wl_setup%bins and set mpi wl_setup%bins
     j = 1
     bin_width = (wl_setup%energy_max - wl_setup%energy_min)/real(wl_setup%bins)*energy_to_ry
