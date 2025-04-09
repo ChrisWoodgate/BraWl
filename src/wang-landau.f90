@@ -1,8 +1,12 @@
-!----------------------------------------------------------------------!
-! Wang-Landau module                                                   !
-!                                                                      !
-! H. Naguszewski, Warwick                                         2024 !
-!----------------------------------------------------------------------!
+!> @file    wang-landau.f90                                  
+!>
+!> @brief   Assorted routines and tools to perform Wang Landau Sampling                                                                      !
+!>
+!> @details This module contains routines necessary for the Wang Landau Sampling
+!>          calculations.                                                           
+!>
+!> @author  H. J. Naguszewski
+!> @date    2024
 
 module wang_landau
   use initialise
@@ -12,9 +16,10 @@ module wang_landau
   use random_site
   use metropolis
   use mpi
+  use display
 
   implicit none
-
+ 
   ! MPI variables
   integer :: mpi_processes
   real(real64) :: start, end, time_max, time_min, test_time_1, test_time_2
@@ -69,10 +74,28 @@ module wang_landau
   
   contains
 
+  !> @brief   Main Wang Landau sampling routine.  
+  !>
+  !> @details This routine performs the Wang Landau sampling calculation. Input parameters (such as
+  !>          the energy range, number of windows etc.) are read from the "wl_input.txt" 
+  !>          file. The first section of the routine generates the initial random configurations, moves them
+  !>          into approriate energy windows, performs pre-sampling to get an estimate for the density of states
+  !>          before performing the main Wang Landau sampling cycle. The main cycle consists of converging
+  !>          
+  !>          The routine makes use of the pair_swap subroutine to calculate energies.
+  !> 
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  wl_setup Derived type containing Wang Landau sampling parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine wl_main(setup, wl_setup)
     type(run_params) :: setup
     type(wl_params) :: wl_setup
 
+    ! Makes internal copies that use module wide variables
     setup_internal = setup
     wl_setup_internal = wl_setup
 
@@ -105,7 +128,8 @@ module wang_landau
 
     if (my_rank == 0) then
       write (6, '(/,72("-"),/)')
-      write (6, '(24("-"),x,"Commencing Simulation!",x,24("-"),/)')
+      call print_centered_message("Commencing Simulation!", "=")
+      write(*,*)
       print *, "Number of atoms", setup_internal%n_atoms
       print *, "Number of iterations", num_iter
     end if
@@ -115,12 +139,14 @@ module wang_landau
     ! Burn in !
     !---------!
     
-    call burn_in()
-    print*, "Rank: ", my_rank, "Burn-in complete"
+    call enter_energy_window()
+    print*, "Rank: ", my_rank, "within energy window"
   
+    flush(6)
+    call comms_wait()
     if (my_rank == 0) then
       write (*, *)
-      write (6, '(27("-"),x,"Burn-in complete",x,27("-"),/)')
+      call print_centered_message("Ranks Within Energy Windows!", "=")
       write (*, *)
     end if
 
@@ -129,9 +155,10 @@ module wang_landau
     !--------------------!
     call pre_sampling()
 
+    flush(6)
+    call comms_wait()
     if (my_rank == 0) then
-      write (*, *)
-      write (6, '(27("-"),x,"Pre-sampling complete",x,27("-"),/)')
+      call print_centered_message("Pre-sampling Complete!", "=")
       write (*, *)
     end if
 
@@ -197,7 +224,7 @@ module wang_landau
 
         if (my_rank == 0) then
           wl_logdos_write = wl_logdos
-          write (6, '(24("-"),x,a,i3,a,i3,x,24("-"))', advance='no') "Wang-Landau Iteration: ", iter, &
+          write (6, '(20("-"),x,a,i3,a,i3,x,20("-"))', advance='no') "Wang-Landau Iteration: ", iter, &
           "/", num_iter
           write (*, *)
           write (6, '(a,f20.18,a,f8.2,a)', advance='no') "Flatness reached f of: ", wl_f_prev, &
@@ -220,12 +247,12 @@ module wang_landau
         call mpi_window_optimise(iter)
 
         call compute_mean_energy()
-        call burn_in()
+        call enter_energy_window()
 
         call zero_subtract_logdos()
         call comms_wait()
         if (my_rank == 0) then
-          write (6, '(27("-"),x,a,x,27("-"))') "Load Balancing Complete"
+          call print_centered_message("Load Balancing Complete!", "-")
           write (*, *)
         end if
         start = mpi_wtime()
@@ -234,11 +261,21 @@ module wang_landau
 
     if (my_rank == 0) then
       write (*, *)
-      write (6, '(25("-"),x,"Simulation Complete!",x,25("-"))')
+      call print_centered_message("Simulation Complete!", "=")
     end if
 
   end subroutine wl_main
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine reduce_time()
     rank_time = 0.0_real64
     rank_time(mpi_index) = end - start - radial_time
@@ -260,6 +297,16 @@ module wang_landau
     MPI_SUM, 0, MPI_COMM_WORLD, ierror)
   end subroutine reduce_time
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine save_rho_E()
     if (.not. rho_saved) then
       if (my_rank == 0) then
@@ -284,7 +331,7 @@ module wang_landau
         setup_internal%n_species*setup_internal%n_species*setup_internal%wc_range*wl_setup_internal%bins, &
         MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierror)
         if (my_rank == 0) then 
-            write (6, '(27("-"),x,a,x,27("-"))') "Radial Densities Saved"
+            call print_centered_message("Radial Densities Saved", "=")
             write (*, *)
           do i=1, wl_setup_internal%bins
             rho_of_E_buffer(:,:,:,i) = rho_of_E_buffer(:,:,:,i)/REAL(radial_record_buffer(i))
@@ -295,6 +342,16 @@ module wang_landau
     end if
   end subroutine save_rho_E
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine save_output_data()
     if (my_rank == 0) then
       ! Write output files
@@ -313,6 +370,16 @@ module wang_landau
     end if
   end subroutine save_output_data
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine compute_mean_energy()
     if (my_rank == 0) then
       wl_logdos = wl_logdos_write
@@ -338,6 +405,16 @@ module wang_landau
     wl_logdos_buffer = wl_logdos
   end subroutine compute_mean_energy
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine zero_subtract_logdos()
     ! Zero elements not worked on
     wl_logdos(1:window_indices(mpi_index,1)-1) = 0.0_real64
@@ -347,6 +424,16 @@ module wang_landau
     wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
   end subroutine zero_subtract_logdos
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   integer function bin_index(energy, bin_edges, bins) result(index)
     integer, intent(in) :: bins
     real(real64), intent(in) :: energy
@@ -357,6 +444,16 @@ module wang_landau
     index = int(((energy - bin_edges(1))/(bin_range))*real(bins)) + 1
   end function bin_index
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine sweeps()
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, pair_unswapped, pair_swapped, delta_e, radial_start, radial_end
@@ -433,15 +530,25 @@ module wang_landau
 
   end subroutine sweeps
 
-  subroutine burn_in()
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
+  subroutine enter_energy_window()
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, pair_swapped, pair_unswapped, delta_e, target_energy, condition
     real(real64) :: beta, beta_min, beta_max, weight, min_e, max_e
     integer(int16) :: site1, site2
-    logical :: stop_burn_in, flag
+    logical :: stop_enter_energy_window, flag
     integer :: rank, rank_index, request, ierror, status, i_steps, i_sweeps, sweeps
 
-    stop_burn_in = .False.
+    stop_enter_energy_window = .False.
     flag = .False.
     ! Target energy
     min_e = MINVAL(mpi_bin_edges)
@@ -466,7 +573,7 @@ module wang_landau
     end if
 
     ! Non-blocking MPI receive
-    call MPI_IRECV(stop_burn_in, 1, MPI_LOGICAL, MPI_ANY_SOURCE, 10000, MPI_COMM_WORLD, request, ierror)
+    call MPI_IRECV(stop_enter_energy_window, 1, MPI_LOGICAL, MPI_ANY_SOURCE, 10000, MPI_COMM_WORLD, request, ierror)
 
     i_steps = 0
     i_sweeps = 0
@@ -495,12 +602,12 @@ module wang_landau
           cycle
         end if
         if (flag .eqv. .False.) then
-          stop_burn_in = .True.
+          stop_enter_energy_window = .True.
           call MPI_CANCEL(request, ierror)
           call MPI_REQUEST_FREE(request, ierror)
           do rank=window_rank_index(mpi_index, 1), window_rank_index(mpi_index, 2)
             if (rank /= my_rank) then
-              call MPI_ISEND(stop_burn_in, 1, MPI_LOGICAL, rank, 10000, MPI_COMM_WORLD, request, ierror)
+              call MPI_ISEND(stop_enter_energy_window, 1, MPI_LOGICAL, rank, 10000, MPI_COMM_WORLD, request, ierror)
               call MPI_ISEND(config, SIZE(config), MPI_SHORT, rank, 10001, MPI_COMM_WORLD, request, ierror)
             end if
           end do
@@ -539,8 +646,18 @@ module wang_landau
 
     call comms_wait()
     call comms_purge()
-  end subroutine burn_in
+  end subroutine enter_energy_window
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine pre_sampling()
     pre_sampled = 0
     pre_sampled_buffer = 0
@@ -585,7 +702,7 @@ module wang_landau
       print*, window_indices(:,2)
     end if
     if (my_rank == 0 ) then
-      write (*, *)
+      call print_centered_message("Pre-sampling Timings", "-")
       do i=1, wl_setup_internal%num_windows
         write (6, '(a,i3,a,f12.2,a,f12.2,a,f12.2,a)') "MPI Window: ", i, " | Avg. time: ", rank_time_buffer(i,1), &
         "s | Time min: ", rank_time_buffer(i,2), "s Time max: " , rank_time_buffer(i,3), "s"
@@ -593,11 +710,21 @@ module wang_landau
       write (*, *)
     end if
 
-    call burn_in()
+    call enter_energy_window()
 
     call zero_subtract_logdos()
   end subroutine pre_sampling
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine divide_range()
     ! Loop indices
     integer :: i
@@ -635,6 +762,16 @@ module wang_landau
     end do
   end subroutine divide_range
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine create_window_intervals()
     integer :: i
 
@@ -659,6 +796,16 @@ module wang_landau
     mpi_bins = mpi_end_idx - mpi_start_idx + 1
   end subroutine create_window_intervals
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine create_energy_bins()  
     ! Internal
     integer :: i, j
@@ -682,6 +829,16 @@ module wang_landau
 
   end subroutine create_energy_bins
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine primary_array_allocation()
     ! Number of WL iteration to be performed
     num_iter = 0
@@ -721,6 +878,16 @@ module wang_landau
     allocate(prob(bins))
   end subroutine primary_array_allocation
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine secondary_array_allocation()
         ! MPI arrays
     allocate(mpi_bin_edges(mpi_bins + 1))
@@ -733,6 +900,16 @@ module wang_landau
     end if
   end subroutine
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine initialise_variables()
     ! Target energy for burn in
     target_energy = (mpi_bin_edges(1) + mpi_bin_edges(SIZE(mpi_bin_edges)))/2
@@ -773,6 +950,16 @@ module wang_landau
     call lattice_shells(setup_internal, shells, config)
   end subroutine initialise_variables
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine dos_average()
     integer :: i, j
 
@@ -807,6 +994,16 @@ module wang_landau
     end do
   end subroutine dos_average
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine dos_combine()
     ! Internal
     integer :: i, j, beta_index
@@ -844,8 +1041,18 @@ module wang_landau
         end do
       end if
     end do
-end subroutine dos_combine
+  end subroutine dos_combine
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine mpi_window_optimise(iter)
     integer, intent(in) :: iter
 
@@ -917,6 +1124,16 @@ end subroutine dos_combine
     mpi_bins = mpi_end_idx - mpi_start_idx + 1
   end subroutine mpi_window_optimise
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine mpi_arrays(wl_setup_internal, my_rank, bin_edges, window_intervals, window_indices, &
                         mpi_bin_edges, mpi_wl_hist, mpi_bins, mpi_index, num_walkers)
     ! Subroutine input
@@ -963,6 +1180,16 @@ end subroutine dos_combine
     end do
   end subroutine mpi_arrays
 
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
   subroutine replica_exchange()
    ! Declare local variables
    integer, dimension(num_walkers, 2) :: overlap_lower, overlap_upper
@@ -1061,34 +1288,53 @@ end subroutine dos_combine
    end do
  end subroutine replica_exchange
   
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
+  ! Subroutine to shuffle the rows of the array
+  subroutine shuffle_rows(array, num_walkers)
+    integer, dimension(num_walkers, 2), intent(inout) :: array
+    integer, intent(in) :: num_walkers
+    integer :: i, rand_index, temp(2)
+    ! Shuffle the rows in the array randomly
+    do i = num_walkers, 2, -1
+        rand_index = MIN(1+int(genrand()*i), num_walkers)  ! Generate random index between 1 and i
+        ! Swap rows i and rand_index
+        temp = array(i, :)
+        array(i, :) = array(rand_index, :)
+        array(rand_index, :) = temp
+    end do
+  end subroutine
 
-! Subroutine to shuffle the rows of the array
-subroutine shuffle_rows(array, num_walkers)
-  integer, dimension(num_walkers, 2), intent(inout) :: array
-  integer, intent(in) :: num_walkers
-  integer :: i, rand_index, temp(2)
-  ! Shuffle the rows in the array randomly
-  do i = num_walkers, 2, -1
-      rand_index = MIN(1+int(genrand()*i), num_walkers)  ! Generate random index between 1 and i
-      ! Swap rows i and rand_index
-      temp = array(i, :)
-      array(i, :) = array(rand_index, :)
-      array(rand_index, :) = temp
-  end do
-end subroutine
-
-subroutine comms_purge()
-  do while(.true.)
-    CALL MPI_IPROBE(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, flag, status, ierror)
-    if (.not. flag) exit  ! No more messages
-    ! get the message size in bytes
-    CALL MPI_GET_COUNT(status, MPI_BYTE, mpi_counter, ierror)
-    ! allocate a dummy buffer
-    allocate(discard(mpi_counter))
-    ! receive and discard the message
-    CALL MPI_RECV(discard, mpi_counter, MPI_BYTE, status(MPI_SOURCE), status(MPI_TAG), MPI_COMM_WORLD, status, ierror)
-    deallocate(discard)  ! free memory
-  end do
-end subroutine comms_purge
+  !> @brief   
+  !>
+  !> @details 
+  !>          
+  !> @param  setup Derived type containing simulation parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024 
+  subroutine comms_purge()
+    do while(.true.)
+      CALL MPI_IPROBE(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, flag, status, ierror)
+      if (.not. flag) exit  ! No more messages
+      ! get the message size in bytes
+      CALL MPI_GET_COUNT(status, MPI_BYTE, mpi_counter, ierror)
+      ! allocate a dummy buffer
+      allocate(discard(mpi_counter))
+      ! receive and discard the message
+      CALL MPI_RECV(discard, mpi_counter, MPI_BYTE, status(MPI_SOURCE), status(MPI_TAG), MPI_COMM_WORLD, status, ierror)
+      deallocate(discard)  ! free memory
+    end do
+  end subroutine comms_purge
 
 end module wang_landau
