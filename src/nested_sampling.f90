@@ -15,7 +15,7 @@ module nested_sampling
   use io
   use comms
   use c_functions
-  use energetics
+  use bw_hamiltonian
   use random_site
   use analytics
   use write_netcdf

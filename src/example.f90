@@ -1,11 +1,14 @@
-!----------------------------------------------------------------------!
-! main.f90                                                             !
-!                                                                      !
-! Example bontewarlo program for developers.                           !
-!                                                                      !
-! C. D. Woodgate,  Bristol                                        2024 !
-!----------------------------------------------------------------------!
-program main
+!> @file    example.f90
+!>
+!> @brief   Example program showing the code's functionalities for
+!>          developers
+!>
+!> @details This file contains an example program showcasing the code's
+!>          functionalities.
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2024
+program example
   
   use initialise
   use comms
@@ -91,4 +94,4 @@ program main
   ! Finalise MPI
   call comms_finalise()
 
-end program main
+end program example
