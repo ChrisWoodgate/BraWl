@@ -1,8 +1,14 @@
-!----------------------------------------------------------------------!
-!   Examples of how to do basic things                                 !
-!                                                                      !
-!   C. D. Woodgate,  Warwick                                      2024 !
-!----------------------------------------------------------------------!
+!> @file    howto_examples.f90
+!>
+!> @brief   Example subroutines showing the code's functionalities for
+!>          developers
+!>
+!> @details This file contains some example subroutines showcasing the
+!>          code's functionalities. They are called by the test program
+!>          in example.f90
+!>
+!> @author  C. D. Woodgate
+!> @date    2021-2024
 module howto_examples 
 
   use initialise
@@ -23,6 +29,15 @@ module howto_examples
 
   contains
 
+  !> @brief   Subroutine showing examples of code's functionalities
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine examples(setup, my_rank)
 
     ! Rank of this processor
