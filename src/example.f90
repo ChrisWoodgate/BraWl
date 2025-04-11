@@ -23,7 +23,7 @@ program example
   use c_functions
   use write_netcdf
   use write_xyz
-  use write_diagnostics
+  use metropolis_output
   use display
   use howto_examples
 

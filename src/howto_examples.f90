@@ -22,7 +22,7 @@ module howto_examples
   use analytics
   use write_netcdf
   use write_xyz
-  use write_diagnostics
+  use metropolis_output
   use metropolis
   
   implicit none

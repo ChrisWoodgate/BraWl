@@ -1,11 +1,11 @@
 !----------------------------------------------------------------------!
-! write_diagnostics.f90                                                !
+! metropolis_output.f90                                                !
 !                                                                      !
 ! Module for writing energy data                                       !
 !                                                                      !
 ! C. D. Woodgate,  Warwick                                        2023 !
 !----------------------------------------------------------------------!
-module write_diagnostics
+module metropolis_output
 
   use kinds
   use shared_data
@@ -45,4 +45,4 @@ module write_diagnostics
 
   end subroutine diagnostics_writer
    
-end module write_diagnostics
+end module metropolis_output
