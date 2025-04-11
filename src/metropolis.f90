@@ -19,7 +19,7 @@ module metropolis
   use analytics
   use write_netcdf
   use write_xyz
-  use metropolis_output.f90
+  use metropolis_output
   
   implicit none
 
