@@ -1,10 +1,10 @@
-!----------------------------------------------------------------------!
-! metropolis_output.f90                                                !
-!                                                                      !
-! Module for writing energy data                                       !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
-!----------------------------------------------------------------------!
+!> @file    metropolis_output.f90
+!>
+!> @brief   Routines for writing plain text outputs from a Metropolis
+!>          simulation
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2025
 module metropolis_output
 
   use kinds
@@ -15,11 +15,19 @@ module metropolis_output
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Routine to write energy and diagnostic data                        !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to write outputs of a Metropolis simulation to
+  !>          plain text file
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  temps Array of simulation temperatures
+  !> @param  energies Array of simulation energies
+  !> @param  C Array of simulation heat capacities
+  !> @param  acceptance Array of simulation heat capacities
+  !>
+  !> @return None
   subroutine diagnostics_writer(filename, temps, energies, C, acceptance)
 
     ! Filename to which to write
