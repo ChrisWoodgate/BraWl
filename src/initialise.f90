@@ -1,10 +1,14 @@
-!----------------------------------------------------------------------!
-! initialise.f90                                                       !
-!                                                                      !
-! Module with routines associated with initialising a simulation.      !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
-!----------------------------------------------------------------------!
+!> @file    initialise.f90
+!>
+!> @brief   Assorted routines and tools used when initialising a
+!>          simulation
+!>
+!> @details This module contains routines used for memory allocations,
+!>          for initalising the state of a configuration, for setting
+!>          and for setting the seed of the random number generator.
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2025
 module initialise
 
   use kinds
@@ -19,12 +23,17 @@ module initialise
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to initialise the PNRG                                  !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to initalise the PRNG
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  seedtime If not 0, time-based random seed(s) are used. If
+  !>                  0, static seed is used (for testing).
+  !>
+  !> @return None
   subroutine initialise_pnrg(seedtime)
+
     integer :: seedtime
 
     if(my_rank == 0) then
@@ -42,14 +51,20 @@ module initialise
 
   end subroutine initialise_pnrg
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to initialise arrays for storing averages (rank 1 only) !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to initalise the global Metropolis arrays
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  metropolis Derived type containing Metroplis parameters
+  !>
+  !> @return None
   subroutine initialise_global_metropolis_arrays(setup, metropolis)
+
     type(run_params), intent(inout) :: setup
     type(metropolis_params), intent(inout) :: metropolis
+
     ! Array for storing energy as a function of temperature
     allocate(av_energies_of_T(metropolis%T_steps))
     ! Array for storing energy as a function of temperature
@@ -59,15 +74,21 @@ module initialise
     ! Radial densities as a function of temperature
     allocate(av_rho_of_T(setup%n_species, setup%n_species, &
                      setup%wc_range, metropolis%T_steps))
+
     av_rho_of_T = 0.0_real64
+
   end subroutine initialise_global_metropolis_arrays
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to initialise function pointers                         !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to initalise function pointers
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine initialise_function_pointers(setup)
+
     type(run_params), intent(inout) :: setup
 
     setup%full_energy => total_energy
@@ -169,12 +190,17 @@ module initialise
 
   end subroutine initialise_function_pointers
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to allocate memory for storing interaction parameters   !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to allocate memory for storing effective pair
+  !>          interactions
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine initialise_interaction(setup)
+
     type(run_params), intent(inout) :: setup
 
     ! Allocate space for atom-atom interchange parameters
@@ -182,98 +208,145 @@ module initialise
 
   end subroutine initialise_interaction
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to allocate memory for all processors                   !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to allocate memory used by all processors,
+  !>          for all types of sim, even if sim is parallel
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine initialise_local_arrays(setup)
+
     type(run_params), intent(inout) :: setup
+
     ! On-shell distances
     allocate(shells(setup%wc_range))
     shells = 0.0_real64
+
     ! Allocate array for storing configuration
     allocate(config(setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3))
     config = 0_int16
+
   end subroutine initialise_local_arrays
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to allocate memory for all processors                   !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to allocate memory used by all processors for
+  !>          a parallel Metropolis run
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  metropolis Derived type containing Metroplis parameters
+  !>
+  !> @return None
   subroutine initialise_local_metropolis_arrays(setup, metropolis)
+
     type(run_params), intent(inout) :: setup
     type(metropolis_params), intent(inout) :: metropolis
+
     ! Array for storing energy as a function of temperature
     allocate(energies_of_T(metropolis%T_steps))
     energies_of_T = 0.0_real64
+
     ! Array for storing energy as a function of temperature
     allocate(C_of_T(metropolis%T_steps))
     C_of_T = 0.0_real64
+
     ! Array for storing energy as a function of temperature
     allocate(acceptance_of_T(metropolis%T_steps))
     acceptance_of_T = 0.0_real64
+
     ! Radial densities as a function of temperature
     allocate(rho_of_T(setup%n_species, setup%n_species, &
                      setup%wc_range, metropolis%T_steps))
     rho_of_T = 0.0_real64
+
     ! Array for storing temperatures
     allocate(temperature(metropolis%T_steps))
     temperature = 0.0_real64
+
   end subroutine initialise_local_metropolis_arrays
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to clean up interaction array                           !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to clean up memory used for storing effective 
+  !>          pair interactions
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @return None
   subroutine clean_up_interaction()
 
     deallocate(V_ex)
 
   end subroutine clean_up_interaction
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to clean up local arrays                                !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to clean up memory used by all modes of
+  !>          simulation, regardless of parallelism used
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine local_clean_up(setup)
+
     type(run_params), intent(inout) :: setup
+
     deallocate(shells)
     deallocate(config)
     deallocate(setup%species_names, setup%species_concentrations)
+
   end subroutine local_clean_up
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to clean up local Metropolis arrays                     !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to clean up memory used by all processors for
+  !>          a Metropolis simulation
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine local_metropolis_clean_up(setup)
+
     type(run_params), intent(inout) :: setup
+
     deallocate(rho_of_T)
     deallocate(temperature)
     deallocate(energies_of_T, C_of_T, acceptance_of_T)
+
   end subroutine local_metropolis_clean_up
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to clean up average arrays                              !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to clean up memory used by process 1 for a
+  !>          parallel Metropolis simulation
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @return None
   subroutine global_metropolis_clean_up()
+
     deallocate(av_rho_of_T)
     deallocate(av_energies_of_T, av_C_of_T, av_acceptance_of_T)
+
   end subroutine global_metropolis_clean_up
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to initialise the grid with a random configuration      !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to initialise the simulation in a random
+  !>          configuration with the correct overall concentration of
+  !>          (or numbers of particles of) each species
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  config Array for simulation configuration
+  !>
+  !> @return None
   subroutine initial_setup(setup, config)
+
     type(run_params) :: setup
     integer(int16), allocatable, dimension(:,:,:,:) :: config
     integer(int32), dimension(4) :: grid_dims
