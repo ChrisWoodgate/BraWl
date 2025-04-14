@@ -24,17 +24,17 @@ module wang_landau
   integer :: mpi_processes
   real(real64) :: start, end, time_max, time_min, test_time_1, test_time_2
   integer :: mpi_bins, mpi_start_idx, mpi_end_idx, mpi_index, mpi_start_idx_buffer
-  integer :: mpi_end_idx_buffer, beta_index, status(MPI_STATUS_SIZE), mpi_counter, i_sweeps
+  integer :: mpi_end_idx_buffer, beta_index, i_sweeps
   real(real64) :: scale_factor, scale_count, wl_logdos_min, bin_overlap, beta_diff, beta_original, beta_merge
   real(real64), allocatable :: mpi_bin_edges(:), mpi_wl_hist(:), wl_logdos_buffer(:), wl_logdos_combine(:)
   real(real64), allocatable :: rank_time(:), rank_time_buffer(:,:)
-  character, allocatable :: discard(:)
+
   logical :: flag
   
   ! Window variables
   integer, allocatable :: window_intervals(:,:), window_rank_index(:,:)
   integer, allocatable :: window_indices(:, :)
-  integer :: num_windows, num_walkers
+  integer :: num_walkers
   
   ! Setup types
   type(run_params) :: setup_internal
@@ -102,8 +102,7 @@ module wang_landau
     ! Check if number of MPI processes is divisible by number of windows
     call MPI_COMM_SIZE(MPI_COMM_WORLD, mpi_processes, ierror)
     bins = wl_setup_internal%bins
-    num_windows = wl_setup_internal%num_windows
-    if (MOD(mpi_processes, num_windows) /= 0) then
+    if (MOD(mpi_processes, wl_setup_internal%num_windows) /= 0) then
       if (my_rank == 0) then
         write (6, '(72("~"))')
         write (6, '(5("~"),x,"Error: Number of MPI processes not divisible by num_windows",x,6("~"))')
@@ -116,13 +115,13 @@ module wang_landau
     ! Initial setup
     call primary_array_allocation()
 
-    call divide_range()
+    call divide_range(window_intervals, window_rank_index)
 
-    call create_window_intervals()
+    call create_window_intervals(window_intervals, window_indices, mpi_bins)
 
-    call secondary_array_allocation()
+    call secondary_array_allocation(mpi_bins)
 
-    call create_energy_bins()
+    call create_energy_bins(bin_edges)
 
     call initialise_variables()
 
@@ -153,7 +152,7 @@ module wang_landau
     !--------------------!
     ! Pre-Sampling       !
     !--------------------!
-    call pre_sampling()
+    call pre_sampling(wl_logdos, mpi_wl_hist)
 
     flush(6)
     call comms_wait()
@@ -187,9 +186,9 @@ module wang_landau
           REAL(COUNT(mpi_wl_hist/=0))/REAL(SIZE(mpi_wl_hist))
         end if
       end if 
-      call sweeps()
+      call sweeps(wl_logdos, mpi_wl_hist)
       if (MOD(i_sweeps, 10) == 0) then        
-        call replica_exchange()
+        call replica_exchange(config)
       end if
 
       flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
@@ -216,8 +215,8 @@ module wang_landau
         wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))!wl_logdos_min
         wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
         !Average DoS across walkers
-        call dos_average()
-        call dos_combine()
+        call dos_average(wl_logdos)
+        call dos_combine(wl_logdos)
 
         call reduce_time(start, end, radial_time)
 
@@ -441,7 +440,7 @@ module wang_landau
   !> @author  H. J. Naguszewski
   !> @date    2024 
   subroutine zero_subtract_logdos(wl_logdos)
-    real(real64), allocatable, intent(in) :: wl_logdos(:)
+    real(real64), allocatable, intent(inout) :: wl_logdos(:)
     ! Zero elements not worked on
     wl_logdos(1:window_indices(mpi_index,1)-1) = 0.0_real64
     wl_logdos(window_indices(mpi_index,2)+1:wl_setup_internal%bins) = 0.0_real64
@@ -563,12 +562,11 @@ module wang_landau
 
   end subroutine sweeps
 
-  !> @brief   
+  !> @brief   Routine for moving processes into assigned energy window
   !>
-  !> @details 
+  !> @details Routine that performs Metropolis Monte Carlo moves in order
+  !>          to move process atom configuration into assigned energy window
   !>          
-  !> @param   setup Derived type containing simulation parameters
-  !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
@@ -680,17 +678,22 @@ module wang_landau
     call comms_purge()
   end subroutine enter_energy_window
 
-  !> @brief   
+  !> @brief   Pre-sampling routine that performs initial sweeps
   !>
-  !> @details 
+  !> @details Routine that performs pre-sampling such that each energy
+  !>          bin has been visited and an initial density of states is obtained.
+  !>          After sampling performs a window optimisation based on pre-sampling run time.
   !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @param   wl_logdos Double 1D array containing density of states
+  !> @param   mpi_wl_hist Double 1D array containing energy bin visit information
+  !>          for working MPI process
   !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine pre_sampling()
+  subroutine pre_sampling(wl_logdos, mpi_wl_hist)
+    real(real64), allocatable, intent(inout) :: wl_logdos(:), mpi_wl_hist(:)
     pre_sampled = 0
     pre_sampled_buffer = 0
     pre_sampled_state = 0
@@ -698,7 +701,7 @@ module wang_landau
     start = mpi_wtime()
     end = start
     do while (SUM(pre_sampled_buffer) < wl_setup_internal%num_windows)
-      call sweeps()
+      call sweeps(wl_logdos, mpi_wl_hist)
 
       if (minval(mpi_wl_hist) > REAL(setup_internal%n_atoms) .and. pre_sampled_state == 0) then
         pre_sampled(mpi_index) = 1
@@ -719,8 +722,8 @@ module wang_landau
     end do
     call save_rho_E(rho_saved, radial_record)
     call zero_subtract_logdos(wl_logdos)
-    call dos_average()
-    call dos_combine()
+    call dos_average(wl_logdos)
+    call dos_combine(wl_logdos)
     
     call compute_mean_energy(wl_logdos)
 
@@ -747,17 +750,23 @@ module wang_landau
     call zero_subtract_logdos(wl_logdos)
   end subroutine pre_sampling
 
-  !> @brief   
+  !> @brief   Creates initial energy windows
   !>
-  !> @details 
+  !> @details Routine that divides energy bins into windows using
+  !>          y = Ax^B + C
   !>          
-  !> @param   setup Derived type containing simulation parameters
+  !>          
+  !> @param   window_intervals Integer 2D array containing energy bin indices for
+  !>          each window
+  !> @param   window_rank_index Integer 2D array containing the window index for
+  !>          each MPI process (which window the process is in)
   !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine divide_range()
+  subroutine divide_range(window_intervals, window_rank_index)
+    integer, intent(inout) :: window_intervals(:,:), window_rank_index(:,:)
     ! Loop indices
     integer :: i
 
@@ -794,17 +803,22 @@ module wang_landau
     end do
   end subroutine divide_range
 
-  !> @brief   
+  !> @brief   Routine that determines window indices for use by MPI processes
   !>
-  !> @details 
+  !> @details Routine that takes the window intervals and adds the user defined overlap
+  !>          region. After doing so it defined the relevant MPI indices.
   !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @param   window_intervals Integer 2D array containing energy bin indices for
+  !>          each window
+  !> @param   window_indices Integer 2D array containing the energy bin indices for
+  !>          each MPI process including ovelap
   !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine create_window_intervals()
+  subroutine create_window_intervals(window_intervals, window_indices, mpi_bins)
+    integer, intent(inout) :: window_intervals(:,:), window_indices(:,:), mpi_bins
     integer :: i
 
     ! Halve overlap due to implementation
@@ -820,7 +834,7 @@ module wang_landau
                                     - wl_setup_internal%bin_overlap), 1)
     window_indices(wl_setup_internal%num_windows,2) = window_intervals(wl_setup_internal%num_windows,2)
 
-    num_walkers = mpi_processes/num_windows
+    num_walkers = mpi_processes/wl_setup_internal%num_windows
 
     mpi_index = my_rank/num_walkers + 1
     mpi_start_idx = window_indices(mpi_index, 1)
@@ -828,17 +842,20 @@ module wang_landau
     mpi_bins = mpi_end_idx - mpi_start_idx + 1
   end subroutine create_window_intervals
 
-  !> @brief   
+  !> @brief   Routine that creates energy bins
   !>
-  !> @details 
+  !> @details Routine that creates energy bins based on user input.
+  !>          Takes minimum and maximum energy and creates a uniformly sized number of bins
+  !>          based on user defined number.
   !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @param   bin_edges Doulbe 1D array that store energy bin edges
   !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine create_energy_bins()  
+  subroutine create_energy_bins(bin_edges)  
+    real(real64), intent(inout) :: bin_edges(:)
     ! Internal
     integer :: i, j
     real(real64) :: energy_to_ry, bin_width
@@ -861,12 +878,8 @@ module wang_landau
 
   end subroutine create_energy_bins
 
-  !> @brief   
+  !> @brief   First set of array allocations
   !>
-  !> @details 
-  !>          
-  !> @param   setup Derived type containing simulation parameters
-  !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
@@ -893,7 +906,7 @@ module wang_landau
     allocate(rho_of_E_buffer(setup_internal%n_species, setup_internal%n_species, setup_internal%wc_range, wl_setup_internal%bins))
 
     ! Get start and end indices for energy windows
-    allocate(window_indices(num_windows, 2))
+    allocate(window_indices(wl_setup_internal%num_windows, 2))
     allocate(window_intervals(wl_setup_internal%num_windows, 2))
     allocate(window_rank_index(wl_setup_internal%num_windows, 2))
     
@@ -910,34 +923,33 @@ module wang_landau
     allocate(prob(bins))
   end subroutine primary_array_allocation
 
-  !> @brief   
+  !> @brief   Second set of array allocations
   !>
-  !> @details 
+  !> @details Occurs after primary allocation due to dependacy on mpi_bins variable
   !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @param   mpi_bins Integer for number of bins assigned to each MPI process
   !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine secondary_array_allocation()
-        ! MPI arrays
+  subroutine secondary_array_allocation(mpi_bins)
+    integer, intent(in) :: mpi_bins
+    ! MPI arrays
     allocate(mpi_bin_edges(mpi_bins + 1))
     allocate(mpi_wl_hist(mpi_bins))
-    allocate(rank_time(num_windows))
-    allocate(rank_time_buffer(num_windows,3))
+    allocate(rank_time(wl_setup_internal%num_windows))
+    allocate(rank_time_buffer(wl_setup_internal%num_windows,3))
 
     if (my_rank == 0) then
       allocate(wl_logdos_combine(bins))
     end if
   end subroutine
 
-  !> @brief   
+  !> @brief   Initialise variables and setup lattice
   !>
-  !> @details 
+  !> @details Intialises variables and arrays. Performs initial setup for lattice configuration
   !>          
-  !> @param   setup Derived type containing simulation parameters
-  !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
@@ -961,7 +973,7 @@ module wang_landau
     ! Path to radial file and name of radial file
     radial_file = "radial_densities/rho_of_E.dat"
 
-    num_walkers = mpi_processes/num_windows
+    num_walkers = mpi_processes/wl_setup_internal%num_windows
     wl_setup_internal%radial_samples = INT(wl_setup_internal%radial_samples/num_walkers)
     wl_setup_internal%radial_samples = MAX(INT(wl_setup_internal%radial_samples*num_walkers), 1)
 
@@ -982,17 +994,16 @@ module wang_landau
     call lattice_shells(setup_internal, shells, config)
   end subroutine initialise_variables
 
-  !> @brief   
-  !>
-  !> @details 
-  !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @brief   Routine that averages DoS within window
+  !>        
+  !> @param   wl_logdos Double 1D array containing density of states
   !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine dos_average()
+  subroutine dos_average(wl_logdos)
+    real(real64), intent(inout) :: wl_logdos(:)
     integer :: i, j
 
     do i = 1, wl_setup_internal%num_windows
@@ -1025,18 +1036,21 @@ module wang_landau
       end if
     end do
   end subroutine dos_average
-
-  !> @brief   
+  
+  !> @brief   Routine that combines DoS across windows
   !>
-  !> @details 
+  !> @details Routine that "stitches" together DoS across windows.
+  !>          Finds point within overlap region where thermodynamic beta is 
+  !>          most similar, scales DoS and combines.
   !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @param   wl_logdos Double 1D array containing density of states
   !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine dos_combine()
+  subroutine dos_combine(wl_logdos)
+    real(real64), intent(inout) :: wl_logdos(:)
     ! Internal
     integer :: i, j, beta_index
     real(real64) :: beta_original, beta_merge, beta_diff, scale_factor
@@ -1080,11 +1094,16 @@ module wang_landau
     call MPI_BCAST(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
   end subroutine dos_combine
 
-  !> @brief   
+  !> @brief   Performs window size optimisation
   !>
-  !> @details 
+  !> @details Routine that adjusts the size of each energy window based on time taken
+  !>          for window to first converge. Uses a diffusion coefficient approach with
+  !>          a dampening factor that reduces the window size adjustment with each iteration.
+  !>          Window sizes are adjusted based on the diffusion coefficients normalised to sum to
+  !>          1. Each window is assigned a percentage of the total energy bins based on this
+  !>          normalised diffusion coefficient.
   !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @param   iter Integer for the current Wang Landau interation
   !> 
   !> @return  None
   !>
@@ -1153,42 +1172,43 @@ module wang_landau
       call MPI_BCAST(window_intervals, wl_setup_internal%num_windows*2, MPI_INT, 0, MPI_COMM_WORLD, ierror)
 
       ! Populate MPI arrays and indlude MPI window overlap
-      call mpi_arrays(wl_setup_internal, my_rank, bin_edges, window_intervals, window_indices, &
-                      mpi_bin_edges, mpi_wl_hist, mpi_bins, mpi_index, num_walkers)
+      call mpi_arrays(window_intervals, window_indices, mpi_bin_edges, mpi_wl_hist, mpi_bins)
+
     end if
     mpi_start_idx = window_indices(mpi_index, 1)
     mpi_end_idx = window_indices(mpi_index, 2)
     mpi_bins = mpi_end_idx - mpi_start_idx + 1
   end subroutine mpi_window_optimise
 
-  !> @brief   
+  !> @brief   Routine that creates MPI arrays
   !>
-  !> @details 
+  !> @details This routine deallocates mpi_bin_edges and mpi_wl_hist and then
+  !>          re-calculates the window energy bin indices before reallocating
+  !>          the MPI arrays and filling them with appropriate values.
+  !>          To be used in conjuction with mpi_window_optimise.
   !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @param   window_intervals Integer 2D array containing energy bin indices for
+  !>          each window
+  !> @param   window_indices Integer 2D array containing the energy bin indices for
+  !>          each MPI process including ovelap
+  !> @param   mpi_bin_edges Double 1D array containing energy bin edges
+  !>          for working MPI process
+  !> @param   mpi_wl_hist Double 1D array containing energy bin visit information
+  !>          for working MPI process
+  !> @param   mpi_bins Integer for number of bins assigned to each MPI process
   !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine mpi_arrays(wl_setup_internal, my_rank, bin_edges, window_intervals, window_indices, &
-                        mpi_bin_edges, mpi_wl_hist, mpi_bins, mpi_index, num_walkers)
-    ! Subroutine input
-    type(wl_params) :: wl_setup_internal
-    integer, intent(in) :: my_rank, num_walkers
+  subroutine mpi_arrays(window_intervals, window_indices, mpi_bin_edges, mpi_wl_hist, mpi_bins)
     integer, dimension(:,:), intent(in) :: window_intervals
-    real(real64), dimension(:), intent(in) :: bin_edges
-
-    ! Subroutine output
     integer, dimension(:,:), intent(inout) :: window_indices
     real(real64), dimension(:), allocatable, intent(inout) :: mpi_bin_edges, mpi_wl_hist
-    integer, intent(out) :: mpi_bins, mpi_index
+    integer, intent(out) :: mpi_bins
 
     ! Loop indices
     integer :: i, j
-
-    if (allocated(mpi_bin_edges)) deallocate(mpi_bin_edges)
-    if (allocated(mpi_wl_hist)) deallocate(mpi_wl_hist)
 
     window_indices(1, 1) = window_intervals(1,1)
     window_indices(1,2) = INT(window_intervals(1,2) + wl_setup_internal%bin_overlap)
@@ -1217,54 +1237,56 @@ module wang_landau
     end do
   end subroutine mpi_arrays
 
-  !> @brief   
+  !> @brief   Replica exchange
   !>
-  !> @details 
+  !> @details Routine that performs a replica exchange if there are two process
+  !>          from different windows within the same overlap region.
   !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @param   config Short 4D array that stores lattice configuration 
   !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine replica_exchange()
-   ! Declare local variables
-   integer, dimension(num_walkers, 2) :: overlap_lower, overlap_upper
-   integer, dimension(num_walkers, 2) :: overlap_exchange
-   integer :: i, j, k, exchange_index, ierror
-   integer :: exchange_count, ibin, jbin
-   logical :: exchange_match, accept
-   integer :: overlap_loc, request
-   integer :: overlap_mpi(mpi_processes, 2), overlap_mpi_buffer(mpi_processes, 2)
-   real(real64) :: delta_e, e_swapped, e_unswapped
+  subroutine replica_exchange(config)
+  integer(int16), dimension(:,:,:,:) :: config
+  ! Declare local variables
+  integer, dimension(num_walkers, 2) :: overlap_lower, overlap_upper
+  integer, dimension(num_walkers, 2) :: overlap_exchange
+  integer :: i, j, k, exchange_index, ierror
+  integer :: exchange_count, ibin, jbin
+  logical :: exchange_match, accept
+  integer :: overlap_loc, request
+  integer :: overlap_mpi(mpi_processes, 2), overlap_mpi_buffer(mpi_processes, 2)
+  real(real64) :: delta_e, e_swapped, e_unswapped
    
-   ! Perform binning and initialize overlap_mpi
-   e_unswapped = setup_internal%full_energy(config)
-   ibin = bin_index(e_unswapped, bin_edges, wl_setup_internal%bins)
-   jbin = ibin
-   accept = .False.
-   overlap_mpi = 0
-   overlap_exchange = -1
+  ! Perform binning and initialize overlap_mpi
+  e_unswapped = setup_internal%full_energy(config)
+  ibin = bin_index(e_unswapped, bin_edges, wl_setup_internal%bins)
+  jbin = ibin
+  accept = .False.
+  overlap_mpi = 0
+  overlap_exchange = -1
 
-   if (ibin > mpi_start_idx - 1 .and. &
-   ibin < mpi_start_idx + wl_setup_internal%bin_overlap .and. mpi_index > 1) then
-     overlap_loc = mpi_index - 1
-   elseif (ibin > mpi_end_idx - wl_setup_internal%bin_overlap .and. &
-    ibin < mpi_end_idx + 1 .and. mpi_index < wl_setup_internal%num_windows) then
-     overlap_loc = mpi_index
-   else
-     overlap_loc = 0
-   end if
+  if (ibin > mpi_start_idx - 1 .and. &
+  ibin < mpi_start_idx + wl_setup_internal%bin_overlap .and. mpi_index > 1) then
+    overlap_loc = mpi_index - 1
+  elseif (ibin > mpi_end_idx - wl_setup_internal%bin_overlap .and. &
+   ibin < mpi_end_idx + 1 .and. mpi_index < wl_setup_internal%num_windows) then
+    overlap_loc = mpi_index
+  else
+    overlap_loc = 0
+  end if
  
-   overlap_mpi(my_rank+1, 1) = my_rank
-   overlap_mpi(my_rank+1, 2) = overlap_loc
+  overlap_mpi(my_rank+1, 1) = my_rank
+  overlap_mpi(my_rank+1, 2) = overlap_loc
  
-   ! Reduce to find max overlap
-   call MPI_REDUCE(overlap_mpi, overlap_mpi_buffer, mpi_processes*2, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD, ierror)
-   overlap_mpi = overlap_mpi_buffer
+  ! Reduce to find max overlap
+  call MPI_REDUCE(overlap_mpi, overlap_mpi_buffer, mpi_processes*2, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD, ierror)
+  overlap_mpi = overlap_mpi_buffer
 
-   ! Exchange loop
-   do i=1, wl_setup_internal%num_windows-1
+  ! Exchange loop
+  do i=1, wl_setup_internal%num_windows-1
     overlap_exchange = -1
     if (my_rank == 0) then
       overlap_lower = overlap_mpi((i-1)*num_walkers+1:i*num_walkers, :)
@@ -1325,11 +1347,10 @@ module wang_landau
    end do
  end subroutine replica_exchange
   
-  !> @brief   
-  !>
-  !> @details 
-  !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @brief   Routine that shuffles rows in integer array
+  !>     
+  !> @param   array Integer input array to have rows shuffles
+  !> @param   num_walkers Integer for number of walkers within window
   !> 
   !> @return  None
   !>
@@ -1350,17 +1371,20 @@ module wang_landau
     end do
   end subroutine
 
-  !> @brief   
+  !> @brief   Purge pending communication
   !>
-  !> @details 
-  !>          
-  !> @param   setup Derived type containing simulation parameters
+  !> @details Routine that recieves any pending communications into a buffer array
+  !>          that is allocated, filled then deallocated. Essentially deletes pending
+  !>          communications.
   !> 
   !> @return  None
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
   subroutine comms_purge()
+    integer :: mpi_counter, status(MPI_STATUS_SIZE), ierror
+    logical :: flag
+    character, allocatable :: discard(:)
     do while(.true.)
       CALL MPI_IPROBE(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, flag, status, ierror)
       if (.not. flag) exit  ! No more messages
