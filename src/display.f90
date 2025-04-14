@@ -145,4 +145,38 @@ module display
 
   end subroutine display_grid
 
+  !> @brief   Centered printing routine  
+  !>
+  !> @details This routine prints centered text with user specified filler either side of printed message.
+  !>          e.g. "----- Output -----"
+  !>          
+  !> @param  message String to be printed
+  !> @param  fill_char String to be used to fill message (can be " ")
+  !> 
+  !> @return None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2025 
+  subroutine print_centered_message(message, fill_char)
+    implicit none
+    character(len=*), intent(in) :: message, fill_char
+    character(len=72) :: output_str
+    integer :: num_fill_chars
+
+    ! Calculate the number of fill characters needed on each side
+    num_fill_chars = (72 - len_trim(message) - 2) / 2
+
+    ! Construct the formatted string with fill characters on both sides
+    output_str = repeat(fill_char, num_fill_chars) // " " // message // " " // repeat(fill_char, num_fill_chars)
+
+    ! If there's an odd number of fill characters, we need to add one more to the right side
+    if (mod(72 - len_trim(message) - 2, 2) /= 0) then
+        output_str = output_str // fill_char
+    end if
+
+    ! Write formatted output
+    write(6, '(A)') output_str
+
+end subroutine print_centered_message
+
 end module display
