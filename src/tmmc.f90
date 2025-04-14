@@ -127,7 +127,7 @@ contains
     beta = 1.0_real64/temp
 
     ! Conversion meV/atom to Rydberg
-    energy_to_ry = setup%n_atoms/(eV_to_Ry*1000)
+    energy_to_ry = setup%n_atoms/(Ry_to_eV*1000)
 
     ! Create energy bins and set mpi bins
     j = 1

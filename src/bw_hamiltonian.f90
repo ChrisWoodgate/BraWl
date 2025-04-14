@@ -1,11 +1,14 @@
-!----------------------------------------------------------------------!
-! energetics.f90                                                       !
-!                                                                      !
-! Module implementing the Bragg-Williams Hamiltonian.                  !
-!                                                                      !
-! C. D. Woodgate,  Bristol                                        2025 !
-!----------------------------------------------------------------------!
-module energetics
+!> @file    bw_hamiltonian.f90
+!>
+!> @brief   Implementation of the Bragg-Williams Hamiltonian
+!>
+!> @details This module contains routines implementing the
+!>          Bragg-Williams Hamiltonian. The various lattice types are
+!>          hard-coded for speed.
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2025
+module bw_hamiltonian
 
   use kinds
   use shared_data
@@ -16,13 +19,23 @@ module energetics
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the total energy of the simulation             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the total energy of a simulation
+  !>          configuration.
+  !>
+  !> @details This should only be called when you *need* a total energy
+  !>          evaluation. Otherwise it is possible to just evaluate the
+  !>          energy associated with swapping pairs of atoms in the
+  !>          simulation cell.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  config Current atomic configuration
+  !>
+  !> @return The total energy of the simulation configuration
   function total_energy(setup,config) result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -46,15 +59,25 @@ module energetics
 
   end function total_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy associated with just one pair of    !
-  ! atoms. (This means we can avoid re-evaluating the full Hamiltonian !
-  ! for things like trial Metropolis-Kawasaki swaps                    !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy of a simulation from a selected pair of atoms.
+  !>
+  !> @details This routine should be used when evaluating a change in
+  !>          energy due to a swap of a pair of atoms.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  config Current atomic configuration
+  !> @param  idx1 Indices of the first atom in the pair
+  !> @param  idx2 Indices of the second atom in the pair
+  !>
+  !> @return The contribution made by the pair of atoms to the total
+  !>         energy of the simulation configuration
   function pair_energy(setup, config, idx1, idx2)&
        result(energy)
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     type(run_params), intent(in) :: setup
     integer, dimension(4), intent(in) :: idx1, idx2
@@ -66,18 +89,31 @@ module energetics
     ! double-counting in this routine.
     energy = setup%nbr_energy(config, idx1(1), idx1(2), idx1(3), idx1(4)) &
            + setup%nbr_energy(config, idx2(1), idx2(2), idx2(3), idx2(4))
+
   end function pair_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 1st coordination     !
-  ! shell to the energy for the BCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 1st-nearest
+  !>          neighbours on the bcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 1st-nearest neighbours on the bcc
+  !>         lattice (cubic representation)
   function bcc_shell1_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -101,6 +137,7 @@ module energetics
     ib = site_b
       
     allocate(nbrs(8))
+
     nbrs(1) = config(ib, ip1, jp1, kp1)
     nbrs(2) = config(ib, ip1, jp1, km1)
     nbrs(3) = config(ib, ip1, jm1, kp1)
@@ -109,22 +146,37 @@ module energetics
     nbrs(6) = config(ib, im1, jp1, km1)
     nbrs(7) = config(ib, im1, jm1, kp1)
     nbrs(8) = config(ib, im1, jm1, km1)
+
     do i=1, 8
       energy = energy + V_ex(species, nbrs(i), 1)
     end do
+
     deallocate(nbrs)
+
   end function bcc_shell1_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 2nd coordination     !
-  ! shell to the energy for the BCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 2nd-nearest
+  !>          neighbours on the bcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 2nd-nearest neighbours on the bcc
+  !>         lattice (cubic representation)
   function bcc_shell2_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -148,28 +200,44 @@ module energetics
     ib = site_b
       
     allocate(nbrs(6))
+
     nbrs(1) = config(ib, ip2, site_j  , site_k  )
     nbrs(2) = config(ib, im2, site_j  , site_k  )
     nbrs(3) = config(ib, site_i  , jm2, site_k  )
     nbrs(4) = config(ib, site_i  , jp2, site_k  )
     nbrs(5) = config(ib, site_i  , site_j  , kp2)
     nbrs(6) = config(ib, site_i  , site_j  , km2)
+
     do i=1, 6
       energy = energy + V_ex(species, nbrs(i), 2)
     end do
+
     deallocate(nbrs)
+
   end function bcc_shell2_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 3rd coordination     !
-  ! shell to the energy for the BCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 3rd-nearest
+  !>          neighbours on the bcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 3rd-nearest neighbours on the bcc
+  !>         lattice (cubic representation)
   function bcc_shell3_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -193,6 +261,7 @@ module energetics
     ib = site_b
       
     allocate(nbrs(12))
+
     nbrs(1)  = config(ib,site_i,  jm2,  km2)
     nbrs(2)  = config(ib, ip2, site_j,  km2)
     nbrs(3)  = config(ib, im2, site_j,  km2)
@@ -205,22 +274,37 @@ module energetics
     nbrs(10) = config(ib, ip2, site_j,  kp2)
     nbrs(11) = config(ib, im2, site_j,  kp2)
     nbrs(12) = config(ib,site_i,  jp2,  kp2)
+
     do i=1, 12
       energy = energy + V_ex(species, nbrs(i), 3)
     end do
+
     deallocate(nbrs)
+
   end function bcc_shell3_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 4th coordination     !
-  ! shell to the energy for the BCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 4th-nearest
+  !>          neighbours on the bcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 4th-nearest neighbours on the bcc
+  !>         lattice (cubic representation)
   function bcc_shell4_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -252,6 +336,7 @@ module energetics
     ib = site_b
 
     allocate(nbrs(24))
+
     nbrs(1)   = config(ib, up, lt, fwfwfw)
     nbrs(2)   = config(ib, dn, lt, fwfwfw)
     nbrs(3)   = config(ib, up, rt, fwfwfw)
@@ -281,19 +366,33 @@ module energetics
     do i=1, 24
       energy = energy + V_ex(species, nbrs(i),4)
     end do
+
     deallocate(nbrs)
+
   end function bcc_shell4_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 5th coordination     !
-  ! shell to the energy for the BCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 5th-nearest
+  !>          neighbours on the bcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 5th-nearest neighbours on the bcc
+  !>         lattice (cubic representation)
   function bcc_shell5_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -316,6 +415,7 @@ module energetics
     ib = site_b
 
     allocate(nbrs(8))
+
     nbrs(1)  = config(ib, upup, ltlt, fwfw)
     nbrs(2)  = config(ib, dndn, ltlt, fwfw)
     nbrs(3)  = config(ib, upup, rtrt, fwfw)
@@ -329,19 +429,33 @@ module energetics
     do i=1, 8
       energy = energy + V_ex(species, nbrs(i),5)
     end do
+
     deallocate(nbrs)
+
   end function bcc_shell5_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 6th coordination     !
-  ! shell to the energy for the BCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 6th-nearest
+  !>          neighbours on the bcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 6th-nearest neighbours on the bcc
+  !>         lattice (cubic representation)
   function bcc_shell6_energy(setup, site_b, site_i, site_j, site_k, &
                              config,  species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -365,6 +479,7 @@ module energetics
     ib = site_b
 
     allocate(nbrs(6))
+
     nbrs(1)  = config(ib, upupupup, site_j, site_k)
     nbrs(2)  = config(ib, dndndndn, site_j, site_k)
     nbrs(3)  = config(ib, site_i, ltltltlt, site_k)
@@ -376,19 +491,33 @@ module energetics
     do i=1, 6
       energy = energy + V_ex(species, nbrs(i),6)
     end do
+
     deallocate(nbrs)
+
   end function bcc_shell6_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 7th coordination     !
-  ! shell to the energy for the BCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 7th-nearest
+  !>          neighbours on the bcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 7th-nearest neighbours on the bcc
+  !>         lattice (cubic representation)
   function bcc_shell7_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -453,16 +582,28 @@ module energetics
 
   end function bcc_shell7_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 8th coordination     !
-  ! shell to the energy for the BCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 8th-nearest
+  !>          neighbours on the bcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 8th-nearest neighbours on the bcc
+  !>         lattice (cubic representation)
   function bcc_shell8_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -527,16 +668,28 @@ module energetics
 
   end function bcc_shell8_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 9th coordination     !
-  ! shell to the energy for the BCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 9th-nearest
+  !>          neighbours on the bcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 9th-nearest neighbours on the bcc
+  !>         lattice (cubic representation)
   function bcc_shell9_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -601,16 +754,28 @@ module energetics
 
   end function bcc_shell9_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 10th coordination    !
-  ! shell to the energy for the BCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 10th-nearest
+  !>          neighbours on the bcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 10th-nearest neighbours on the bcc
+  !>         lattice (cubic representation)
   function bcc_shell10_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -690,15 +855,28 @@ module energetics
 
   end function bcc_shell10_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 1st    !
-  ! coordination shell on the BCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 1st-nearest neighbours on the bcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 1st-nearest
+  !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_1shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -711,15 +889,28 @@ module energetics
     
   end function bcc_energy_1shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 2nd    !
-  ! coordination shell on the BCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 2nd-nearest neighbours on the bcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 2nd-nearest
+  !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_2shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -733,15 +924,28 @@ module energetics
     
   end function bcc_energy_2shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 3rd    !
-  ! coordination shell on the BCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 3rd-nearest neighbours on the bcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 3rd-nearest
+  !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_3shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -756,15 +960,28 @@ module energetics
     
   end function bcc_energy_3shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 4th    !
-  ! coordination shell on the BCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 4th-nearest neighbours on the bcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 4th-nearest
+  !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_4shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -780,15 +997,28 @@ module energetics
     
   end function bcc_energy_4shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 5th    !
-  ! coordination shell on the BCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 5th-nearest neighbours on the bcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 5th-nearest
+  !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_5shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -805,15 +1035,28 @@ module energetics
     
   end function bcc_energy_5shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 6th    !
-  ! coordination shell on the BCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 6th-nearest neighbours on the bcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 6th-nearest
+  !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_6shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -831,15 +1074,28 @@ module energetics
 
   end function bcc_energy_6shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 7th    !
-  ! coordination shell on the BCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 7th-nearest neighbours on the bcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 7th-nearest
+  !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_7shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -858,15 +1114,28 @@ module energetics
 
   end function bcc_energy_7shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 8th    !
-  ! coordination shell on the BCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 8th-nearest neighbours on the bcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 8th-nearest
+  !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_8shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -886,15 +1155,28 @@ module energetics
 
   end function bcc_energy_8shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 9th    !
-  ! coordination shell on the BCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 9th-nearest neighbours on the bcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 9th-nearest
+  !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_9shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -915,12 +1197,25 @@ module energetics
 
   end function bcc_energy_9shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 10th   !
-  ! coordination shell on the BCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 10th-nearest neighbours on the bcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 10th-nearest
+  !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_10shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
     !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
@@ -945,16 +1240,28 @@ module energetics
 
   end function bcc_energy_10shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 1st coordination     !
-  ! shell to the energy for the FCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 1st-nearest
+  !>          neighbours on the fcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 1st-nearest neighbours on the fcc
+  !>         lattice (cubic representation)
   function fcc_shell1_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -978,6 +1285,7 @@ module energetics
     ib = site_b
       
     allocate(nbrs(12))
+
     nbrs(1)  = config(ib, site_i, rt, fw)
     nbrs(2)  = config(ib, site_i, rt, bw)
     nbrs(3)  = config(ib, site_i, lt, fw)
@@ -990,22 +1298,37 @@ module energetics
     nbrs(10) = config(ib, dn, lt, site_k)
     nbrs(11) = config(ib, dn, site_j, fw)
     nbrs(12) = config(ib, dn, site_j, bw)
+
     do i=1, 12
       energy = energy + V_ex(species, nbrs(i), 1)
     end do
+
     deallocate(nbrs)
+
   end function fcc_shell1_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 2nd coordination     !
-  ! shell to the energy for the FCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 2nd-nearest
+  !>          neighbours on the fcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 2nd-nearest neighbours on the fcc
+  !>         lattice (cubic representation)
   function fcc_shell2_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1029,28 +1352,44 @@ module energetics
     ib = site_b
 
     allocate(nbrs(6))
+
     nbrs(1)  = config(ib, upup, site_j, site_k)
     nbrs(2)  = config(ib, dndn, site_j, site_k)
     nbrs(3)  = config(ib, site_i, ltlt, site_k)
     nbrs(4)  = config(ib, site_i, rtrt, site_k)
     nbrs(5)  = config(ib, site_i, site_j, fwfw)
     nbrs(6)  = config(ib, site_i, site_j, bwbw)
+
     do i=1, 6
       energy = energy + V_ex(species, nbrs(i), 2)
     end do
+
     deallocate(nbrs)
+
   end function fcc_shell2_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 3rd coordination     !
-  ! shell to the energy for the FCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 3rd-nearest
+  !>          neighbours on the fcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 3rd-nearest neighbours on the fcc
+  !>         lattice (cubic representation)
   function fcc_shell3_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1081,6 +1420,7 @@ module energetics
     ib = site_b
 
     allocate(nbrs(24))
+
     nbrs(1)   = config(ib, dndn, lt, fw)
     nbrs(2)   = config(ib, dndn, lt, bw)
     nbrs(3)   = config(ib, dndn, rt, fw)
@@ -1105,22 +1445,37 @@ module energetics
     nbrs(22)  = config(ib, dn, lt, bwbw)
     nbrs(23)  = config(ib, up, rt, bwbw)
     nbrs(24)  = config(ib, dn, rt, bwbw)
+
     do i=1, 24
       energy = energy + V_ex(species, nbrs(i), 3)
     end do
+
     deallocate(nbrs)
+
   end function fcc_shell3_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 4th coordination     !
-  ! shell to the energy for the FCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 4th-nearest
+  !>          neighbours on the fcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 4th-nearest neighbours on the fcc
+  !>         lattice (cubic representation)
   function fcc_shell4_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1144,6 +1499,7 @@ module energetics
     ib = site_b
 
     allocate(nbrs(12))
+
     nbrs(1)  = config(ib, upup, site_j, bwbw)
     nbrs(2)  = config(ib, dndn, site_j, bwbw)
     nbrs(3)  = config(ib, site_i, ltlt, bwbw)
@@ -1156,22 +1512,37 @@ module energetics
     nbrs(10) = config(ib, dndn, site_j, fwfw)
     nbrs(11) = config(ib, site_i, ltlt, fwfw)
     nbrs(12) = config(ib, site_i, rtrt, fwfw)
+
     do i=1, 12
       energy = energy + V_ex(species, nbrs(i), 4)
     end do
+
     deallocate(nbrs)
+
   end function fcc_shell4_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 5th coordination     !
-  ! shell to the energy for the FCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 5th-nearest
+  !>          neighbours on the fcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 5th-nearest neighbours on the fcc
+  !>         lattice (cubic representation)
   function fcc_shell5_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1202,6 +1573,7 @@ module energetics
     ib = site_b
 
     allocate(nbrs(24))
+
     nbrs(1)   = config(ib, up, site_j, bwbwbw)
     nbrs(2)   = config(ib, dn, site_j, bwbwbw)
     nbrs(3)   = config(ib, site_i, rt, bwbwbw)
@@ -1226,22 +1598,37 @@ module energetics
     nbrs(22)  = config(ib, dn, site_j, fwfwfw)
     nbrs(23)  = config(ib, site_i, rt, fwfwfw)
     nbrs(24)  = config(ib, site_i, lt, fwfwfw)
+
     do i=1, 24
       energy = energy + V_ex(species, nbrs(i), 5)
     end do
+
     deallocate(nbrs)
+
   end function fcc_shell5_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 6th coordination     !
-  ! shell to the energy for the FCC lattice                            !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 6th-nearest
+  !>          neighbours on the fcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 6th-nearest neighbours on the fcc
+  !>         lattice (cubic representation)
   function fcc_shell6_energy(setup, site_b, site_i, site_j, site_k, &
                              config, species)     &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1264,6 +1651,7 @@ module energetics
     ib = site_b
     
     allocate(nbrs(8))
+
     nbrs(1)   = config(ib, upup, ltlt, bwbw)
     nbrs(2)   = config(ib, dndn, ltlt, bwbw)
     nbrs(3)   = config(ib, upup, rtrt, bwbw)
@@ -1272,21 +1660,37 @@ module energetics
     nbrs(6)   = config(ib, dndn, ltlt, fwfw)
     nbrs(7)   = config(ib, upup, rtrt, fwfw)
     nbrs(8)   = config(ib, dndn, rtrt, fwfw)
+
     do i=1, 8
       energy = energy + V_ex(species, nbrs(i), 6)
     end do
+
     deallocate(nbrs)
+
   end function fcc_shell6_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 1st    !
-  ! coordination shell on the FCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 1st-nearest neighbours on the fcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 1st-nearest
+  !>         neighbours on the fcc lattice (cubic representation).
   function fcc_energy_1shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1299,15 +1703,28 @@ module energetics
     
   end function fcc_energy_1shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 2nd    !
-  ! coordination shell on the FCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 2nd-nearest neighbours on the fcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 2nd-nearest
+  !>         neighbours on the fcc lattice (cubic representation).
   function fcc_energy_2shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1321,15 +1738,28 @@ module energetics
     
   end function fcc_energy_2shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 3rd    !
-  ! coordination shell on the FCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 3rd-nearest neighbours on the fcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 3rd-nearest
+  !>         neighbours on the fcc lattice (cubic representation).
   function fcc_energy_3shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1344,15 +1774,28 @@ module energetics
     
   end function fcc_energy_3shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 4th    !
-  ! coordination shell on the FCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 4th-nearest neighbours on the fcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 4th-nearest
+  !>         neighbours on the fcc lattice (cubic representation).
   function fcc_energy_4shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1368,15 +1811,28 @@ module energetics
     
   end function fcc_energy_4shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 5th    !
-  ! coordination shell on the FCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 5th-nearest neighbours on the fcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 5th-nearest
+  !>         neighbours on the fcc lattice (cubic representation).
   function fcc_energy_5shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1393,15 +1849,28 @@ module energetics
     
   end function fcc_energy_5shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 6th    !
-  ! coordination shell on the FCC lattice.                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 6th-nearest neighbours on the fcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 6th-nearest
+  !>         neighbours on the fcc lattice (cubic representation).
   function fcc_energy_6shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1419,15 +1888,27 @@ module energetics
     
   end function fcc_energy_6shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the contribution from the 1st coordination     !
-  ! shell to the energy for the simple cubic lattice                   !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 1st-nearest
+  !>          neighbours on the simple cubic lattice
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 1st-nearest neighbours on the simple
+  !>         cubic lattice
   function simple_cubic_1shell_energy(setup, site_b, site_i, site_j, site_k, config, species) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1466,17 +1947,31 @@ module energetics
     end do
  
     deallocate(nbrs)
+
   end function simple_cubic_1shell_energy
 
-  !--------------------------------------------------------------------!
-  ! Function to compute the energy for an interaction up to the 1st    !
-  ! coordination shell on the simple cubic lattice.                    !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 1st-nearest neighbours on the simple cubic
+  !>          lattice
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 1st-nearest
+  !>         neighbours on the simple cubic lattice
   function simple_cubic_energy_1shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
+
     integer(int16), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
@@ -1489,4 +1984,4 @@ module energetics
     
   end function simple_cubic_energy_1shells
 
-end module energetics
+end module bw_hamiltonian

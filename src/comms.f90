@@ -1,10 +1,9 @@
-!----------------------------------------------------------------------!
-! comms.f90                                                            !
-!                                                                      !
-! Module for handling calls to MPI library (used for parallelisation). !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2025 !
-!----------------------------------------------------------------------!
+!> @file    comms.f90
+!>
+!> @brief   Routines associated with calls to the MPI library
+!>
+!> @author  C. D. Woodgate
+!> @date    2021-2025
 module comms
 
   use mpi
@@ -42,11 +41,12 @@ module comms
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Routine to initialise MPI                                          !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to initialise MPI
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2021-2023
+  !>
+  !> @return None
   subroutine comms_initialise()
 
     ! initialise mpi
@@ -61,11 +61,12 @@ module comms
 
   end subroutine comms_initialise
 
-  !--------------------------------------------------------------------!
-  ! Routine to put in a call to MPI_BARRIER (wait for all processes).  !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to call MPI_BARRIER---all processes wait
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2023
+  !>
+  !> @return None
   subroutine comms_wait()
 
     ! Call MPI_BARRIER
@@ -73,12 +74,16 @@ module comms
 
   end subroutine comms_wait
 
-  !--------------------------------------------------------------------!
-  ! Routine to reduce results of an (MPI) ensemble of simulations and  !
-  ! perform averaging.                                                 !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Reduces (averages) results of a parallel ensemble of 
+  !>          Metropolis Monte Carlo simulations.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2021-2023
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  setup Derived type containing Metropolis parameters
+  !>
+  !> @return None
   subroutine comms_reduce_metropolis_results(setup, metropolis)
 
     ! Input contains information about simulation
@@ -115,11 +120,15 @@ module comms
 
   end subroutine comms_reduce_metropolis_results
 
-  !--------------------------------------------------------------------!
-  ! Routine to finalise MPI and display time taken.                    !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to finalise MPI
+  !>
+  !> @details The block which is currently commented out can be used to
+  !>          display the time taken.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2021-2023
+  !>
+  !> @return None
   subroutine comms_finalise()
 
     ! stop the clock

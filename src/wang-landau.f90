@@ -861,7 +861,8 @@ module wang_landau
     real(real64) :: energy_to_ry, bin_width
 
     ! Conversion meV/atom to Rydberg
-    energy_to_ry = setup_internal%n_atoms/(eV_to_Ry*1000)
+    energy_to_ry = setup_internal%n_atoms/(Ry_to_eV*1000)
+
     ! Create energy wl_setup_internal%bins and set mpi wl_setup_internal%bins
     j = 1
     bin_width = (wl_setup_internal%energy_max - wl_setup_internal%energy_min)/real(wl_setup_internal%bins)*energy_to_ry

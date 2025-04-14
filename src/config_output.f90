@@ -51,7 +51,7 @@ module config_output
       write(6, '(f8.2,a)') temperatures(i), " K" 
     end do
 
-    energy_to_ry = setup%n_atoms/(eV_to_Ry*1000)
+    energy_to_ry = setup%n_atoms/(Ry_to_eV*1000)
 
     ! Set up the lattice
     call initial_setup(setup, config)

@@ -1,10 +1,15 @@
-!----------------------------------------------------------------------!
-! io.f90                                                               !
-!                                                                      !
-! Module containing input/output routines.                             !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2025 !
-!----------------------------------------------------------------------!
+!> @file    io.f90
+!>
+!> @brief   Assorted routines and tools for file and data i/o
+!>
+!> @details This module contains routines for reading/writing
+!>          information about a simulation (either to the screen or to
+!>          file in plain text format. Data to be stored in binary
+!>          format is written using the NetCDF library, for which the
+!>          relevant routines can be found in write_netcdf.f90
+!>
+!> @author  C. D. Woodgate
+!> @date    2020-2025
 module io
 
   use kinds
@@ -18,11 +23,19 @@ module io
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to write software version, date, and time               !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to print software version, date, and time
+  !>
+  !> @details Some ASCII-art, names of developers/contributors, and
+  !>          date/time when execution of the program started and
+  !>          finished.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2024-2025
+  !>
+  !> @param  point Character string (either 's' or 'f') telling us
+  !>               whether we are at the start or finish of simulation
+  !>
+  !> @return None
   subroutine write_info(point)
 
     character (len=1) point
@@ -62,12 +75,17 @@ module io
 
   end subroutine write_info
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to make directories for storing data                    !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to make directories for storing data
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2021-2025
+  !>
+  !> @param  point Character string (either 's' or 'f') telling us
+  !>               whether we are at the start or finish of simulation
+  !>
+  !> @return None
   subroutine make_data_directories(my_rank)
+
     integer :: my_rank
 
     ! make a directory for the grid states, diagnostics, 
@@ -75,13 +93,23 @@ module io
     if(my_rank == 0) call execute_command_line('mkdir -p grids')
     if(my_rank == 0) call execute_command_line('mkdir -p diagnostics')
     if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
+
   end subroutine make_data_directories
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to parse control file                                   !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read the input file defining the simulation
+  !>
+  !> @details As of v0.4.0, need to read this file AND a separate input
+  !>          file relevant to Metropolis, Nested Sampling, Wang-Landau
+  !>          algorithms.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @param  filename Name of file to read
+  !> @param  parameters Derived type containing simulation parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine read_control_file(filename, parameters, my_rank)
 
     character(len=*), intent(in) :: filename
@@ -267,11 +295,17 @@ module io
 
   end subroutine read_control_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to print that the input file is being parsed to screen  !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to print to screen that we are reading input
+  !>          file.
+  !>
+  !> @details Redundant as of v0.4.0.
+  !>
+  !> @todo    Delete this routine?
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @return None
   subroutine print_parse()
 
     print*, '###############################'
@@ -279,12 +313,17 @@ module io
 
   end subroutine print_parse
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to echo the input file to the screen                    !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to echo the contents of the input file to
+  !>          the screen
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @param  parameters Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine echo_control_file(parameters)
+
     type(run_params) :: parameters
     integer :: i
 
@@ -315,17 +354,30 @@ module io
 
   end subroutine echo_control_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read in exchange parameters from file                !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read the atom-atom effective pair
+  !>          interactions (EPIs) from file
+  !>
+  !> @details The file should represent the EPIs on each coordination
+  !>          shell as an sxs matrix, with a blank line between the set
+  !>          of EPIs for one coordination shell and those for the
+  !>          next. They should be given in order from nearest to
+  !>          furthest coordination shell.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine read_exchange(setup, my_rank)
+
     type(run_params) , intent(in) :: setup
     integer :: my_rank
 
     if(my_rank == 0) then
-      write(6,'(15("-"),x,"Reading atom-atom interaction parameters",x,15("-"),/)')
+      write(6,'(15("-"),x,"Reading atom-atom interaction parameters",x,&
+                15("-"),/)')
     end if
 
     V_ex = 0.0_real64
@@ -344,12 +396,20 @@ module io
 
   end subroutine read_exchange
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to parse command-line arguments and look for input file !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to parse command line arguments
+  !>
+  !> @details For routines which actually *parse* the command line
+  !>          arguments, see command_line.f90
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine parse_inputs(setup, my_rank)
+
     type(run_params) :: setup
     integer :: my_rank
     character(len=30) :: control = ' '
@@ -385,12 +445,17 @@ module io
 
   end subroutine parse_inputs
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to parse command-line arguments and look for input file !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to parse the Metropolis MC input file
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @param  metropolis Derived type containing Metropolis MC parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine parse_metropolis_inputs(metropolis, my_rank)
+
     type(metropolis_params) :: metropolis
     integer :: my_rank
     character(len=30) :: control = ' '
@@ -427,12 +492,15 @@ module io
 
   end subroutine parse_metropolis_inputs
 
-
-  !--------------------------------------------------------------------!
-  ! Subroutine to parse Metropolis MC input file                       !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to parse the Metropolis MC input file
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2025
+  !>
+  !> @param  metropolis Derived type containing Metropolis MC parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine read_metropolis_file(filename, metropolis, my_rank)
 
     character(len=*), intent(in) :: filename
@@ -557,12 +625,17 @@ module io
 
   end subroutine read_metropolis_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to echo the Metropolis input file to the screen         !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to echo the contents of the Metropolis input
+  !>          file to the screen
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2025
+  !>
+  !> @param  metropolis Derived type containing Metroplis parameters
+  !>
+  !> @return None
   subroutine echo_metropolis_file(metropolis)
+
     type(metropolis_params) :: metropolis
 
     print*, ' Using mode =          ', metropolis%mode
@@ -583,14 +656,17 @@ module io
 
   !> @brief   Subroutine to read and parse nested sampling control file
   !>
-  !> @param  filename Name of the nested sampling input file (expected to be "ns_input.txt")    
-  !> @param  parameters Derived type of ns_params, containing nested sampling parameters
-  !>
-  !> @return None
-  !>
   !> @author  L. B. Partay
   !> @date    2024
+  !>
+  !> @param  filename Name of the nested sampling input file (expected
+  !>                  to be "ns_input.txt")
+  !> @param  parameters Derived type of ns_params, containing nested
+  !>                    sampling parameters
+  !>
+  !> @return None
   subroutine read_ns_file(filename, parameters)
+
     character(len=*), intent(in) :: filename
     logical, dimension(8) :: check
     type(ns_params) :: parameters
@@ -657,12 +733,19 @@ module io
 
   end subroutine read_ns_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read and parse nested tmmc control file              !
-  !                                                                    !
-  ! H. Naguszewski, Warwick                                       2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read and parse transition matrix Monte Carlo
+  !>          (TMMC) input file
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024
+  !>
+  !> @param  filename Name of the TMMC input file
+  !> @param  parameters Derived type of tmmc_params, containing TMMC
+  !>                    parameters
+  !>
+  !> @return None
   subroutine read_tmmc_file(filename, parameters, my_rank)
+
     integer :: my_rank
     character(len=*), intent(in) :: filename
     logical, dimension(8) :: check
@@ -771,12 +854,19 @@ module io
 
   end subroutine read_tmmc_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read and parse nested wang landau control file       !
-  !                                                                    !
-  ! H. Naguszewski, Warwick                                       2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read and parse Wang-Landau sampling input
+  !>          file
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024
+  !>
+  !> @param  filename Name of the Wang-Landau input file
+  !> @param  parameters Derived type of wl_params, containing
+  !>                    Wang-Landau parameters
+  !>
+  !> @return None
   subroutine read_wl_file(filename, parameters, my_rank)
+
     integer :: my_rank
     character(len=*), intent(in) :: filename
     logical, dimension(10) :: check
@@ -898,12 +988,21 @@ module io
 
   end subroutine read_wl_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read and parse nested wang landau control file       !
-  !                                                                    !
-  ! H. Naguszewski, Warwick                                       2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read and parse energy spectrum input file
+  !>
+  !> @details The energy spectrum of a given system to be simulated is
+  !>          required before Wang-Landau sampling can be performed.
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024
+  !>
+  !> @param  filename Name of the energy spectrum input file
+  !> @param  parameters Derived type of es_params, containing
+  !>                    energy spectrum parameters
+  !>
+  !> @return None
   subroutine read_es_file(filename, parameters, my_rank)
+
     integer :: my_rank
     character(len=*), intent(in) :: filename
     logical, dimension(1) :: check
@@ -969,4 +1068,5 @@ module io
     end if
 
   end subroutine read_es_file
+
 end module io
