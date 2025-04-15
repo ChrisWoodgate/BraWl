@@ -77,6 +77,7 @@ Most of the options specified in the input file are fairly self-explanatory. The
 - Christopher D. Woodgate
 
 ## Contributors
+- Heather Ratcliffe
 - David Quigley
 
 ## Contributing
