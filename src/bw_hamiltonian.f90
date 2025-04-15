@@ -17,6 +17,26 @@ module bw_hamiltonian
   
   implicit none
 
+  private
+
+  ! General routines
+  public :: total_energy, pair_energy
+
+  ! FCC routines
+  public :: fcc_energy_1shells, fcc_energy_2shells
+  public :: fcc_energy_3shells, fcc_energy_4shells
+  public :: fcc_energy_5shells, fcc_energy_6shells
+
+  ! BCC routines
+  public :: bcc_energy_1shells, bcc_energy_2shells
+  public :: bcc_energy_3shells, bcc_energy_4shells
+  public :: bcc_energy_5shells, bcc_energy_6shells
+  public :: bcc_energy_7shells, bcc_energy_8shells
+  public :: bcc_energy_9shells, bcc_energy_10shells
+
+  ! Simple cubic routines
+  public :: simple_cubic_energy_1shells
+
   contains
 
   !> @brief   Function to compute the total energy of a simulation
