@@ -108,7 +108,7 @@ program main
 
     ! Wang Landau algorithm
     call read_wl_file("wl_input.txt", wl_setup, my_rank)
-    call wl_main(setup, wl_setup, my_rank)
+    call wl_main(setup, wl_setup)
 
   else if (setup%mode == 306) then
 
