@@ -10,6 +10,7 @@ module random_site
   use kinds
   use shared_data
   use c_functions
+  use derived_types
   
   implicit none
 

@@ -9,6 +9,7 @@ module comms
   use mpi
   use kinds
   use shared_data
+  use derived_types
 
   implicit none
 

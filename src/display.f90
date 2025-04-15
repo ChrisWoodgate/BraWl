@@ -10,6 +10,7 @@ module display
   use kinds
   use shared_data
   use constants
+  use derived_types
   
   implicit none
 

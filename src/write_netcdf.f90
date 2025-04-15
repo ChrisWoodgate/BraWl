@@ -10,6 +10,7 @@ module write_netcdf
   use kinds
   use netcdf
   use shared_data
+  use derived_types
 
   implicit none
 

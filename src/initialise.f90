@@ -18,6 +18,7 @@ module initialise
   use bw_hamiltonian
   use random_site
   use comms
+  use iso_c_binding
   
   implicit none
 
