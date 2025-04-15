@@ -1,9 +1,11 @@
-!----------------------------------------------------------------------!
-! Transition Matrix Monte Carlo Module                                 !
-!                                                                      !
-! H. Naguszewski, Warwick                                         2024 !
-!----------------------------------------------------------------------!
-
+!> @file    tmmc.f90                              
+!>
+!> @brief   Assorted routines and tools to perform Transition Matric Monte Carlo (TMMC)
+!>
+!> @details WIP. DO NOT USE. This module does not function correctly.                                                            
+!>
+!> @author  H. J. Naguszewski
+!> @date    2024 
 module tmmc
 
   use initialise
