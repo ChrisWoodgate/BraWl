@@ -9,9 +9,14 @@
 !> @author  C. D. Woodgate
 !> @date    2019-2025
 module c_functions
+
   use iso_c_binding
 
   implicit none
+
+  private
+
+  public :: genrand, f90_init_genrand
 
   interface
     ! Mersenne Twister PNRG
