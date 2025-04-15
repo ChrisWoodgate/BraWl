@@ -1,25 +1,33 @@
-  !> @brief functions to parse command line arguments
-  !>
-  !> module to read command line arguments to a program
-  !> we assume they are of the form name=value (spaces around '=' are ignored) or are a flag
-  !> note: 'val=""' differs from 'val' - the latter is a flag, the former an empty string
-  !> value can be extracted as a string, integer, a long-integer
-  !> or a single or double-precision real, according to the
-  !> type passed in.
-  !> argument names are limited to 20 chars, and values
-  !> to 30 chars as read.
-  !>
-  !> note that the only functions you should call from outside are
-  !> get_arg and get_arg_value for 'key=value' arguments
-  !> arg_present to check presence and state (flag or valued)
-  !> arg_count and dump_names for general inquiries
-  !> note: flags can also be read by name as a logical: true if present, false if not
-  !> note: total count may not match command_argument_count due to
-  !> parsing spaces out of key( )=()value syntax!
-
-  !> @author h ratcliffe, senior research software engineer, university of warwick
-  !> @date 1/11/24
-
+!> @file    command_line.f90
+!>
+!> @brief   Functions to parse command line arguments
+!>
+!> @details Module to read command line arguments to a program. We
+!>          assume they are of the form name=value (spaces around '='
+!>          are ignored) or are a flag.
+!>
+!>          Note: 'val=""' differs from 'val' - the latter is a flag,
+!>                the former an empty string. Value can be extracted as
+!>                a string, integer, a long-integer or a single or
+!>                double-precision real, according to the type passed
+!>                in. Argument names are limited to 20 chars, and values
+!>                to 30 chars as read.
+!>
+!>          Note: The only functions you should call from outside are:
+!>                1. get_arg and get_arg_value for 'key=value' arguments
+!>                2. arg_present to check presence and state (flag or
+!>                   valued)
+!>                3. arg_count and dump_names for general inquiries
+!>
+!>          Note: Flags can also be read by name as a logical: TRUE if
+!>                present, FALSE if not.
+!>
+!>          Note: Total count may not match command_argument_count due
+!>                to parsing spaces out of key( )=()value syntax!
+!>
+!> @author H. Ratcliffe, Senior Research Software Engineer,
+!>                       University of Warwick
+!> @date   2024
 module command_line
 
   use kinds
@@ -47,14 +55,21 @@ module command_line
 
   !> @brief read arguments by name or number
   !>
-  !> get arguments. if the first parameter is a string,
-  !> this is interpreted as the name of the parameter, if
-  !> an integer, it is the position of the argument in the input list.
-  !> @param name name to look up (supply this or num)
-  !> @param num arg. number to look up (supply this or name)
-  !> @param val value to read into, with type matching that to parse as
-  !> @param exists whether the name was found
-  !> @return true if the name is found and parsed, false otherwise
+  !> @details Get arguments. if the first parameter is a string,
+  !>          this is interpreted as the name of the parameter, if
+  !>          an integer, it is the position of the argument in the
+  !>          input list.
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
+  !> @param name Name to look up (supply this or num)
+  !> @param num Arg. number to look up (supply this or name)
+  !> @param val Value to read into, with type matching that to parse as
+  !> @param exists Whether the name was found
+  !>
+  !> @return True if the name is found and parsed, false otherwise
   interface get_arg
     module procedure get_arg_num_logical, get_arg_name_logical
     module procedure get_arg_num_int, get_arg_name_int
@@ -73,12 +88,16 @@ module command_line
 
   contains
 
-  !> @brief parse out command line args
+  !> @brief Parse out command line args
   !>
-  !> this function can be called multiple times
-  !> and will freshly parse all arguments each time
-  !> we assume these are entered as 'name=value'. if there is
-  !> no '=' sign, we set an empty value
+  !> @details This function can be called multiple times
+  !>          and will freshly parse all arguments each time
+  !>          we assume these are entered as 'name=value'. If there is
+  !>          no '=' sign, we set an empty value
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
   subroutine parse_args()
 
     ! strictly we can't be sure any max_string_len is enough
@@ -217,9 +236,15 @@ module command_line
 !------------------------------------------------------------------
 
   !> @brief read by number for logical values
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param num argument number to read
   !> @param val value to read into
   !> @param exists whether the name was found
+  !>
   !> @return true if the name is found and parsed, false otherwise
   function get_arg_num_logical(num, val, exists)
 
@@ -249,12 +274,19 @@ module command_line
 
   end function get_arg_num_logical
 
-  !> @brief read by name for logical values
-  !> note : a flag (name with no '=value' part) will parse as
-  !> .true. if present, and .false. if not
-  !> @param name argument name to look up
-  !> @param val value to read into
-  !> @param exists whether the name was found
+  !> @brief   Read by name for logical values
+  !>
+  !> @details Note : a flag (name with no '=value' part) will parse as
+  !>          .true. if present, and .false. if not
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
+  !> @param name Argument name to look up
+  !> @param val Value to read into
+  !> @param exists Whether the name was found
+  !>
   !> @return true if the name is found and parsed, false otherwise
   function get_arg_name_logical(name, val, exists)
 
@@ -295,9 +327,15 @@ module command_line
 
 
   !> @brief read by number for double precision values
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param num argument number to read
   !> @param val value to read into
   !> @param exists whether the name was found
+  !>
   !> @return true if the name is found and parsed, false otherwise
   function get_arg_num_dbl(num, val, exists)
 
@@ -328,9 +366,15 @@ module command_line
   end function get_arg_num_dbl
 
   !> @brief read by name for double precision values
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param name argument name to look up
   !> @param val value to read into
   !> @param exists whether the name was found
+  !>
   !> @return true if the name is found and parsed, false otherwise
   function get_arg_name_dbl(name, val, exists)
 
@@ -366,11 +410,16 @@ module command_line
   ! command line parsing should be avoided in performance critical code
   ! so extra overhead from double call and downcast is not a problem
 
-
-  !> @brief read by number for single precision (float) values
+  !> @brief Read by number for single precision (float) values
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param num argument number to read
   !> @param val value to read into
   !> @param exists whether the name was found
+  !>
   !> @return true if the name is found and parsed, false otherwise
   function get_arg_num_float(num, val, exists)
     logical :: get_arg_num_float
@@ -391,9 +440,15 @@ module command_line
   end function
 
   !> @brief read by name for single precision (float) values
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param name argument name to look up
   !> @param val value to read into
   !> @param exists whether the name was found
+  !>
   !> @return true if the name is found and parsed, false otherwise
   function get_arg_name_float(name, val, exists)
     logical :: get_arg_name_float
@@ -415,6 +470,11 @@ module command_line
 
 
   !> @brief read by number for integer values
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param num argument number to read
   !> @param val value to read into
   !> @param exists whether the name was found
@@ -449,6 +509,11 @@ module command_line
   end function get_arg_num_int
 
   !> @brief read by name for integer values
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param name argument name to look up
   !> @param val value to read into
   !> @param exists whether the name was found
@@ -485,6 +550,11 @@ module command_line
   end function get_arg_name_int
 
   !> @brief read by number for long integer values
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param num argument number to read
   !> @param val value to read into
   !> @param exists whether the name was found
@@ -519,6 +589,11 @@ module command_line
   end function get_arg_num_long
 
   !> @brief read by name for long integer values
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param name argument name to look up
   !> @param val value to read into
   !> @param exists whether the name was found
@@ -555,6 +630,11 @@ module command_line
   end function get_arg_name_long
 
   !> @brief read by number for string/character values
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param num argument number to read
   !> @param val value to read into
   !> @param exists whether the name was found - this is already contained in
@@ -589,12 +669,19 @@ module command_line
   end function get_arg_num_str
 
   !> @brief read by name for string values
-  !> note: if the string passed is shorter than the value, it will be truncated
-  !> if the length is not known use get_arg_value to get an allocatable string
+  !>
+  !> @details Note: if the string passed is shorter than the value, it will be truncated
+  !>                if the length is not known use get_arg_value to get an allocatable string
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param name argument name to look up
   !> @param val value to read into
   !> @param exists whether the name was found - this is already contained in
   !> the return value, but is given for consistency with the other members
+  !>
   !> @return true if the name is found and parsed, false otherwise
   function get_arg_name_str(name, val, exists)
 
@@ -625,11 +712,17 @@ module command_line
 
   end function get_arg_name_str
 
-
 !--------------------------------------------------------------------
+
   !> @brief check presence of an argument by name
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param name argument name to look up
   !> @param has_value whether this argument has a defined value (also .false. if not present)
+  !>
   !> @return true if present, false if not
   function arg_present(name, has_value) result(found)
 
@@ -654,6 +747,11 @@ module command_line
 
   !> @brief get all the argument names (by copy)
   !> order will _probably_ match input order, but this is not guaranteed
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @return array of str_wrapper types containing all argument names
   function dump_names()
     type(str_wrapper), dimension(:), allocatable :: dump_names
@@ -669,8 +767,14 @@ module command_line
 
   !> @brief lookup an argument by name and return the value as an (allocatable) string
   !> if the name is not present, an empty string is returned
+  !>
+  !> @author H. Ratcliffe
+  !>
+  !> @date   2024
+  !>
   !> @param name argument name to look up
   !> @param exists whether the name was found
+  !>
   !> @return the string value associated with the given name
   function get_arg_value(name, exists)
 
@@ -699,6 +803,5 @@ module command_line
     end if
 
   end function get_arg_value
-
 
 end module command_line
