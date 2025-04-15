@@ -457,9 +457,6 @@ module io
     integer :: my_rank
     character(len=30) :: control = ' '
 
-    ! Parse the command line arguments
-    call parse_args()
-
     ! Parse the name of the input file
     if(my_rank == 0) then
       write(6,'(/,17("-"),x,"Parsing name of Metropolis input file",x,16("-"),/)')
