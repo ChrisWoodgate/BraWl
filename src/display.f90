@@ -9,6 +9,7 @@ module display
 
   use kinds
   use shared_data
+  use constants
   
   implicit none
 
