@@ -24,7 +24,7 @@ module wang_landau
   integer :: mpi_processes
   real(real64) :: start, end, time_max, time_min, test_time_1, test_time_2
   integer :: mpi_bins, mpi_start_idx, mpi_end_idx, mpi_index, mpi_start_idx_buffer
-  integer :: mpi_end_idx_buffer, beta_index, i_sweeps
+  integer :: mpi_end_idx_buffer, i_sweeps
   real(real64) :: scale_factor, scale_count, wl_logdos_min, bin_overlap, beta_diff, beta_original, beta_merge
   real(real64), allocatable :: mpi_bin_edges(:), mpi_wl_hist(:), wl_logdos_buffer(:), wl_logdos_combine(:)
   real(real64), allocatable :: rank_time(:), rank_time_buffer(:,:)
@@ -1048,7 +1048,7 @@ module wang_landau
   subroutine dos_combine(wl_logdos)
     real(real64), intent(inout) :: wl_logdos(:)
     ! Internal
-    integer :: i, j
+    integer :: i, j, beta_index
     real(real64) :: beta_original, beta_merge, beta_diff, scale_factor
     integer :: mpi_start_idx, mpi_end_idx
 
