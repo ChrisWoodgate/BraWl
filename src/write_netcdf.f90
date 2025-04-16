@@ -64,7 +64,7 @@ module write_netcdf
 
     ! Number of dimensions of my grid data
     integer, dimension(rho_ndims) :: rho_sizes, rho_dim_ids
-    integer :: r_size, r_dim_id, T_size, T_dim_id, U_size, U_dim_id
+    integer :: r_size, r_dim_id
 
     ! Names of my dimensions
     character(len=1), dimension(rho_ndims) :: rho_dims=(/"i", "j", "r"/)
