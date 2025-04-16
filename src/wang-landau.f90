@@ -24,13 +24,11 @@ module wang_landau
   integer :: mpi_processes
   real(real64) :: start, end, time_max, time_min, test_time_1, test_time_2
   integer :: mpi_bins, mpi_start_idx, mpi_end_idx, mpi_index, mpi_start_idx_buffer
-  integer :: mpi_end_idx_buffer, beta_index, i_sweeps
+  integer :: mpi_end_idx_buffer, i_sweeps
   real(real64) :: scale_factor, scale_count, wl_logdos_min, bin_overlap, beta_diff, beta_original, beta_merge
   real(real64), allocatable :: mpi_bin_edges(:), mpi_wl_hist(:), wl_logdos_buffer(:), wl_logdos_combine(:)
   real(real64), allocatable :: rank_time(:), rank_time_buffer(:,:)
-
-  logical :: flag
-  
+ 
   ! Window variables
   integer, allocatable :: window_intervals(:,:), window_rank_index(:,:)
   integer, allocatable :: window_indices(:, :)
@@ -61,10 +59,7 @@ module wang_landau
   logical, allocatable :: radial_record_bool(:)
   integer :: radial_mc_steps
   real(real64) :: radial_time
-  
-  ! Rank of this processor
-  integer :: ierror, request
-  
+   
   ! Loop integers and error handling variable
   integer :: i, j
   integer :: iter, num_iter
@@ -100,7 +95,7 @@ module wang_landau
     wl_setup_internal = wl_setup
 
     ! Check if number of MPI processes is divisible by number of windows
-    call MPI_COMM_SIZE(MPI_COMM_WORLD, mpi_processes, ierror)
+    call MPI_COMM_SIZE(MPI_COMM_WORLD, mpi_processes, ierr)
     bins = wl_setup_internal%bins
     if (MOD(mpi_processes, wl_setup_internal%num_windows) /= 0) then
       if (my_rank == 0) then
@@ -108,7 +103,7 @@ module wang_landau
         write (6, '(5("~"),x,"Error: Number of MPI processes not divisible by num_windows",x,6("~"))')
         write (6, '(72("~"))')
       end if
-      call MPI_FINALIZE(ierror)
+      call MPI_FINALIZE(ierr)
       call EXIT(0)
     end if
 
@@ -199,7 +194,7 @@ module wang_landau
         converged = 1
       end if
 
-      call MPI_ALLREDUCE(converged, converged_sum, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierror)
+      call MPI_ALLREDUCE(converged, converged_sum, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierr)
 
       if (converged_sum == mpi_processes) then
         i = 0
@@ -278,19 +273,19 @@ module wang_landau
     rank_time = 0.0_real64
     rank_time(mpi_index) = end - start - radial_time
     call MPI_ALLREDUCE(end - start, time_max, 1, MPI_DOUBLE_PRECISION, &
-    MPI_MAX, MPI_COMM_WORLD, ierror)
+    MPI_MAX, MPI_COMM_WORLD, ierr)
     call MPI_REDUCE(end - start, time_min, 1, MPI_DOUBLE_PRECISION, &
-    MPI_MIN, 0, MPI_COMM_WORLD, ierror)
+    MPI_MIN, 0, MPI_COMM_WORLD, ierr)
     call MPI_REDUCE(rank_time/num_walkers, rank_time_buffer(:,1), wl_setup_internal%num_windows, MPI_DOUBLE_PRECISION, &
-    MPI_SUM, 0, MPI_COMM_WORLD, ierror)
+    MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     call MPI_REDUCE(rank_time, rank_time_buffer(:,3), wl_setup_internal%num_windows, MPI_DOUBLE_PRECISION, &
-    MPI_MAX, 0, MPI_COMM_WORLD, ierror)
+    MPI_MAX, 0, MPI_COMM_WORLD, ierr)
     rank_time = time_max
     rank_time(mpi_index) = end - start - radial_time
     radial_time = 0.0_real64
     call MPI_REDUCE(rank_time, rank_time_buffer(:,2), wl_setup_internal%num_windows, MPI_DOUBLE_PRECISION, &
-    MPI_MIN, 0, MPI_COMM_WORLD, ierror)
-    call MPI_BCAST(rank_time_buffer, wl_setup_internal%num_windows*3, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
+    MPI_MIN, 0, MPI_COMM_WORLD, ierr)
+    call MPI_BCAST(rank_time_buffer, wl_setup_internal%num_windows*3, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
   end subroutine reduce_time
 
   !> @brief   Saving radial density as a function of energy
@@ -313,7 +308,7 @@ module wang_landau
     
     if (.not. rho_saved) then
       call MPI_REDUCE(radial_record, radial_record_buffer, wl_setup_internal%bins, MPI_INT, &
-      MPI_SUM, 0, MPI_COMM_WORLD, ierror)
+      MPI_SUM, 0, MPI_COMM_WORLD, ierr)
       if (my_rank == 0) then
         radial_min = 0
         do i=1,wl_setup_internal%bins
@@ -327,14 +322,14 @@ module wang_landau
         radial_min = radial_min/REAL(wl_setup_internal%radial_samples*wl_setup_internal%bins)
       end if
 
-      call MPI_BCAST(radial_min, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
-      call MPI_BCAST(radial_record_bool, wl_setup_internal%bins, MPI_INTEGER, 0, MPI_COMM_WORLD, ierror)
+      call MPI_BCAST(radial_min, 1, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+      call MPI_BCAST(radial_record_bool, wl_setup_internal%bins, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
 
       if (radial_min >= 1) then
         rho_saved = .True.
         call MPI_REDUCE(rho_of_E, rho_of_E_buffer, &
         setup_internal%n_species*setup_internal%n_species*setup_internal%wc_range*wl_setup_internal%bins, &
-        MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierror)
+        MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
         if (my_rank == 0) then 
             call print_centered_message("Radial Densities Saved", "=")
             write (*, *)
@@ -363,9 +358,9 @@ module wang_landau
     real(real64), allocatable, intent(in) :: bin_edges(:), wl_logdos(:), wl_hist(:)
     if (my_rank == 0) then
       ! Write output files
-      call ncdf_writer_1d("wl_dos_bins.dat", ierror, bin_edges)
-      call ncdf_writer_1d("wl_dos.dat", ierror, wl_logdos)
-      call ncdf_writer_1d("wl_hist.dat", ierror, wl_hist)
+      call ncdf_writer_1d("wl_dos_bins.dat", ierr, bin_edges)
+      call ncdf_writer_1d("wl_dos.dat", ierr, wl_logdos)
+      call ncdf_writer_1d("wl_hist.dat", ierr, wl_hist)
     end if
   end subroutine save_wl_data
 
@@ -388,10 +383,10 @@ module wang_landau
       lb_avg_time(iter, :) = rank_time_buffer(:,1)
       lb_max_time(iter, :) = rank_time_buffer(:,3)
       window_time(iter) = MAXVAL(rank_time_buffer(:,3))
-      call ncdf_writer_2d("wl_lb_bins.dat", ierror, lb_bins)
-      call ncdf_writer_2d("wl_lb_avg_time.dat", ierror, lb_avg_time)
-      call ncdf_writer_2d("wl_lb_max_time.dat", ierror, lb_max_time)
-      call ncdf_writer_1d("wl_window_time.dat", ierror, window_time)
+      call ncdf_writer_2d("wl_lb_bins.dat", ierr, lb_bins)
+      call ncdf_writer_2d("wl_lb_avg_time.dat", ierr, lb_avg_time)
+      call ncdf_writer_2d("wl_lb_max_time.dat", ierr, lb_max_time)
+      call ncdf_writer_1d("wl_window_time.dat", ierr, window_time)
     end if
   end subroutine save_load_balance_data
 
@@ -577,7 +572,7 @@ module wang_landau
     real(real64) :: beta, beta_end, beta_start, weight, min_e, max_e
     integer(int16) :: site1, site2
     logical :: stop_enter_energy_window, flag
-    integer :: rank, request, ierror, i_steps, i_sweeps, sweeps
+    integer :: rank, request, ierr, i_steps, i_sweeps, sweeps
 
     stop_enter_energy_window = .False.
     flag = .False.
@@ -603,7 +598,7 @@ module wang_landau
     end if
 
     ! Non-blocking MPI receive
-    call MPI_IRECV(stop_enter_energy_window, 1, MPI_LOGICAL, MPI_ANY_SOURCE, 10000, MPI_COMM_WORLD, request, ierror)
+    call MPI_IRECV(stop_enter_energy_window, 1, MPI_LOGICAL, MPI_ANY_SOURCE, 10000, MPI_COMM_WORLD, request, ierr)
 
     i_steps = 0
     i_sweeps = 0
@@ -618,12 +613,12 @@ module wang_landau
       end if
 
       ! Check if MPI message received
-      call MPI_TEST(request, flag, MPI_STATUS_IGNORE, ierror)
+      call MPI_TEST(request, flag, MPI_STATUS_IGNORE, ierr)
 
       ! Stop burn if other rank in window is burnt in
       ! or if burnt in send configuration to rest of window
       if (flag .eqv. .True.) then
-        call MPI_RECV(config, SIZE(config), MPI_SHORT, MPI_ANY_SOURCE, 10001, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror) ! Check if you can put an array of accepted values in the source variable
+        call MPI_RECV(config, SIZE(config), MPI_SHORT, MPI_ANY_SOURCE, 10001, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr) ! Check if you can put an array of accepted values in the source variable
         exit
       else if (e_unswapped < max_e-condition .and. e_unswapped > min_e+condition) then
         e_unswapped = setup_internal%full_energy(config)
@@ -633,12 +628,12 @@ module wang_landau
         end if
         if (flag .eqv. .False.) then
           stop_enter_energy_window = .True.
-          call MPI_CANCEL(request, ierror)
-          call MPI_REQUEST_FREE(request, ierror)
+          call MPI_CANCEL(request, ierr)
+          call MPI_REQUEST_FREE(request, ierr)
           do rank=window_rank_index(mpi_index, 1), window_rank_index(mpi_index, 2)
             if (rank /= my_rank) then
-              call MPI_ISEND(stop_enter_energy_window, 1, MPI_LOGICAL, rank, 10000, MPI_COMM_WORLD, request, ierror)
-              call MPI_ISEND(config, SIZE(config), MPI_SHORT, rank, 10001, MPI_COMM_WORLD, request, ierror)
+              call MPI_ISEND(stop_enter_energy_window, 1, MPI_LOGICAL, rank, 10000, MPI_COMM_WORLD, request, ierr)
+              call MPI_ISEND(config, SIZE(config), MPI_SHORT, rank, 10001, MPI_COMM_WORLD, request, ierr)
             end if
           end do
         end if
@@ -707,7 +702,7 @@ module wang_landau
         pre_sampled(mpi_index) = 1
       end if
       call MPI_ALLREDUCE(pre_sampled, pre_sampled_buffer, wl_setup_internal%num_windows, &
-      MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ierror)
+      MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ierr)
       if (pre_sampled_buffer(mpi_index) == 1) then
         if (pre_sampled_state == 0) then
           end = mpi_wtime() - radial_time
@@ -1010,13 +1005,13 @@ module wang_landau
     do i = 1, wl_setup_internal%num_windows
       if (mpi_index == i) then
         if (my_rank /= (i - 1)*num_walkers) then
-          call MPI_Send(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, (i - 1)*num_walkers, i, MPI_COMM_WORLD, ierror)
+          call MPI_Send(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, (i - 1)*num_walkers, i, MPI_COMM_WORLD, ierr)
           !print*, my_rank, "send", (i - 1)*num_walkers
         end if
         if (my_rank == (i - 1)*num_walkers) then
           do j = 1, num_walkers - 1
             call MPI_Recv(wl_logdos_buffer, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, &
-            (i - 1)*num_walkers + j, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+            (i - 1)*num_walkers + j, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
             !print*, my_rank, "recv", (i - 1)*num_walkers + j
             wl_logdos = wl_logdos + wl_logdos_buffer
           end do
@@ -1025,12 +1020,12 @@ module wang_landau
           wl_logdos = wl_logdos/num_walkers
           do j = 1, num_walkers - 1
             call MPI_Send(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, (i - 1)*num_walkers + j, i, MPI_COMM_WORLD, &
-                          ierror)
+                          ierr)
             !print*, my_rank, "send", (i - 1)*num_walkers + j
           end do
         else
           call MPI_Recv(wl_logdos_buffer, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, (i - 1)*num_walkers, i, MPI_COMM_WORLD, &
-                        MPI_STATUS_IGNORE, ierror)
+                        MPI_STATUS_IGNORE, ierr)
           wl_logdos = wl_logdos_buffer
           !print*, my_rank, "recv", (i - 1)*num_walkers
         end if
@@ -1053,7 +1048,7 @@ module wang_landau
   subroutine dos_combine(wl_logdos)
     real(real64), intent(inout) :: wl_logdos(:)
     ! Internal
-    integer :: i, j
+    integer :: i, j, beta_index
     real(real64) :: beta_original, beta_merge, beta_diff, scale_factor
     integer :: mpi_start_idx, mpi_end_idx
 
@@ -1063,15 +1058,15 @@ module wang_landau
 
     do i = 2, wl_setup_internal%num_windows
       if (my_rank == window_rank_index(i,1)) then
-        call MPI_Send(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, 0, 0, MPI_COMM_WORLD, ierror)
-        call MPI_Send(window_indices(mpi_index,1), 1, MPI_INT, 0, 1, MPI_COMM_WORLD, ierror)
-        call MPI_Send(window_indices(mpi_index,2), 1, MPI_INT, 0, 2, MPI_COMM_WORLD, ierror)
+        call MPI_Send(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, 0, 0, MPI_COMM_WORLD, ierr)
+        call MPI_Send(window_indices(mpi_index,1), 1, MPI_INT, 0, 1, MPI_COMM_WORLD, ierr)
+        call MPI_Send(window_indices(mpi_index,2), 1, MPI_INT, 0, 2, MPI_COMM_WORLD, ierr)
       end if
       if (my_rank == 0) then
         call MPI_Recv(wl_logdos_buffer, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, (i - 1)*num_walkers, 0, MPI_COMM_WORLD, &
-          MPI_STATUS_IGNORE, ierror)
-        call MPI_Recv(mpi_start_idx, 1, MPI_INT, (i - 1)*num_walkers, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
-        call MPI_Recv(mpi_end_idx, 1, MPI_INT, (i - 1)*num_walkers, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+          MPI_STATUS_IGNORE, ierr)
+        call MPI_Recv(mpi_start_idx, 1, MPI_INT, (i - 1)*num_walkers, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+        call MPI_Recv(mpi_end_idx, 1, MPI_INT, (i - 1)*num_walkers, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         scale_factor = 0.0_real64
         beta_diff = HUGE(beta_diff)
         do j = 0,  window_indices(i-1, 2) - window_indices(i, 1) - 1
@@ -1092,7 +1087,7 @@ module wang_landau
     if (my_rank == 0) then
       wl_logdos = wl_logdos_combine
     end if
-    call MPI_BCAST(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierror)
+    call MPI_BCAST(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
   end subroutine dos_combine
 
   !> @brief   Performs window size optimisation
@@ -1114,7 +1109,7 @@ module wang_landau
     integer, intent(in) :: iter
 
     ! Internal
-    integer :: i, j, ierror, min_bins
+    integer :: i, j, ierr, min_bins
     real(real64) :: diffusion(wl_setup_internal%num_windows), diffusion_merge(wl_setup_internal%num_windows), factor, scaling
     integer :: bins(wl_setup_internal%num_windows)
     integer :: bins_max_indices(wl_setup_internal%num_windows)
@@ -1170,7 +1165,7 @@ module wang_landau
         window_intervals(wl_setup_internal%num_windows, 2) = wl_setup_internal%bins
       end if
 
-      call MPI_BCAST(window_intervals, wl_setup_internal%num_windows*2, MPI_INT, 0, MPI_COMM_WORLD, ierror)
+      call MPI_BCAST(window_intervals, wl_setup_internal%num_windows*2, MPI_INT, 0, MPI_COMM_WORLD, ierr)
 
       ! Populate MPI arrays and indlude MPI window overlap
       call mpi_arrays(window_intervals, window_indices, mpi_bin_edges, mpi_wl_hist, mpi_bins)
@@ -1254,7 +1249,7 @@ module wang_landau
   ! Declare local variables
   integer, dimension(num_walkers, 2) :: overlap_lower, overlap_upper
   integer, dimension(num_walkers, 2) :: overlap_exchange
-  integer :: i, j, k, exchange_index, ierror
+  integer :: i, j, k, exchange_index, ierr
   integer :: exchange_count, ibin, jbin
   logical :: accept
   integer :: overlap_loc, request
@@ -1283,7 +1278,7 @@ module wang_landau
   overlap_mpi(my_rank+1, 2) = overlap_loc
  
   ! Reduce to find max overlap
-  call MPI_REDUCE(overlap_mpi, overlap_mpi_buffer, mpi_processes*2, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD, ierror)
+  call MPI_REDUCE(overlap_mpi, overlap_mpi_buffer, mpi_processes*2, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD, ierr)
   overlap_mpi = overlap_mpi_buffer
 
   ! Exchange loop
@@ -1320,28 +1315,28 @@ module wang_landau
     end if
 
     ! Broadcast exchange data
-    call MPI_BCAST(overlap_exchange, num_walkers*2, MPI_INT, 0, MPI_COMM_WORLD, ierror)
+    call MPI_BCAST(overlap_exchange, num_walkers*2, MPI_INT, 0, MPI_COMM_WORLD, ierr)
 
     ! MPI SEND RECV calls for replica exchange
     do j=1, COUNT(overlap_exchange(:,1) > -1)
       call comms_wait()
       if (my_rank == overlap_exchange(j,1)) then
-        call MPI_RECV(e_swapped, 1, MPI_DOUBLE_PRECISION, overlap_exchange(j,2), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+        call MPI_RECV(e_swapped, 1, MPI_DOUBLE_PRECISION, overlap_exchange(j,2), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         jbin = bin_index(e_swapped, bin_edges, wl_setup_internal%bins)
         if (genrand() .lt. exp((wl_logdos(ibin) - wl_logdos(jbin)))) then
           accept = .True.
-          call MPI_SEND(accept, 1, MPI_INT, overlap_exchange(j,2), 1, MPI_COMM_WORLD, ierror)
-          call MPI_ISEND(config, SIZE(config), MPI_SHORT, overlap_exchange(j,2), 2, MPI_COMM_WORLD, request, ierror)
-          call MPI_RECV(config, SIZE(config), MPI_SHORT, overlap_exchange(j,2), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+          call MPI_SEND(accept, 1, MPI_INT, overlap_exchange(j,2), 1, MPI_COMM_WORLD, ierr)
+          call MPI_ISEND(config, SIZE(config), MPI_SHORT, overlap_exchange(j,2), 2, MPI_COMM_WORLD, request, ierr)
+          call MPI_RECV(config, SIZE(config), MPI_SHORT, overlap_exchange(j,2), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         else
-          call MPI_SEND(accept, 1, MPI_INT, overlap_exchange(j,2), 1, MPI_COMM_WORLD, ierror)
+          call MPI_SEND(accept, 1, MPI_INT, overlap_exchange(j,2), 1, MPI_COMM_WORLD, ierr)
         end if
       elseif (my_rank == overlap_exchange(j,2)) then
-        call MPI_SEND(e_unswapped, 1, MPI_DOUBLE_PRECISION, overlap_exchange(j,1), 0, MPI_COMM_WORLD, ierror)
-        call MPI_RECV(accept, 1, MPI_INT, overlap_exchange(j,1), 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+        call MPI_SEND(e_unswapped, 1, MPI_DOUBLE_PRECISION, overlap_exchange(j,1), 0, MPI_COMM_WORLD, ierr)
+        call MPI_RECV(accept, 1, MPI_INT, overlap_exchange(j,1), 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         if (accept) then
-          call MPI_ISEND(config, SIZE(config), MPI_SHORT, overlap_exchange(j,1), 2, MPI_COMM_WORLD, request, ierror)
-          call MPI_RECV(config, SIZE(config), MPI_SHORT, overlap_exchange(j,1), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierror)
+          call MPI_ISEND(config, SIZE(config), MPI_SHORT, overlap_exchange(j,1), 2, MPI_COMM_WORLD, request, ierr)
+          call MPI_RECV(config, SIZE(config), MPI_SHORT, overlap_exchange(j,1), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         end if
       end if
     end do
@@ -1371,32 +1366,5 @@ module wang_landau
         array(rand_index, :) = temp
     end do
   end subroutine
-
-  !> @brief   Purge pending communication
-  !>
-  !> @details Routine that recieves any pending communications into a buffer array
-  !>          that is allocated, filled then deallocated. Essentially deletes pending
-  !>          communications.
-  !> 
-  !> @return  None
-  !>
-  !> @author  H. J. Naguszewski
-  !> @date    2024 
-  subroutine comms_purge()
-    integer :: mpi_counter, status(MPI_STATUS_SIZE), ierror
-    logical :: flag
-    character, allocatable :: discard(:)
-    do while(.true.)
-      CALL MPI_IPROBE(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, flag, status, ierror)
-      if (.not. flag) exit  ! No more messages
-      ! get the message size in bytes
-      CALL MPI_GET_COUNT(status, MPI_BYTE, mpi_counter, ierror)
-      ! allocate a dummy buffer
-      allocate(discard(mpi_counter))
-      ! receive and discard the message
-      CALL MPI_RECV(discard, mpi_counter, MPI_BYTE, status(MPI_SOURCE), status(MPI_TAG), MPI_COMM_WORLD, status, ierror)
-      deallocate(discard)  ! free memory
-    end do
-  end subroutine comms_purge
 
 end module wang_landau

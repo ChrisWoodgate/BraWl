@@ -28,7 +28,13 @@ module comms
   integer, dimension(mpi_status_size) :: status_info
 
   ! error variables
-  integer :: ierr
+  integer :: ierr, request
+
+  ! has the message been recieved
+  logical :: flag
+
+  ! size of message
+  integer :: mpi_counter
 
   ! our communicator
   integer :: cart_comm
@@ -145,5 +151,31 @@ module comms
     call mpi_finalize(ierr)
 
   end subroutine comms_finalise
+
+  !> @brief   Purge pending communication
+  !>
+  !> @details Routine that recieves any pending communications into a buffer array
+  !>          that is allocated, filled then deallocated. Essentially deletes pending
+  !>          communications.
+  !> 
+  !> @return  None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2025 
+  subroutine comms_purge()
+    character, allocatable :: discard(:)
+    do while(.true.)
+      CALL MPI_IPROBE(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, flag, status_info, ierr)
+      if (.not. flag) exit  ! No more messages
+      ! get the message size in bytes
+      CALL MPI_GET_COUNT(status_info, MPI_BYTE, mpi_counter, ierr)
+      ! allocate a dummy buffer
+      allocate(discard(mpi_counter))
+      ! receive and discard the message
+      CALL MPI_RECV(discard, mpi_counter, MPI_BYTE, status_info(MPI_SOURCE), status_info(MPI_TAG), &
+      MPI_COMM_WORLD, status_info, ierr)
+      deallocate(discard)  ! free memory
+    end do
+  end subroutine comms_purge
 
 end module comms
