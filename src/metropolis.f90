@@ -228,7 +228,7 @@ module metropolis
     end if
 
     ! Clean up
-    call local_metropolis_clean_up(setup)
+    call local_metropolis_clean_up()
 
     ! Clean up
     call global_metropolis_clean_up()
@@ -371,7 +371,7 @@ module metropolis
       end do
 
     ! Clean up
-    call local_metropolis_clean_up(setup)
+    call local_metropolis_clean_up()
 
     ! Clean up
     call global_metropolis_clean_up()
