@@ -1,11 +1,13 @@
-!----------------------------------------------------------------------!
-! metropolis.f90                                                       !
-!                                                                      !
-! Module containing routines relating to the Metropolis algorithm      !
-! using Kawasaki dynamics.                                             !
-!                                                                      !
-! C. D. Woodgate,  Bristol                                        2025 !
-!----------------------------------------------------------------------!
+!> @file    metropolis.f90
+!>
+!> @brief   Routines for running Metropolis Monte Carlo simulations
+!>
+!> @details This module contains routines which run Metropolis Monte
+!>          Carlo simulations and extract various quantities of
+!>          interest.
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2025
 module metropolis
 
   use initialise
@@ -25,12 +27,17 @@ module metropolis
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Runs Metropolis with Kawasaki dynamics and performs simulated      !
-  ! annealing.                                                         !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine for performing simulated annealing using
+  !>          the Metropolis Monte Carlo algorithm
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  metropolis Derived type containing Metropolis MC parameters
+  !> @param  my_rank Rank of this process
+  !>
+  !> @return None
   subroutine metropolis_simulated_annealing(setup, metropolis, my_rank)
 
     ! Rank of this processor
@@ -239,13 +246,18 @@ module metropolis
   
   end subroutine metropolis_simulated_annealing
 
-  !--------------------------------------------------------------------!
-  ! Runs Metropolis with Kawasaki dynamics. Simulates annealing down   !
-  ! to a target temperature then draws samples N steps apart, where N  !
-  ! is chosen by the user.                                             !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine for performing simulated annealing using
+  !>          the Metropolis Monte Carlo algorithm, then drawing a set
+  !>          of equilibrated samples each N steps apart
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  metropolis Derived type containing Metropolis MC parameters
+  !> @param  my_rank Rank of this process
+  !>
+  !> @return None
   subroutine metropolis_decorrelated_samples(setup, metropolis, my_rank)
 
     ! Rank of this processor
@@ -382,13 +394,19 @@ module metropolis
   
   end subroutine metropolis_decorrelated_samples
 
-  !--------------------------------------------------------------------!
-  ! Runs one MC step assuming pairs swapped across entire lattice.     !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine for performing a trial Metropolis-Kawasaki swap
+  !>          assuming pair can be swapped across the entire lattice
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  config Current grid state
+  !> @param  beta Inverse temperature to use in acceptance rate
+  !>
+  !> @return None
   function monte_carlo_step_lattice(setup, config, beta) result(accept)
-    !integer(int16), allocatable, dimension(:,:,:,:) :: config
+
     integer(int16), dimension(:,:,:,:) :: config
     class(run_params), intent(in) :: setup
     integer :: accept
@@ -451,13 +469,22 @@ module metropolis
 
   end function monte_carlo_step_lattice
 
-  !--------------------------------------------------------------------!
-  ! Runs one MC step assuming only neighbours can be swapped           !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine for performing a trial Metropolis-Kawasaki swap
+  !>          assuming only nearest-neighbour pair can be swapped.
+  !>
+  !> @details More physical than allowing swaps across the entire
+  !>          lattice, but much slower to reach equilibrium.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  config Current grid state
+  !> @param  beta Inverse temperature to use in acceptance rate
+  !>
+  !> @return None
   function monte_carlo_step_nbr(setup, config, beta) result(accept)
-    !integer(int16), allocatable, dimension(:,:,:,:) :: config
+
     integer(int16), dimension(:,:,:,:) :: config
     class(run_params), intent(in) :: setup
     integer :: accept
