@@ -39,22 +39,17 @@ module nested_sampling
   !> 
   !> @param  setup Derived type containing simulation parameters
   !> @param  nested_sampling Derived type containing nested sampling parameters
-  !> @param  my_rank Rank of this process. Redundant as current implementation is serial.
   !> 
   !> @return None
   !>
   !> @author  L. B. Partay
   !> @date    2024  
-  subroutine nested_sampling_main(setup, nested_sampling, my_rank)
+  subroutine nested_sampling_main(setup, nested_sampling)
 
     ! Arrays for storing instances of the system, as nested sampling walkers
     type(run_params) :: setup
     type(ns_params) :: nested_sampling
   
-    ! Rank of this processor
-    ! Redundant if we are in serial
-    integer, intent(in) :: my_rank
-
     ! Energy before and after swap and change
     real(real64) :: e_unswapped, e_swapped, delta_e, ener_limit, rnd
     real(real64) :: acc_ratio, rnde
