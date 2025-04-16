@@ -1,10 +1,10 @@
-!----------------------------------------------------------------------!
-! main.f90                                                             !
-!                                                                      !
-! Main bontewarlo program.                                             !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2024 !
-!----------------------------------------------------------------------!
+!> @file    main.f90
+!>
+!> @brief   Main BraWl program
+!>
+!> @author  C. D. Woodgate
+!>
+!> @date    2019-2025
 program main
   
   use initialise

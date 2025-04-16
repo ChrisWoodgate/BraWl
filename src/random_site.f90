@@ -1,10 +1,14 @@
-!----------------------------------------------------------------------!
-! random_site.f90                                                      !
-!                                                                      !
-! Module for getting random lattice site and neighbour.                !
-!                                                                      !
-! C. D. Woodgate,  Bristol                                        2025 !
-!----------------------------------------------------------------------!
+!> @file    random_site.f90
+!>
+!> @brief   Assorted routines for getting random lattice sites and 
+!>          neighbours.
+!>
+!> @details This module contains routines for obtaining random sites on
+!>          the various implemented lattice types.
+!>
+!> @author  C. D. Woodgate
+!>
+!> @date    2019-2025
 module random_site
 
   use kinds
@@ -13,6 +17,13 @@ module random_site
   use derived_types
   
   implicit none
+
+  private
+
+  public :: simple_cubic_random_site, simple_cubic_random_nbr &
+            bcc_random_site, bcc_random_nbr                   &
+            fcc_random_site, fcc_random_nbr                   &
+            pair_swap
 
   ! Array for neighbours on the sc lattice
   integer, parameter, dimension(3,6) :: &
@@ -48,24 +59,43 @@ module random_site
                         -1, -1,  0, &
                         -1,  0,  1, &
                         -1,  0, -1 /), (/3, 12/))
+
   contains
 
-  !-------------------------------------------------!
-  ! Function to get a random site on the sc lattice !
-  !-------------------------------------------------!
+  !> @brief   Function to get a random site on the simple cubic lattice
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return Indices of a random site on the simple cubic lattice
   pure function simple_cubic_random_site(setup) result(site)
+
     class(run_params), intent(in) :: setup
     integer, dimension(4) :: site
+
     site(1) = 1
     site(2) = floor(genrand()*2.0_real64*real(setup%n_1)) +1
     site(3) = floor(genrand()*2.0_real64*real(setup%n_2)) +1
     site(4) = floor(genrand()*2.0_real64*real(setup%n_3)) +1
+
   end function simple_cubic_random_site
   
-  !------------------------------------------------------!
-  ! Function to get a random neighbour on the sc lattice !
-  !------------------------------------------------------!
+  !> @brief   Function to get a random neighbour of a site on the simple
+  !>          cubic lattice
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site Site for which to get the neighbour
+  !>
+  !> @return Indices of a random neighbour of the input site
   pure function simple_cubic_random_nbr(setup, site) result(nbr)
+
     class(run_params), intent(in) :: setup
     integer, dimension(4), intent(in) :: site
     integer, dimension(4) :: nbr 
@@ -82,26 +112,45 @@ module random_site
     nbr(2) = modulo(nbr(2)-1, 2*setup%n_1) + 1
     nbr(3) = modulo(nbr(3)-1, 2*setup%n_2) + 1
     nbr(4) = modulo(nbr(4)-1, 2*setup%n_3) + 1
+
   end function simple_cubic_random_nbr
   
-  !--------------------------------------------------!
-  ! Function to get a random site on the bcc lattice !
-  !--------------------------------------------------!
+  !> @brief   Function to get a random site on the bcc lattice
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return Indices of a random site on the bcc lattice
   pure function bcc_random_site(setup) result(site)
+
     class(run_params), intent(in) :: setup
     integer, dimension(4) :: site
+
     site(1) = 1
     site(4) = floor(2.0_real64*genrand()*real(setup%n_3, real64)) +1
     site(2) = 2 * floor(genrand()*real(setup%n_1, real64)) &
                 + 2 - modulo(site(4), 2)
     site(3) = 2 * floor(genrand()*real(setup%n_2, real64)) &
                 + 2 - modulo(site(4), 2)
+
   end function bcc_random_site
   
-  !-------------------------------------------------------!
-  ! Function to get a random neighbour on the bcc lattice !
-  !-------------------------------------------------------!
+  !> @brief   Function to get a random neighbour of a site on the bcc
+  !>          lattice
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site Site for which to get the neighbour
+  !>
+  !> @return Indices of a random neighbour of the input site
   pure function bcc_random_nbr(setup, site) result(nbr)
+
     class(run_params), intent(in) :: setup
     integer, dimension(4), intent(in) :: site
     integer, dimension(4) :: nbr 
@@ -118,25 +167,44 @@ module random_site
     nbr(2) = modulo(nbr(2)-1, 2*setup%n_1) + 1
     nbr(3) = modulo(nbr(3)-1, 2*setup%n_2) + 1
     nbr(4) = modulo(nbr(4)-1, 2*setup%n_3) + 1
+
   end function bcc_random_nbr
   
-  !--------------------------------------------------!
-  ! Function to get a random site on the fcc lattice !
-  !--------------------------------------------------!
+  !> @brief   Function to get a random site on the fcc lattice
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return Indices of a random site on the fcc lattice
   pure function fcc_random_site(setup) result(site)
+
     class(run_params), intent(in) :: setup
     integer, dimension(4) :: site
+
     site(1) = 1
     site(4) = floor(2.0_real64*genrand()*real(setup%n_3, real64)) + 1
     site(2) = floor(2.0_real64*genrand()*real(setup%n_1, real64)) + 1
     site(3) = 2 * floor(genrand()*real(setup%n_2, real64)) + 1 &
                     + modulo((site(2)-modulo(site(4),2)), 2)
+
   end function fcc_random_site
 
-  !-------------------------------------------------------!
-  ! Function to get a random neighbour on the fcc lattice !
-  !-------------------------------------------------------!
+  !> @brief   Function to get a random neighbour of a site on the fcc
+  !>          lattice
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site Site for which to get the neighbour
+  !>
+  !> @return Indices of a random neighbour of the input site
   pure function fcc_random_nbr(setup, site) result(nbr)
+
     class(run_params), intent(in) :: setup
     integer, dimension(4), intent(in) :: site
     integer, dimension(4) :: nbr 
@@ -153,15 +221,22 @@ module random_site
     nbr(2) = modulo(nbr(2)-1, 2*setup%n_1) + 1
     nbr(3) = modulo(nbr(3)-1, 2*setup%n_2) + 1
     nbr(4) = modulo(nbr(4)-1, 2*setup%n_3) + 1
+
   end function fcc_random_nbr
 
-  !--------------------------------------------------------------------!
-  ! Function to swap a pair of atoms on the lattice.                   !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to swap a pair of lattice site occupancies
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2019-2025
+  !>
+  !> @param  config System configuration
+  !> @param  idx1 Indices of first lattice site
+  !> @param  idx2 Indices of second lattice site
+  !>
+  !> @return None
   subroutine pair_swap(config, idx1, idx2)
-    !integer(int16), allocatable, dimension(:,:,:,:) :: config
+
     integer(int16), dimension(:,:,:,:) :: config
     integer, dimension(4), intent(in) :: idx1, idx2
     integer(int16) :: species1, species2
