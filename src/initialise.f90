@@ -311,9 +311,7 @@ module initialise
   !> @param  setup Derived type containing simulation parameters
   !>
   !> @return None
-  subroutine local_metropolis_clean_up(setup)
-
-    type(run_params), intent(inout) :: setup
+  subroutine local_metropolis_clean_up()
 
     deallocate(rho_of_T)
     deallocate(temperature)
@@ -354,7 +352,7 @@ module initialise
     integer :: i, j, k, n_sites, idx
     integer(int16) :: l, n_species
     real(real64) :: rand
-    integer(int32), dimension(setup%n_species) :: species_count, check
+    integer(int64), dimension(setup%n_species) :: species_count, check
 
     check = 0
     if (setup%lattice == 'simple_cubic') then
