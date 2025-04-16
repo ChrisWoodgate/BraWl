@@ -21,6 +21,23 @@ module write_netcdf
 
   implicit none
 
+  private
+
+  public :: ncdf_radial_density_writer_once,          &
+            ncdf_radial_density_writer,               &
+            ncdf_radial_density_writer_across_energy, &
+            ncdf_order_writer,                        &
+            ncdf_grid_state_writer,                   &
+            ncdf_grid_states_writer,                  &
+            ncdf_writer_1d,                           &
+            ncdf_writer_2d,                           &
+            ncdf_writer_3d,                           &
+            ncdf_writer_4d,                           &
+            ncdf_writer_5d,                           &
+            ncdf_writer_3d_short,                     &
+            read_1D_array,                            &
+            check
+
   contains
 
   !> @brief   Routine to write radial density (calculated once) to file
