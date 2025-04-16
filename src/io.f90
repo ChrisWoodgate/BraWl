@@ -377,8 +377,8 @@ module io
     integer :: my_rank
 
     if(my_rank == 0) then
-      write(6,'(15("-"),x,"Reading atom-atom interaction parameters",x,
-                & 15("-"),/)')
+      write(6,'(15("-"),x,"Reading atom-atom interaction parameters",x, &
+                &15("-"),/)')
     end if
 
     V_ex = 0.0_real64
