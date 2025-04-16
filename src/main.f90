@@ -96,7 +96,7 @@ program main
     end if
 
     ! Nested Sampling algorithm
-    call nested_sampling_main(setup, ns_setup, my_rank)
+    call nested_sampling_main(setup, ns_setup)
 
   else if (setup%mode == 304) then
 
