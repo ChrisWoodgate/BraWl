@@ -1,6 +1,6 @@
 !> @file    wang-landau.f90                                  
 !>
-!> @brief   Assorted routines and tools to perform Wang Landau Sampling                                                                      !
+!> @brief   Assorted routines and tools to perform Wang Landau Sampling
 !>
 !> @details This module contains routines necessary for the Wang Landau Sampling
 !>          calculations.                                                           

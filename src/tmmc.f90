@@ -1,9 +1,11 @@
-!----------------------------------------------------------------------!
-! Transition Matrix Monte Carlo Module                                 !
-!                                                                      !
-! H. Naguszewski, Warwick                                         2024 !
-!----------------------------------------------------------------------!
-
+!> @file    tmmc.f90                              
+!>
+!> @brief   Assorted routines and tools to perform Transition Matric Monte Carlo (TMMC)
+!>
+!> @details WIP. DO NOT USE. This module does not function correctly.                                                            
+!>
+!> @author  H. J. Naguszewski
+!> @date    2024 
 module tmmc
 
   use initialise
@@ -16,7 +18,9 @@ module tmmc
 
   implicit none
 
-contains
+  contains
+
+  
 
   !------------------------------------------------------------------!
   ! Main TMMC routine.                                               !
@@ -55,6 +59,14 @@ contains
     ! window variables
     integer, allocatable :: window_indices(:, :)
     integer :: num_windows, num_walkers
+
+    if (my_rank == 0) then
+      write (6, '(72("~"))')
+      write (6, '(5("~"),x,"Error: WIP module. Does not function.",x,6("~"))')
+      write (6, '(72("~"))')
+    end if
+    call MPI_FINALIZE(ierror)
+    call EXIT(0)
 
     ! Get number of MPI processes
     call MPI_COMM_SIZE(MPI_COMM_WORLD, num_proc, ierror)
