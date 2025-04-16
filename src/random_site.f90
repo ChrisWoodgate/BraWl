@@ -18,6 +18,13 @@ module random_site
   
   implicit none
 
+  private
+
+  public :: simple_cubic_random_site, simple_cubic_random_nbr &
+            bcc_random_site, bcc_random_nbr                   &
+            fcc_random_site, fcc_random_nbr                   &
+            pair_swap
+
   ! Array for neighbours on the sc lattice
   integer, parameter, dimension(3,6) :: &
   sc_nbrs = reshape((/  0,  0,  1, &
