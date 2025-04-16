@@ -1052,6 +1052,8 @@ module wang_landau
     real(real64) :: beta_original, beta_merge, beta_diff, scale_factor
     integer :: mpi_start_idx, mpi_end_idx
 
+    beta_index = 0
+
     if (my_rank == 0) then
       wl_logdos_combine = wl_logdos
     end if
