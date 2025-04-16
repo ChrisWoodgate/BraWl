@@ -183,7 +183,7 @@ module wang_landau
         call comms_wait()
         if (converged == 0) then
           print*, "Unconverged rank: ", my_rank, "Flatness: ", flatness, "Explored: ", &
-          REAL(COUNT(mpi_wl_hist/=0))/REAL(SIZE(mpi_wl_hist))
+          REAL(COUNT(INT(mpi_wl_hist)/=0))/REAL(SIZE(mpi_wl_hist))
         end if
       end if 
       call sweeps(wl_logdos, mpi_wl_hist)
@@ -489,7 +489,7 @@ module wang_landau
     real(real64), allocatable, intent(inout) :: wl_logdos(:), mpi_wl_hist(:)
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, pair_unswapped, pair_swapped, delta_e, radial_start, radial_end
-    integer :: i, ibin, jbin, iradial
+    integer :: i, ibin, jbin
     integer(int16) :: site1, site2
 
     ! Establish total energy before any moves
@@ -577,7 +577,7 @@ module wang_landau
     real(real64) :: beta, beta_end, beta_start, weight, min_e, max_e
     integer(int16) :: site1, site2
     logical :: stop_enter_energy_window, flag
-    integer :: rank, rank_index, request, ierror, status, i_steps, i_sweeps, sweeps
+    integer :: rank, request, ierror, i_steps, i_sweeps, sweeps
 
     stop_enter_energy_window = .False.
     flag = .False.
@@ -1053,7 +1053,7 @@ module wang_landau
   subroutine dos_combine(wl_logdos)
     real(real64), intent(inout) :: wl_logdos(:)
     ! Internal
-    integer :: i, j, beta_index
+    integer :: i, j
     real(real64) :: beta_original, beta_merge, beta_diff, scale_factor
     integer :: mpi_start_idx, mpi_end_idx
 
@@ -1256,10 +1256,10 @@ module wang_landau
   integer, dimension(num_walkers, 2) :: overlap_exchange
   integer :: i, j, k, exchange_index, ierror
   integer :: exchange_count, ibin, jbin
-  logical :: exchange_match, accept
+  logical :: accept
   integer :: overlap_loc, request
   integer :: overlap_mpi(mpi_processes, 2), overlap_mpi_buffer(mpi_processes, 2)
-  real(real64) :: delta_e, e_swapped, e_unswapped
+  real(real64) :: e_swapped, e_unswapped
    
   ! Perform binning and initialize overlap_mpi
   e_unswapped = setup_internal%full_energy(config)
