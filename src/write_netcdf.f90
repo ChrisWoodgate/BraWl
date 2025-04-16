@@ -1,10 +1,17 @@
-!----------------------------------------------------------------------!
-! write_netcdf.f90                                                     !
-!                                                                      !
-! Module containing all calls to NetCDF library routines               !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
-!----------------------------------------------------------------------!
+!> @file    write_netcdf.f90
+!>
+!> @brief   Routines for interacting with NetCDF library and writing
+!>          data to binary files.
+!>
+!> @details This module contains routines for writing NetCDF files
+!>          for various simulation outputs. Writing to binary NetCDF
+!>          files saves disk space compared to dumping everything as
+!>          plain text.
+!>
+!> @author  C. D. Woodgate
+!> @author  H. J. Naguszewski
+!>
+!> @date    2019-2023
 module write_netcdf
 
   use kinds
@@ -16,11 +23,18 @@ module write_netcdf
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Routine to write radial density array calculated once to file      !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Routine to write radial density (calculated once) to file
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2019-2025
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  rho Array containing radial densities
+  !> @param  r List of radial distances
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine ncdf_radial_density_writer_once(filename, rho, r, setup)
 
     integer, parameter :: rho_ndims = 3
@@ -100,11 +114,21 @@ module write_netcdf
 
   end subroutine ncdf_radial_density_writer_once
 
-  !--------------------------------------------------------------------!
-  ! Routine to write radial densities to file                          !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Routine to write radial densities as a function of
+  !>          temperature to file. Also writes internal energies
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2019-2025
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  rho Array containing average radial densities of T
+  !> @param  r List of radial distances
+  !> @param  T List of temperatures
+  !> @param  U_of_T List of average internal energies of T
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine ncdf_radial_density_writer(filename, rho, r, T, U_of_T, setup)
 
     integer, parameter :: rho_ndims = 4
@@ -201,11 +225,20 @@ module write_netcdf
 
   end subroutine ncdf_radial_density_writer
 
-  !--------------------------------------------------------------------!
-  ! Routine to write radial densities across energy to file            !
-  !                                                                    !
-  ! H. J. Naguszewski,  Warwick                                   2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Routine to write radial densities as a function of
+  !>          average energy to file (used in Wang-Landau).
+  !>
+  !> @author  H. J. Naguszewski
+  !>
+  !> @date    2024-2025
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  rho Array containing average radial densities of T
+  !> @param  r List of radial distances
+  !> @param  U List of energies
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine ncdf_radial_density_writer_across_energy(filename, rho, r, U, setup)
 
     integer, parameter :: rho_ndims = 4
@@ -294,11 +327,20 @@ module write_netcdf
 
   end subroutine ncdf_radial_density_writer_across_energy
 
-  !--------------------------------------------------------------------!
-  ! Routine to write order parameters to file                          !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Routine to write average atomic long-range order (ALRO)
+  !>          parameters as a function of temperature to file.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2025
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  ierr Error flag
+  !> @param  order Array containing average ALRO of T
+  !> @param  temperature List of temperatures
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine ncdf_order_writer(filename, ierr, order, temperature, setup)
 
     integer, parameter :: grid_ndims = 5
@@ -417,11 +459,19 @@ module write_netcdf
 
   end subroutine ncdf_order_writer
 
-  !--------------------------------------------------------------------!
-  ! Routine to write grid state to file                                !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Routine to write current state of the grid to file.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2025
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  ierr Error flag
+  !> @param  state Current grid configuration
+  !> @param  temperature Current temperature
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine ncdf_grid_state_writer(filename, ierr, &
                                     state, temperature, setup)
 
@@ -521,9 +571,21 @@ module write_netcdf
 
   end subroutine ncdf_grid_state_writer
 
-  !---------------------------------------------!
-  ! Routine to write order parameters to a file !
-  !---------------------------------------------!
+  !> @brief   Routine to write list of states of the grid to file.
+  !>
+  !> @details Deprecated.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2023
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  ierr Error flag
+  !> @param  states List of grid configurations
+  !> @param  temperature List of temperatures
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine ncdf_grid_states_writer(filename, ierr, states, temperature, setup)
 
     integer, parameter :: grid_ndims = 4
@@ -642,6 +704,19 @@ module write_netcdf
 
   end subroutine ncdf_grid_states_writer
 
+  !> @brief   Routine to write a 1D array to NetCDF file.
+  !>
+  !> @details Generic routine for writing a NetCDF file for a 1D array.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2023
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  ierr Error flag
+  !> @param  grid_data Array to write
+  !>
+  !> @return None
   subroutine ncdf_writer_1d(filename, ierr, grid_data)
 
     integer, parameter :: grid_ndims = 1
@@ -719,6 +794,19 @@ module write_netcdf
 
   end subroutine ncdf_writer_1d
 
+  !> @brief   Routine to write a 2D array to NetCDF file.
+  !>
+  !> @details Generic routine for writing a NetCDF file for a 2D array.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2023
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  ierr Error flag
+  !> @param  grid_data Array to write
+  !>
+  !> @return None
   subroutine ncdf_writer_2d(filename, ierr, grid_data)
 
     integer, parameter :: grid_ndims = 2
@@ -796,6 +884,19 @@ module write_netcdf
 
   end subroutine ncdf_writer_2d
 
+  !> @brief   Routine to write a 5D array to NetCDF file.
+  !>
+  !> @details Generic routine for writing a NetCDF file for a 5D array.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2023
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  ierr Error flag
+  !> @param  grid_data Array to write
+  !>
+  !> @return None
   subroutine ncdf_writer_5d(filename, ierr, grid_data)
 
     integer, parameter :: grid_ndims = 5
@@ -875,6 +976,19 @@ module write_netcdf
 
   end subroutine ncdf_writer_5d
 
+  !> @brief   Routine to write a 3D array to NetCDF file.
+  !>
+  !> @details Generic routine for writing a NetCDF file for a 3D array.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2023
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  ierr Error flag
+  !> @param  grid_data Array to write
+  !>
+  !> @return None
   subroutine ncdf_writer_3d(filename, ierr, grid_data)
 
     integer, parameter :: grid_ndims = 3
@@ -952,6 +1066,19 @@ module write_netcdf
 
   end subroutine ncdf_writer_3d
 
+  !> @brief   Routine to write a 4D array to NetCDF file.
+  !>
+  !> @details Generic routine for writing a NetCDF file for a 4D array.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2023
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  ierr Error flag
+  !> @param  grid_data Array to write
+  !>
+  !> @return None
   subroutine ncdf_writer_4d(filename, ierr, grid_data)
 
     integer, parameter :: grid_ndims = 4
@@ -1029,6 +1156,21 @@ module write_netcdf
 
   end subroutine ncdf_writer_4d
 
+  !> @brief   Routine to write a 3D array of shorts to NetCDF file.
+  !>
+  !> @details Generic routine for writing a NetCDF file for a 3D array
+  !>          of shorts. Deprecated.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2023
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  ierr Error flag
+  !> @param  grid_data Array to write
+  !> @param  energies List of energies
+  !>
+  !> @return None
   subroutine ncdf_writer_3d_short(filename, ierr, grid_data, energies)
 
     real(real64), dimension(:), allocatable, intent(in) :: energies
@@ -1137,6 +1279,15 @@ module write_netcdf
 
   end subroutine ncdf_writer_3d_short
 
+  !> @brief   Routine to check NetCDF error codes.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2023
+  !>
+  !> @param  stat Integer error code
+  !>
+  !> @return None
   subroutine check(stat)
     !> integer error code
     integer, intent ( in) :: stat
@@ -1148,11 +1299,17 @@ module write_netcdf
     end if
   end subroutine check
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read and parse bin edge netcdf file                  !
-  !                                                                    !
-  ! H. J. Naguszewski, Warwick                                    2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Routine to read and parse bin edge NetCDF file.
+  !>
+  !> @author  H. J. Naguszewski
+  !>
+  !> @date    2024
+  !>
+  !> @param  filename Name of file to read
+  !> @param  varname Name of variable to read
+  !> @param  array Array into which to read data
+  !>
+  !> @return None
   subroutine read_1D_array(filename, varname, array)
     character(len=*), intent(in) :: filename
     character(len=*), intent(in) :: varname
