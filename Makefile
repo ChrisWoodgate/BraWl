@@ -66,8 +66,7 @@ MODFILES=mt19937ar.c kinds.f90 shared_data.f90 io.f90 comms.f90 write_netcdf.f90
          write_xyz.f90 metropolis_output.f90 command_line.f90 c_functions.f90 \
          display.f90 bw_hamiltonian.f90 analytics.f90 random_site.f90 \
          metropolis.f90 nested_sampling.f90 tmmc.f90 wang-landau.f90 \
-         energy_spectrum.f90 config_output.f90 initialise.f90 constants.f90 \
-         derived_types.o
+         initialise.f90 constants.f90 derived_types.o
 
 SRCFILES=$(MODFILES) main.f90
 
