@@ -9,8 +9,10 @@
 !> @date    2024
 
 module wang_landau
-  use initialise
+
   use kinds
+  use constants
+  use initialise
   use shared_data
   use c_functions
   use random_site
@@ -485,7 +487,7 @@ module wang_landau
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, pair_unswapped, pair_swapped, delta_e, radial_start, radial_end
     integer :: i, ibin, jbin
-    integer(int16) :: site1, site2
+    integer(array_int) :: site1, site2
 
     ! Establish total energy before any moves
     e_unswapped = setup_internal%full_energy(config)
@@ -570,7 +572,7 @@ module wang_landau
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, pair_swapped, pair_unswapped, delta_e, target_energy, condition
     real(real64) :: beta, beta_end, beta_start, weight, min_e, max_e
-    integer(int16) :: site1, site2
+    integer(array_int) :: site1, site2
     logical :: stop_enter_energy_window, flag
     integer :: rank, request, ierr, i_steps, i_sweeps, sweeps
 
@@ -1247,7 +1249,7 @@ module wang_landau
   !> @author  H. J. Naguszewski
   !> @date    2024 
   subroutine replica_exchange(config)
-  integer(int16), dimension(:,:,:,:) :: config
+  integer(array_int), dimension(:,:,:,:) :: config
   ! Declare local variables
   integer, dimension(num_walkers, 2) :: overlap_lower, overlap_upper
   integer, dimension(num_walkers, 2) :: overlap_exchange

@@ -20,8 +20,6 @@ module tmmc
 
   contains
 
-  
-
   !------------------------------------------------------------------!
   ! Main TMMC routine.                                               !
   !                                                                  !
@@ -365,7 +363,7 @@ module tmmc
   !------------------------------------------------------------------!
   function run_tmmc_sweeps(setup, tmmc_setup, config, temp, bins, bin_edges, mpi_start_idx, &
                            mpi_end_idx, energy_bias, trans_matrix, bin_probability) result(acceptance)
-    integer(int16), dimension(:, :, :, :) :: config
+    integer(array_int), dimension(:, :, :, :) :: config
     class(run_params), intent(in) :: setup
     class(tmmc_params), intent(in) :: tmmc_setup
     integer, intent(in) :: bins, mpi_start_idx, mpi_end_idx
@@ -377,7 +375,7 @@ module tmmc
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, delta_e, beta, unswapped_bias, swapped_bias
     integer :: acceptance, i, ibin, jbin
-    integer(int16) :: site1, site2
+    integer(array_int) :: site1, site2
 
     ! inverse temp
     beta = 1.0_real64/temp
@@ -447,13 +445,13 @@ module tmmc
   end function run_tmmc_sweeps
 
   subroutine tmmc_burn_in(setup, config, target_energy, min_e, max_e)
-    integer(int16), dimension(:, :, :, :) :: config
+    integer(array_int), dimension(:, :, :, :) :: config
     class(run_params), intent(in) :: setup
     real(real64), intent(in) :: target_energy, min_e, max_e
 
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, delta_e
-    integer(int16) :: site1, site2
+    integer(array_int) :: site1, site2
 
     ! Establish total energy before any moves
     e_unswapped = setup%full_energy(config)

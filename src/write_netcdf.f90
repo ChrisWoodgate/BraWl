@@ -15,6 +15,7 @@
 module write_netcdf
 
   use kinds
+  use constants
   use netcdf
   use shared_data
   use derived_types
@@ -497,7 +498,7 @@ module write_netcdf
     type(run_params), intent(in) :: setup
 
     ! Data to write to file
-    integer(int16), dimension(:,:,:,:), allocatable, intent(in) :: state
+    integer(array_int), dimension(:,:,:,:), allocatable, intent(in) :: state
     real(real64), intent(in) :: temperature
 
     ! Number of dimensions of my grid data
@@ -610,7 +611,7 @@ module write_netcdf
     type(run_params), intent(in) :: setup
 
     ! Data to write to file
-    integer(int16), dimension(:,:,:,:), allocatable, intent(in) :: states
+    integer(array_int), dimension(:,:,:,:), allocatable, intent(in) :: states
     real(real64), dimension(:), allocatable, intent(in) :: temperature
 
     ! Number of dimensions of my grid data
@@ -1204,7 +1205,7 @@ module write_netcdf
     integer, parameter :: grid_ndims = 3
 
     ! Data to write to file
-    integer(int16), dimension(:,:,:), allocatable, intent(in) :: grid_data
+    integer(array_int), dimension(:,:,:), allocatable, intent(in) :: grid_data
     ! Number of dimensions of my rho data
     integer, dimension(grid_ndims) :: grid_sizes, grid_dim_ids
 

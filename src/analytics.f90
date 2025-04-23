@@ -12,6 +12,7 @@
 module analytics
 
   use kinds
+  use constants
   use shared_data
   use io
   use display
@@ -34,8 +35,8 @@ module analytics
   !>
   !> @return None
   subroutine store_state(averages, config, setup)
-    !integer(int16), allocatable, dimension(:,:,:), intent(in) :: config
-    integer(int16), dimension(:,:,:), intent(in) :: config
+    !integer(array_int), allocatable, dimension(:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:), intent(in) :: config
     type(run_params), intent(in) :: setup
     real(real64), dimension(:,:,:,:), intent(inout), allocatable :: averages
     integer :: i,j,k,l
@@ -91,8 +92,8 @@ module analytics
   !>
   !> @return The total number of particles in the simulation cell
   function total_particle_count(setup, config) result(total_count)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    !integer(array_int), allocatable, dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     type(run_params) :: setup
     integer :: total_count
     integer :: i,j,k,b
@@ -103,7 +104,7 @@ module analytics
       do k=1, 2*setup%n_3
         do j=1, 2*setup%n_2
           do i=1, 2*setup%n_1
-            if (config(b,i,j,k) .ne. 0_int16) then
+            if (config(b,i,j,k) .ne. 0_array_int) then
               total_count = total_count + 1
             end if
           end do
@@ -123,8 +124,8 @@ module analytics
   !>
   !> @return None
   subroutine print_particle_count(setup, config)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    !integer(array_int), allocatable, dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     type(run_params) :: setup
     integer, dimension(4) :: sizes
     integer, dimension(:), allocatable :: species_count
@@ -140,7 +141,7 @@ module analytics
     do k=1, sizes(3)
       do j=1, sizes(2)
         do i=1, sizes(1)
-          if (config(1,i,j,k) .ne. 0_int16) then
+          if (config(1,i,j,k) .ne. 0_array_int) then
             n = n+1
             species_count(config(1,i,j,k)) = &
               species_count(config(1,i,j,k)) + 1
@@ -177,8 +178,8 @@ module analytics
   !> @return None
   subroutine lattice_shells(setup, shells, configuration)
 
-    !integer(int16), dimension(:,:,:,:), allocatable :: configuration
-    integer(int16), dimension(:,:,:,:) :: configuration
+    !integer(array_int), dimension(:,:,:,:), allocatable :: configuration
+    integer(array_int), dimension(:,:,:,:) :: configuration
     type(run_params), intent(in) :: setup
     integer :: i,j,k,b,l
     real(real64) :: dist
@@ -217,7 +218,7 @@ module analytics
         do i=1, 2*setup%n_1
           do b=1, setup%n_basis
             ! Cycle if this lattice site is empty
-            if (configuration(b,i,j,k) .eq. 0_int16) cycle
+            if (configuration(b,i,j,k) .eq. 0_array_int) cycle
             dist     = sqrt(real((k-1)**2) + &
                             real((j-1)**2) + &
                             real((i-1)**2))
@@ -267,7 +268,7 @@ module analytics
   function radial_densities(setup, configuration, n_shells,            &
                             shell_distances) result(r_densities)
     type(run_params), intent(in) :: setup
-    integer(int16), dimension(:,:,:,:) :: configuration
+    integer(array_int), dimension(:,:,:,:) :: configuration
     real(real64), dimension(:), allocatable :: shell_distances
     real(real64), dimension(setup%n_species,setup%n_species,           &
                             n_shells) :: r_densities
@@ -293,7 +294,7 @@ module analytics
           do i_b=1, setup%n_basis
             do l=1, setup%n_species
               if (configuration(i_b, i_1, i_2, i_3) .eq.              &
-                                int(l, kind=int16)) then
+                                int(l, kind=array_int)) then
                 particle_counts(l) = particle_counts(l) + 1
               end if
             end do
@@ -320,7 +321,7 @@ module analytics
         do i_1=1, 2*setup%n_1
           do i_b=1, setup%n_basis
           ! Cycle if this site is empty
-          if (configuration(i_b, i_1, i_2, i_3) .eq. 0_int16) cycle
+          if (configuration(i_b, i_1, i_2, i_3) .eq. 0_array_int) cycle
             ! Loop over neighbouring sites, accounting for
             ! P.B.C.s
             do jj_3=i_3-loop_3, i_3+loop_3, 1
@@ -330,7 +331,7 @@ module analytics
                 do jj_1=i_1-loop_1, i_1+loop_1, 1
                   j_1 = modulo(jj_1-1, 2*setup%n_1) + 1
                   do j_b=1, setup%n_basis
-                    if (configuration(j_b, j_1, j_2, j_3) .eq. 0_int16) cycle
+                    if (configuration(j_b, j_1, j_2, j_3) .eq. 0_array_int) cycle
                     ! Compute the distance to this site, accounting
                     ! for PBCs
                     d_x = real(i_1-j_1)

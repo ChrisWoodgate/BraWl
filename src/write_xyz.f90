@@ -10,6 +10,7 @@
 module write_xyz
 
   use kinds
+  use constants
   use shared_data
   use analytics
 
@@ -37,8 +38,8 @@ module write_xyz
     type(run_params), intent(in) :: setup
 
     ! Data to write to file
-    !integer(int16), dimension(:,:,:,:), allocatable, intent(in) :: configuration
-    integer(int16), dimension(:,:,:,:), intent(in) :: configuration
+    !integer(array_int), dimension(:,:,:,:), allocatable, intent(in) :: configuration
+    integer(array_int), dimension(:,:,:,:), intent(in) :: configuration
 
     ! Option to open existing xyz file and append new configuration to the end
     logical, optional :: trajectory

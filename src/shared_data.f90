@@ -9,6 +9,7 @@
 module shared_data
 
   use kinds
+  use constants
   
   implicit none
 
@@ -25,7 +26,7 @@ module shared_data
 
   ! Arrays used on all processors
   ! Indices run (basis, x, y, z)
-  integer(int16), allocatable, dimension(:,:,:,:) :: config
+  integer(array_int), allocatable, dimension(:,:,:,:) :: config
   real(real64), allocatable, dimension(:) :: energies_of_T, C_of_T,   &
                                              acceptance_of_T,         &
                                              temperature

@@ -12,6 +12,7 @@
 module derived_types
 
   use kinds
+  use constants
   
   implicit none
 
@@ -227,20 +228,22 @@ module derived_types
 
     ! Simulation energy
     function hamiltonian(setup, config)
-      use kinds
+      use kinds, only : real64
+      use constants, only : array_int
       import :: run_params
-      !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
-      integer(int16), dimension(:,:,:,:), intent(in) :: config
+      !integer(array_int), allocatable, dimension(:,:,:,:), intent(in) :: config
+      integer(array_int), dimension(:,:,:,:), intent(in) :: config
       real(real64) :: hamiltonian
       class(run_params), intent(in) :: setup
     end function
 
     ! Neighbour
     function neighbour(setup, config, site_b, site_i, site_j, site_k)
-      use kinds
+      use kinds, only : real64
+      use constants, only : array_int
       import :: run_params
-      !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
-      integer(int16), dimension(:,:,:,:), intent(in) :: config
+      !integer(array_int), allocatable, dimension(:,:,:,:), intent(in) :: config
+      integer(array_int), dimension(:,:,:,:), intent(in) :: config
       real(real64) :: neighbour
       class(run_params), intent(in) :: setup
       integer, intent(in) :: site_b, site_i, site_j, site_k
@@ -248,7 +251,8 @@ module derived_types
 
     ! Random site on the lattice
     function rand_site(setup)
-      use kinds
+      use kinds, only : real64
+      use constants, only : array_int
       import :: run_params
       class(run_params), intent(in) :: setup
       integer, dimension(4) :: rand_site
@@ -256,7 +260,8 @@ module derived_types
 
     ! Random neighbour of that site
     function rand_neighbour(setup, site)
-      use kinds
+      use kinds, only : real64
+      use constants, only : array_int
       import :: run_params
       class(run_params), intent(in) :: setup
       integer, dimension(4), intent(in) :: site
@@ -265,10 +270,11 @@ module derived_types
 
     ! Type of Monte Carlo step
     function monte_carlo(setup, config, beta) result(accept)
-      use kinds
+      use kinds, only : real64
+      use constants, only : array_int
       import :: run_params
-      !integer(int16), allocatable, dimension(:,:,:,:) :: config
-      integer(int16), dimension(:,:,:,:) :: config
+      !integer(array_int), allocatable, dimension(:,:,:,:) :: config
+      integer(array_int), dimension(:,:,:,:) :: config
       class(run_params), intent(in) :: setup
       integer :: accept
       real(real64), intent(in) :: beta

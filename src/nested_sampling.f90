@@ -55,10 +55,10 @@ module nested_sampling
     real(real64) :: acc_ratio, rnde
     real(real64), dimension(:), allocatable :: walker_energies
     ! Array for all the walkers configurations, with indices of n_base, n1, n2, n3, i_walker
-    integer(int16), dimension(:,:,:,:,:), allocatable :: ns_walkers
+    integer(array_int), dimension(:,:,:,:,:), allocatable :: ns_walkers
     
     ! Occupancy of each site
-    integer(int16) :: site1, site2
+    integer(array_int) :: site1, site2
     integer :: i_walker, i_step, i_iter, irnd, n_at
     integer :: n_acc, i_max(1), extra_steps
   

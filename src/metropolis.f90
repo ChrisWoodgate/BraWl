@@ -407,13 +407,13 @@ module metropolis
   !> @return None
   function monte_carlo_step_lattice(setup, config, beta) result(accept)
 
-    integer(int16), dimension(:,:,:,:) :: config
+    integer(array_int), dimension(:,:,:,:) :: config
     class(run_params), intent(in) :: setup
     integer :: accept
     integer, dimension(4) :: rdm1, rdm2
     real(real64) , intent(in) :: beta
     real(real64) :: e_unswapped, e_swapped, delta_e
-    integer(int16) :: site1, site2
+    integer(array_int) :: site1, site2
 
     ! Pick two random sites on the lattice
     rdm1 = setup%rdm_site()
@@ -485,13 +485,13 @@ module metropolis
   !> @return None
   function monte_carlo_step_nbr(setup, config, beta) result(accept)
 
-    integer(int16), dimension(:,:,:,:) :: config
+    integer(array_int), dimension(:,:,:,:) :: config
     class(run_params), intent(in) :: setup
     integer :: accept
     integer, dimension(4) :: rdm1, rdm2
     real(real64) , intent(in) :: beta
     real(real64) :: e_unswapped, e_swapped, delta_e
-    integer(int16) :: site1, site2
+    integer(array_int) :: site1, site2
 
     ! Pick a random site on the lattice and its neighbour
     rdm1 = setup%rdm_site()

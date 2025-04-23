@@ -237,9 +237,9 @@ module random_site
   !> @return None
   subroutine pair_swap(config, idx1, idx2)
 
-    integer(int16), dimension(:,:,:,:) :: config
+    integer(array_int), dimension(:,:,:,:) :: config
     integer, dimension(4), intent(in) :: idx1, idx2
-    integer(int16) :: species1, species2
+    integer(array_int) :: species1, species2
 
     species1 = config(idx1(1), idx1(2), idx1(3), idx1(4))
     species2 = config(idx2(1), idx2(2), idx2(3), idx2(4))

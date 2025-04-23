@@ -12,6 +12,7 @@
 module initialise
 
   use kinds
+  use constants
   use shared_data
   use io
   use c_functions
@@ -228,7 +229,7 @@ module initialise
 
     ! Allocate array for storing configuration
     allocate(config(setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3))
-    config = 0_int16
+    config = 0_array_int
 
   end subroutine initialise_local_arrays
 
@@ -347,10 +348,10 @@ module initialise
   subroutine initial_setup(setup, config)
 
     type(run_params) :: setup
-    integer(int16), allocatable, dimension(:,:,:,:) :: config
+    integer(array_int), allocatable, dimension(:,:,:,:) :: config
     integer(int32), dimension(4) :: grid_dims
     integer :: i, j, k, n_sites, idx
-    integer(int16) :: l, n_species
+    integer(array_int) :: l, n_species
     real(real64) :: rand
     integer(int64), dimension(setup%n_species) :: species_count, check
 
@@ -372,7 +373,7 @@ module initialise
 
     ! Get the dimensions of the grid I am using
     grid_dims = shape(config)
-    n_species = int(setup%n_species, kind=int16)
+    n_species = int(setup%n_species, kind=array_int)
 
     ! Case user specified number of each species
     if (sum(setup%species_numbers) .eq. setup%n_atoms) then
@@ -389,7 +390,7 @@ module initialise
     end if
 
     ! Set configuration to be zero
-    config = 0_int16
+    config = 0_array_int
 
     ! Set up the lattice
     ! Deal with simple cubic case

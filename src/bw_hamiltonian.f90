@@ -11,6 +11,7 @@
 module bw_hamiltonian
 
   use kinds
+  use constants
   use shared_data
   use io
   use c_functions
@@ -56,7 +57,7 @@ module bw_hamiltonian
   !> @return The total energy of the simulation configuration
   function total_energy(setup,config) result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer :: i, j, k, l
@@ -67,7 +68,7 @@ module bw_hamiltonian
       do k=1, 2*setup%n_2
         do j=1, 2*setup%n_1
           do i=1, setup%n_basis
-            if (config(i,j,k,l) .eq. 0_int16) cycle
+            if (config(i,j,k,l) .eq. 0_array_int) cycle
             energy = energy + setup%nbr_energy(config, i, j, k, l)
           end do
         end do
@@ -98,7 +99,7 @@ module bw_hamiltonian
   function pair_energy(setup, config, idx1, idx2)&
        result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     type(run_params), intent(in) :: setup
     integer, dimension(4), intent(in) :: idx1, idx2
     real(real64) :: energy
@@ -134,12 +135,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, ip1, im1, jp1, jm1, kp1, km1, ib
 
     energy=0.0_real64
@@ -197,12 +198,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, ip2, im2, jp2, jm2, kp2, km2, ib
 
     energy=0.0_real64
@@ -258,12 +259,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, ip2, im2, jp2, jm2, kp2, km2, ib
 
     energy=0.0_real64
@@ -325,12 +326,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, up, dn, fw, bw, lt, rt, upupup, dndndn, &
                fwfwfw, bwbwbw, ltltlt, rtrtrt, ib
 
@@ -413,12 +414,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, upup, dndn, fwfw, bwbw, ltlt, rtrt, ib
 
     energy=0.0_real64
@@ -476,12 +477,12 @@ module bw_hamiltonian
                              config,  species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, upupupup, dndndndn, fwfwfwfw, bwbwbwbw, &
                ltltltlt, rtrtrtrt, ib
 
@@ -538,12 +539,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, up, dn, fw, bw, lt, rt, upupup, dndndn, &
                fwfwfw, bwbwbw, ltltlt, rtrtrt, ib
 
@@ -624,12 +625,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, upup, dndn, fwfw, bwbw, ltlt, rtrt, upupupup, &
                dndndndn, fwfwfwfw, bwbwbwbw, ltltltlt, rtrtrtrt, ib
 
@@ -710,12 +711,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, upup, dndn, fwfw, bwbw, ltlt, rtrt, upupupup, &
                dndndndn, fwfwfwfw, bwbwbwbw, ltltltlt, rtrtrtrt, ib
 
@@ -796,12 +797,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, up, dn, fw, bw, lt, rt, upupup, dndndn, fwfwfw, &
                bwbwbw, ltltlt, rtrtrt, upupupupup, dndndndndn,    &
                fwfwfwfwfw, bwbwbwbwbw, ltltltltlt, rtrtrtrtrt, ib
@@ -897,11 +898,11 @@ module bw_hamiltonian
   function bcc_energy_1shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -931,11 +932,11 @@ module bw_hamiltonian
   function bcc_energy_2shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -966,11 +967,11 @@ module bw_hamiltonian
   function bcc_energy_3shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1002,11 +1003,11 @@ module bw_hamiltonian
   function bcc_energy_4shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1039,11 +1040,11 @@ module bw_hamiltonian
   function bcc_energy_5shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1077,11 +1078,11 @@ module bw_hamiltonian
   function bcc_energy_6shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1116,11 +1117,11 @@ module bw_hamiltonian
   function bcc_energy_7shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1156,11 +1157,11 @@ module bw_hamiltonian
   function bcc_energy_8shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1197,11 +1198,11 @@ module bw_hamiltonian
   function bcc_energy_9shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1238,12 +1239,12 @@ module bw_hamiltonian
   !>         neighbours on the bcc lattice (cubic representation).
   function bcc_energy_10shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    !integer(array_int), allocatable, dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1282,12 +1283,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, up, dn, fw, bw, lt, rt, ib
 
     energy=0.0_real64
@@ -1349,12 +1350,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i
     integer :: upup, dndn, fwfw, bwbw, ltlt, rtrt, ib
 
@@ -1410,12 +1411,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, up, dn, fw, bw, lt, rt
     integer :: upup, dndn, fwfw, bwbw, ltlt, rtrt, ib
 
@@ -1496,12 +1497,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i
     integer :: upup, dndn, fwfw, bwbw, ltlt, rtrt, ib
 
@@ -1563,12 +1564,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, up, dn, fw, bw, lt, rt
     integer :: upupup, dndndn, fwfwfw, bwbwbw, ltltlt, rtrtrt, ib
 
@@ -1649,12 +1650,12 @@ module bw_hamiltonian
                              config, species)     &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16), intent(in) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, upup, dndn, fwfw, bwbw, ltlt, rtrt, ib
 
     energy=0.0_real64
@@ -1711,11 +1712,11 @@ module bw_hamiltonian
   function fcc_energy_1shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1745,11 +1746,11 @@ module bw_hamiltonian
   function fcc_energy_2shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1780,11 +1781,11 @@ module bw_hamiltonian
   function fcc_energy_3shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1816,11 +1817,11 @@ module bw_hamiltonian
   function fcc_energy_4shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1853,11 +1854,11 @@ module bw_hamiltonian
   function fcc_energy_5shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1891,11 +1892,11 @@ module bw_hamiltonian
   function fcc_energy_6shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -1929,12 +1930,12 @@ module bw_hamiltonian
   function simple_cubic_1shell_energy(setup, site_b, site_i, site_j, site_k, config, species) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, up, dn, fw, bw, lt, rt, ib
 
     energy=0.0_real64
@@ -1992,11 +1993,11 @@ module bw_hamiltonian
   function simple_cubic_energy_1shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
 
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 

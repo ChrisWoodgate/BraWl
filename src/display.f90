@@ -103,7 +103,7 @@ module display
   !> @return None
   subroutine display_grid(grid, show_borders, title)
 
-    integer(kind=int16), intent(in), dimension(:,:,:,:) :: grid
+    integer(kind=array_int), intent(in), dimension(:,:,:,:) :: grid
     logical, intent(in), optional :: show_borders
     character(len=*), optional :: title
     logical :: borders
