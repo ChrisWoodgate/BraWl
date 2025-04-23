@@ -21,6 +21,9 @@ module io
   
   implicit none
 
+  ! Variables for keeping track of time
+  real(real64) :: t_start, t_stop
+
   contains
 
   !> @brief   Subroutine to print software version, date, and time
@@ -49,6 +52,11 @@ module io
     write(6,'(72("-"))')
 
     if (point .eq. 's') then
+
+      ! Start the clock
+      call cpu_time(t_start)
+
+      ! Print relevant info to screen
       write(6, '(20x,"    ____            _       ____")')
       write(6, '(20x,"   / __ )_________ | |     / / /")')
       write(6, '(20x,"  / __  / ___/ __ `/ | /| / / / ")')
@@ -70,6 +78,10 @@ module io
       write(6,'(15x,"This run finished at",1x,a," on",1x,a)')          &
                time(1:2)//":"//time(3:4)//":"//time(5:6),              &
                date(7:8)//"."//date(5:6)//"."//date(1:4)
+      write(6,'(72("-"))')
+      ! Start the clock
+      call cpu_time(t_stop)
+      write(6,'(20x,"Execution took",1x,f9.1 " seconds")') t_stop-t_start
     endif
 
     write(6,'(72("="),/)' )
