@@ -14,7 +14,18 @@ module constants
 
   private
 
+  public :: array_int
+
   public :: k_b_in_eV, k_b_in_Ry, Ry_to_eV
+
+  !--------------------------------------------------------------------!
+  ! KIND to use for arrays storing simulation configurations. int8 is  !
+  ! more than enough, as it stores values in the range -128 to 127.    !
+  !                                                                    !
+  ! C. D. Woodgate,  Bristol                                      2025 !
+  !--------------------------------------------------------------------!
+
+  integer, parameter :: array_int = int8
 
   !--------------------------------------------------------------------!
   ! Hard-coded physical constants. Mainly for conversion of internal   !
