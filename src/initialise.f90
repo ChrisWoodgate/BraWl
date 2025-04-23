@@ -34,19 +34,33 @@ module initialise
   !>                  0, static seed is used (for testing).
   !>
   !> @return None
-  subroutine initialise_pnrg(seedtime)
+  subroutine initialise_pnrg(static_seed)
 
-    integer :: seedtime
+    logical :: static_seed
+    integer :: seedtime = 0
 
     if(my_rank == 0) then
-      write(6,'(17("-"),x,"Initialising random number generators",x,16("-"),/)')
+      write(6,'(18("-"),x,"Seeding random number generator(s)",x,18("-"),/)')
+      if (static_seed) then
+        write(6,'(2x,"Using fixed seed (for testing)",/)')
+      else
+        write(6,'(2x,"Using time-based random seed",/)')
+      end if
+    end if
+
+    if (static_seed) then
+      seedtime = 0
+    else
+      seedtime = 1
     end if
 
     ! Initialise the prng
     seed = f90_init_genrand(seedtime, int(my_rank, kind=C_INT))
 
     call comms_wait()
+
     print*, 'Thread ', my_rank, ' has seed ', seed
+
     call flush(6)
 
     call comms_wait()

@@ -136,12 +136,12 @@ module io
     ! Exit cleanly if we can't find it
     if (.not. exists) then
       call comms_finalise()
-      stop 'Could not find control file ' // trim(filename)
+      stop 'Could not find input file ' // trim(filename)
     end if
 
     ! If we can find it, output that we are reading it
     if(my_rank == 0) then
-      write(6,'(25("-"),x,"Parsing control file",x,25("-"),/)')
+      write(6,'(26("-"),x,"Parsing input file",x,26("-"),/)')
     end if
 
     ! Open it for reading
@@ -196,6 +196,8 @@ module io
           check(9) = .true.
         case ('wc_range')
           read(buffer, *, iostat=ios) parameters%wc_range
+        case ('static_seed')
+          read(buffer, *, iostat=ios) parameters%static_seed
         case default
         end select
       end if
@@ -377,8 +379,8 @@ module io
     integer :: my_rank
 
     if(my_rank == 0) then
-      write(6,'(15("-"),x,"Reading atom-atom interaction parameters",x, &
-                &15("-"),/)')
+      !write(6,'(72("-"),/)', advance='no')
+      write(6,'(8("-"),x,"Reading atom-atom effective pair interaction parameters",x, 7("-"),/)')
     end if
 
     V_ex = 0.0_real64
@@ -392,7 +394,9 @@ module io
     end if
 
     if(my_rank == 0) then
-      write(6,'(72("-"),/)')
+      write(6,'(3("-"),x,"Read atom-atom effective pair interaction parameters successfully",x, &
+                &2("-"),/)')!, advance='no')
+      !write(6,'(72("-"),/)')
     end if
 
   end subroutine read_exchange
@@ -467,7 +471,6 @@ module io
           print*, ' Metropolis input file not specified with "metropolis=<name>"'
           print*, ' '
           print*, ' Defaulting to searching for "metropolis.inp"'
-          print*, ' '
         end if
         control = 'metropolis.inp'
       else

@@ -55,7 +55,9 @@ program main
   call read_exchange(setup, my_rank)
 
   ! Initialise PNRG
-  call initialise_pnrg(setup%seedtime)
+  ! static_seed is true if we would like to use a fixed seed and false
+  ! otherwise
+  call initialise_pnrg(setup%static_seed)
 
   ! Initialise some function pointers
   call initialise_function_pointers(setup)

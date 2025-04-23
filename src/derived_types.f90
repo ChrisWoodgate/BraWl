@@ -36,8 +36,8 @@ module derived_types
     integer :: n_species
     ! Number of atoms
     integer :: n_atoms
-    ! Fixed or time-based random seed
-    integer :: seedtime=1
+    ! Logical flag for fixed or time-based random seed
+    logical :: static_seed=.false.
     ! Lattice type - name, e.g. fcc, bcc, hcp, ...
     character(len=20) :: lattice
     ! Lattice parameter (for writing xyz file)

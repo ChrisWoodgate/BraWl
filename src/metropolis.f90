@@ -100,7 +100,6 @@ module metropolis
                          setup%wc_range))
 
     if(my_rank == 0) then
-      write(6,'(/,72("-"),/)')
       write(6,'(24("-"),x,"Commencing Simulation!",x,24("-"),/)')
     end if
 
