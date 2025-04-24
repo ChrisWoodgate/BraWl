@@ -25,6 +25,11 @@ module metropolis
   
   implicit none
 
+  private
+
+  public :: metropolis_simulated_annealing,                            &
+            metropolis_decorrelated_samples
+
   contains
 
   !> @brief   Subroutine for performing simulated annealing using

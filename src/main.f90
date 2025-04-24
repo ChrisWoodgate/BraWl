@@ -57,7 +57,7 @@ program main
   ! Initialise PNRG
   ! static_seed is true if we would like to use a fixed seed and false
   ! otherwise
-  call initialise_pnrg(setup%static_seed)
+  call initialise_prng(setup%static_seed)
 
   ! Initialise some function pointers
   call initialise_function_pointers(setup)

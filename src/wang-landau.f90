@@ -12,18 +12,23 @@ module wang_landau
 
   use kinds
   use constants
+  use derived_types
   use initialise
   use shared_data
   use c_functions
   use random_site
   use metropolis
+  use bw_hamiltonian
+  use analytics
+  use comms
   use mpi
+  use write_netcdf
   use display
 
   implicit none
  
   ! MPI variables
-  integer :: mpi_processes
+  integer :: mpi_processes, ierr
   real(real64) :: start, end, time_max, time_min, test_time_1, test_time_2
   integer :: mpi_bins, mpi_start_idx, mpi_end_idx, mpi_index, mpi_start_idx_buffer
   integer :: mpi_end_idx_buffer, i_sweeps

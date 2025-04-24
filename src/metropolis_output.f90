@@ -13,6 +13,10 @@ module metropolis_output
 
   implicit none
 
+  private
+
+  public :: diagnostics_writer
+
   contains
 
   !> @brief   Subroutine to write outputs of a Metropolis simulation to

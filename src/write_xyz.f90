@@ -10,6 +10,7 @@
 module write_xyz
 
   use kinds
+  use derived_types
   use constants
   use shared_data
   use analytics

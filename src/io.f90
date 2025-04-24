@@ -13,13 +13,21 @@
 module io
 
   use kinds
+  use derived_types
   use shared_data
   use command_line
   use display
-  use netcdf
   use comms
   
   implicit none
+
+  private
+
+  public :: write_info, make_data_directories, read_control_file,      &
+            echo_control_file, read_exchange, parse_inputs,            &
+            parse_metropolis_inputs, read_metropolis_file,             &
+            echo_metropolis_file, read_ns_file, read_tmmc_file,        &
+            read_wl_file
 
   ! Variables for keeping track of time
   real(real64) :: t_start, t_stop

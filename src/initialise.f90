@@ -13,6 +13,7 @@ module initialise
 
   use kinds
   use constants
+  use derived_types
   use shared_data
   use io
   use c_functions
@@ -22,6 +23,15 @@ module initialise
   use iso_c_binding
   
   implicit none
+
+  private
+
+  public :: initialise_prng, initialise_global_metropolis_arrays,      &
+            initialise_function_pointers, initialise_interaction,      &
+            initialise_local_arrays, clean_up_interaction,             &
+            initialise_local_metropolis_arrays, local_clean_up,        &
+            local_metropolis_clean_up, global_metropolis_clean_up,     &
+            initial_setup
 
   contains
 
@@ -34,7 +44,7 @@ module initialise
   !>                  0, static seed is used (for testing).
   !>
   !> @return None
-  subroutine initialise_pnrg(static_seed)
+  subroutine initialise_prng(static_seed)
 
     logical :: static_seed
     integer :: seedtime = 0
@@ -65,7 +75,7 @@ module initialise
 
     call comms_wait()
 
-  end subroutine initialise_pnrg
+  end subroutine initialise_prng
 
   !> @brief   Subroutine to initalise the global Metropolis arrays
   !>

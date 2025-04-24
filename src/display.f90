@@ -14,6 +14,10 @@ module display
   
   implicit none
 
+  private
+
+  public :: pretty_print_exchange, display_grid, print_centered_message
+
   contains
 
   !> @brief   Subroutine to print atom-atom effective pair interactions

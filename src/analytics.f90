@@ -12,12 +12,18 @@
 module analytics
 
   use kinds
+  use derived_types
   use constants
   use shared_data
   use io
   use display
   
   implicit none
+
+  private
+
+  public :: store_state, average_state, total_particle_count,          &
+            print_particle_count, lattice_shells, radial_densities
 
   contains
 
@@ -178,7 +184,6 @@ module analytics
   !> @return None
   subroutine lattice_shells(setup, shells, configuration)
 
-    !integer(array_int), dimension(:,:,:,:), allocatable :: configuration
     integer(array_int), dimension(:,:,:,:) :: configuration
     type(run_params), intent(in) :: setup
     integer :: i,j,k,b,l

@@ -13,6 +13,13 @@ module comms
 
   implicit none
 
+  private
+
+  public :: my_rank, p
+
+  public :: comms_initialise, comms_wait,                              &
+            comms_reduce_metropolis_results, comms_finalise, comms_purge
+
   save
 
   ! total number of processes
@@ -28,23 +35,13 @@ module comms
   integer, dimension(mpi_status_size) :: status_info
 
   ! error variables
-  integer :: ierr, request
+  integer :: ierr
 
   ! has the message been recieved
   logical :: flag
 
   ! size of message
   integer :: mpi_counter
-
-  ! our communicator
-  integer :: cart_comm
-
-  ! this processor coordinates
-  integer, dimension(3) :: my_rank_coords
-
-  ! neighbouring ranks
-  integer, dimension(6) :: my_rank_neighbours
-  integer :: east, west, north, south, up, down
 
   contains
 
