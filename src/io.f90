@@ -147,8 +147,18 @@ module io
 
     ios=0; line=0
 
-    ! Defaults if these are not specified.
+    ! Initialise to default values---this means Valgrid will be happy
+    parameters%mode = 301
+    parameters%lattice = 'fcc'
+    parameters%lattice_parameter = 3.57
+    parameters%n_1 = 4
+    parameters%n_2 = 4
+    parameters%n_3 = 4
+    parameters%n_basis = 1
+    parameters%n_species = 4
+    parameters%interaction_file = 'V_ijs.txt'
     parameters%wc_range = 2
+    parameters%static_seed = .true.
 
     ! See if the relevant file exists
     inquire(file=trim(filename), exist=exists)
@@ -317,24 +327,6 @@ module io
     end if
 
   end subroutine read_control_file
-
-  !> @brief   Subroutine to print to screen that we are reading input
-  !>          file.
-  !>
-  !> @details Redundant as of v0.4.0.
-  !>
-  !> @todo    Delete this routine?
-  !>
-  !> @author  C. D. Woodgate
-  !> @date    2020-2025
-  !>
-  !> @return None
-  subroutine print_parse()
-
-    print*, '###############################'
-    print*, '#     Parsing input file      #'
-
-  end subroutine print_parse
 
   !> @brief   Subroutine to echo the contents of the input file to
   !>          the screen
