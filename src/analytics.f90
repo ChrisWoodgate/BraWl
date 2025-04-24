@@ -138,7 +138,7 @@ module analytics
     integer :: i,j,k, n, my_rank
 
     if(my_rank == 0) then
-      write(6,'(16("-"),x,"Checking contents of simulation cell(s)",x, 17("-"),/)')
+      write(6,'(16("-"),x,"Checking contents of simulation cell(s)",x, 15("-"),/)')
     end if
 
     sizes = shape(config)
