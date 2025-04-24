@@ -110,7 +110,8 @@ module nested_sampling
     ! Main NS iteration cycle         !
     !---------------------------------!
     write(*,'(24("-"),x,"Entering main NS cycle",x, 24("-"),/)')
-    print*, 'Will do',nested_sampling%n_iter,'iterations, starting with', nested_sampling%n_steps,'MC steps initially.', new_line('a')
+    print*, 'Will do',nested_sampling%n_iter,'iterations, starting with', &
+             nested_sampling%n_steps,'MC steps initially.', new_line('a')
     
     do i_iter = 1, nested_sampling%n_iter
     
