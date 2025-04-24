@@ -62,9 +62,6 @@ program main
   ! Initialise some function pointers
   call initialise_function_pointers(setup)
 
-  ! Make directories for data
-  call make_data_directories(my_rank)
-
   ! Initialise some local arrays
   call initialise_local_arrays(setup)
 
@@ -73,10 +70,20 @@ program main
   !---------------!
   if (setup%mode == 301) then
 
-    ! Metropolis with Kawasaki dynamics
+    ! Make the relevant directories
+    if(my_rank == 0) call execute_command_line('mkdir -p grids')
+    if(my_rank == 0) call execute_command_line('mkdir -p diagnostics')
+    if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
+
+    ! Run Metropolis with Kawasaki dynamics
     call metropolis_simulated_annealing(setup, metropolis_setup, my_rank)
 
   else if (setup%mode == 302) then
+
+    ! Make the relevant directories
+    if(my_rank == 0) call execute_command_line('mkdir -p grids')
+    if(my_rank == 0) call execute_command_line('mkdir -p diagnostics')
+    if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
 
     ! Draw decorrelated samples
     call metropolis_decorrelated_samples(setup, metropolis_setup, my_rank)
@@ -102,6 +109,9 @@ program main
     call tmmc_main(setup, tmmc_setup, my_rank)
 
   else if (setup%mode == 305) then
+
+    ! Make the relevant directories
+    if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
 
     ! Wang Landau algorithm
     call read_wl_file("wl_input.inp", wl_setup, my_rank)
