@@ -90,7 +90,7 @@ module nested_sampling
        ns_walkers(:,:,:,:,i_walker) = config
        
        ! Check the average concentrations
-       if (i_walker == 1) call print_particle_count(setup, ns_walkers(:,:,:,:,i_walker))
+       if (i_walker == 1) call print_particle_count(setup, ns_walkers(:,:,:,:,i_walker), 0)
     
        ! Calculate all the inital energies and print to screen
        ! Add small random number to the energy to avoid configurations to be degenerate in energy
