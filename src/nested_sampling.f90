@@ -66,7 +66,7 @@ module nested_sampling
     integer, dimension(4) :: rdm1, rdm2
 
     ! open and parse input parameters needed for nested sampling
-    call read_ns_file("ns_input.txt", nested_sampling)
+    call read_ns_file("ns_input.inp", nested_sampling)
     open(35,file=nested_sampling%outfile_ener)
 
     ! creat arrays for storing all the NS walker configurations and their energies

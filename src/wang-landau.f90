@@ -138,6 +138,7 @@ module wang_landau
     call enter_energy_window()
     print*, "Rank: ", my_rank, "within energy window"
   
+    call comms_wait()
     flush(6)
     call comms_wait()
     if (my_rank == 0) then
@@ -151,6 +152,7 @@ module wang_landau
     !--------------------!
     call pre_sampling(wl_logdos, mpi_wl_hist)
 
+    call comms_wait()
     flush(6)
     call comms_wait()
     if (my_rank == 0) then
