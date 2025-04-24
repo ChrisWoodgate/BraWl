@@ -1,6 +1,0 @@
-n_walkers=100
-n_steps=500
-n_iter=14000    
-traj_freq=10
-outfile_ener='fcc_al_1.00_crfeconi_K100.energies'
-outfile_traj='fcc_al_1.00_crfeconi_K100.traj.xyz'
