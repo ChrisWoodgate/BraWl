@@ -688,33 +688,42 @@ module io
     character(len=*), intent(in) :: filename
     logical, dimension(8) :: check
     type(ns_params) :: parameters
-    character(len=100) :: buffer, label
+    character(len=144) :: buffer, label, first_char
     integer :: line, pos, ios
 
     check = .false.
 
     ios=0; line=0
 
+    ! Print to screen that we are looking for the NS input file
+    if(my_rank == 0) then
+      write(6,'(/,18("-"),x,"Parsing Nested Sampling input file",x,18("-"),/)')
+    end if
+
+    print*, ' Looking for Nested Sampling input file named: ', filename, new_line('a')
+
     open(25, file=filename, iostat=ios)
 
+    ! Exit cleanly if we cannot find it
     if (ios .ne. 0) then
       call comms_finalise()
       stop 'Could not parse input file. Aborting...'
     end if
 
-    write(*,'(a)', advance='no') new_line('a')
-    print*, '###############################'
-    print*, '#  Parsing NS input file      #'
-    print*, '###############################'
-
-    print*, '# NS input file name: ', filename
-
+    ! Otherwise, read it
     do while (ios==0)
 
       read(25, "(A)", iostat=ios) buffer
 
       if(ios==0) then
         line=line+1
+
+        ! Check if the first non-whitespace character is a hash.
+        ! If so, this is a comment line---ignore it.
+        first_char = trim(buffer)
+        if (first_char(1:1) .eq. '#') then
+          continue
+        end if
 
         pos = scan(buffer, '=')
         label=buffer(1:pos-1)
@@ -723,30 +732,32 @@ module io
         select case (label)
         case ('n_walkers')
           read(buffer, *, iostat=ios) parameters%n_walkers
-          print*, '# Read n_walkers = ', parameters%n_walkers
+          print*, ' Read n_walkers = ', parameters%n_walkers
         case ('n_steps')
           read(buffer, *, iostat=ios) parameters%n_steps
-          print*, '# Read n_steps = ', parameters%n_steps
+          print*, ' Read n_steps = ', parameters%n_steps
         case ('n_iter')
           read(buffer, *, iostat=ios) parameters%n_iter
-          print*, '# Read n_iter = ', parameters%n_iter
+          print*, ' Read n_iter = ', parameters%n_iter
         case ('outfile_ener')
           read(buffer, *, iostat=ios) parameters%outfile_ener
-          print*, '# Read outfile_ener = ', parameters%outfile_ener
+          print*, ' Read outfile_ener = ', parameters%outfile_ener
         case ('outfile_traj')
           read(buffer, *, iostat=ios) parameters%outfile_traj
-          print*, '# Read outfile_traj = ', parameters%outfile_traj
+          print*, ' Read outfile_traj = ', parameters%outfile_traj
         case ('traj_freq')
           read(buffer, *, iostat=ios) parameters%traj_freq
-          print*, '# Write configuration every n-th NS iteration = ', parameters%traj_freq
+          print*, ' Write configuration every n-th NS iteration = ', parameters%traj_freq
         case default
-          print*, '# Skipping invalid label'
         end select
       end if
     end do
 
-    print*, '# Finished parsing NS input file #'
-    print*, '###############################', new_line('a')
+    ! If all has gone to plan, print that we have read this file
+    if(my_rank == 0) then
+      write(6,'(/,12("-"),x,"Successfully parsed Nested Sampling input file",x,12("-"),/)')
+    end if
+
     close(25)
 
   end subroutine read_ns_file
