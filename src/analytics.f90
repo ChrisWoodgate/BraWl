@@ -129,13 +129,17 @@ module analytics
   !> @param  config Current atomic configuration
   !>
   !> @return None
-  subroutine print_particle_count(setup, config)
+  subroutine print_particle_count(setup, config, my_rank)
     !integer(array_int), allocatable, dimension(:,:,:,:), intent(in) :: config
     integer(array_int), dimension(:,:,:,:), intent(in) :: config
     type(run_params) :: setup
     integer, dimension(4) :: sizes
     integer, dimension(:), allocatable :: species_count
-    integer :: i,j,k, n
+    integer :: i,j,k, n, my_rank
+
+    if(my_rank == 0) then
+      write(6,'(16("-"),x,"Checking contents of simulation cell(s)",x, 15("-"),/)')
+    end if
 
     sizes = shape(config)
 
@@ -144,9 +148,9 @@ module analytics
     species_count = 0
     n=0
 
-    do k=1, sizes(3)
-      do j=1, sizes(2)
-        do i=1, sizes(1)
+    do k=1, sizes(4)
+      do j=1, sizes(3)
+        do i=1, sizes(2)
           if (config(1,i,j,k) .ne. 0_array_int) then
             n = n+1
             species_count(config(1,i,j,k)) = &
@@ -156,16 +160,29 @@ module analytics
       end do
     end do
 
-    print*, 'Particle counts are: '
+    if(my_rank == 0) then
+      write(6,'(x,"Simulation cell is",x,A,/)') setup%lattice
+      write(6,'(x,"There are:",/)')
+      write(6,'(x,I3,x,"cells in direction 1,")') setup%n_1
+      write(6,'(x,I3,x,"cells in direction 2,")') setup%n_2
+      write(6,'(x,I3,x,"cells in direction 3,",/)') setup%n_3
+      write(6,'(x,"for a total of ",I5,x,"atoms in the cell.",/)') n
 
-    do i=1, setup%n_species-1
-      print*, 'Species ', i ,species_count(i)
-    end do
+      write(6,'(x,"The breakdown is:",/)')
 
-    print*, 'Species ', setup%n_species,                   &
-             species_count(setup%n_species), new_line('a')
-    
+      write(6,'(x,"Index | Element | Number of Atoms")')
+      write(6,'(x,33("-"))')
+      do i=1, setup%n_species
+        write(6,'(x,I5," |      ", A, " | ", I9)')                         &
+              i, setup%species_names(i), species_count(i)
+      end do
+    end if
+
     deallocate(species_count)
+
+    if(my_rank == 0) then
+      write(6,'(/,17("-"),x,"End of info about simulation cell(s)",x, 17("-"),/)')
+    end if
 
   end subroutine print_particle_count
 
