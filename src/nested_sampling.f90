@@ -74,6 +74,8 @@ module nested_sampling
     allocate(walker_energies(nested_sampling%n_walkers))
     walker_energies=0.0d0
 
+    write(*,'(16("-"),x,"Initialising set of walkers for NS run",x, 16("-"),/)')
+
     ! initialise all walkers 
     do i_walker = 1,nested_sampling%n_walkers
     
@@ -89,24 +91,26 @@ module nested_sampling
        call initial_setup(setup, config)
        ns_walkers(:,:,:,:,i_walker) = config
        
-       ! Check the average concentrations
-       if (i_walker == 1) call print_particle_count(setup, ns_walkers(:,:,:,:,i_walker), 0)
-    
        ! Calculate all the inital energies and print to screen
        ! Add small random number to the energy to avoid configurations to be degenerate in energy
        call random_number(rnde)
        walker_energies(i_walker)=setup%full_energy(ns_walkers(:,:,:,:,i_walker))+rnde*1e-8
-       print*, 'Energy', i_walker, 'is: ', walker_energies(i_walker)
+       print*, ' Initial energy of walker ', i_walker, 'is: ', walker_energies(i_walker)
     
     enddo
+
+    write(*,'(/,16("-"),x,"Set of walkers successfully initialised",x, 15("-"),/)')
+
+    ! Print the cell contents to screen
+    call print_particle_count(setup, ns_walkers(:,:,:,:,1), 0)
     
     extra_steps=0
     
     !---------------------------------!
     ! Main NS iteration cycle         !
     !---------------------------------!
-    print*, '********* MAIN NS CYCLE STARTS ************'
-    print*, 'Will do',nested_sampling%n_iter,'iterations, starting with', nested_sampling%n_steps,'MC steps initially.'
+    write(*,'(24("-"),x,"Entering main NS cycle",x, 24("-"),/)')
+    print*, 'Will do',nested_sampling%n_iter,'iterations, starting with', nested_sampling%n_steps,'MC steps initially.', new_line('a')
     
     do i_iter = 1, nested_sampling%n_iter
     
@@ -195,9 +199,10 @@ module nested_sampling
        endif        
     
     enddo
-    print*, 'All NS iterations are done, sampling finished.'
+    print*, new_line('a'), ' All NS iterations are done, sampling finished.'
     close(35)
     
+    write(*,'(/,26("-"),x,"Leaving NS routine",x, 26("-"))')
   
   end subroutine nested_sampling_main
 
