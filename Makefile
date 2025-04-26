@@ -119,6 +119,7 @@ display.o: kinds.o shared_data.o constants.o derived_types.o constants.o
 bw_hamiltonian.o: kinds.o shared_data.o c_functions.o io.o constants.o
 analytics.o: shared_data.o kinds.o display.o io.o constants.o
 random_site.o: shared_data.o kinds.o c_functions.o analytics.o constants.o
+nested_sampling.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o derived_types.o
 metropolis.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o
 nested_sampling.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o metropolis.o constants.o
 initialise.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o comms.o constants.o
