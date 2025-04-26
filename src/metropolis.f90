@@ -182,11 +182,6 @@ module metropolis
         my_rank, '_trajectory_at_T_', int(temp), temp-int(temp),'.xyz'
       end if
 
-      if (metropolis%write_trajectory_xyz) then
-        write(xyz_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'trajectories/proc_', &
-        my_rank, '_trajectory_at_T_', int(temp), temp-int(temp),'.xyz'
-      end if
-
       if (metropolis%write_trajectory_energy) then
         write(energy_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'energies/proc_', &
         my_rank, '_energy_trajectory_at_T_', int(temp), temp-int(temp),'.xyz'
