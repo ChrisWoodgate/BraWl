@@ -115,8 +115,6 @@ module metropolis
     allocate(r_densities(setup%n_species, setup%n_species, setup%wc_range))
     allocate(asro(setup%n_species, setup%n_species, setup%wc_range))
 
-    print*, size(asro)
-
     ! Allocate memory for order_parameters
     allocate(order(setup%n_basis, setup%n_1, setup%n_2, setup%n_3))
 
