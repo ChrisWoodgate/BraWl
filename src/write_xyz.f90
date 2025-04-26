@@ -5,8 +5,9 @@
 !> @details This module contains a routine to produce a configuration file in xyz format 
 !>
 !> @author  C. D. Woodgate
+!> @author  L. B. Partay
+!>
 !> @date    2019-2025
-! C. D. Woodgate,  Warwick                                        2023 !
 module write_xyz
 
   use kinds
@@ -25,7 +26,9 @@ module write_xyz
   !>          (incl. lattice, element type and coordinates) with option to append configurations in a 
   !>          single trajectory file.
   !>
-  !> @author  C. D. Woodgate & L. B. Partay
+  !> @author  C. D. Woodgate
+  !> @author  L. B. Partay
+  !>
   !> @date    2024
   !>
   !> @param  filename Name of file to be created                                          
