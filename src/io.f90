@@ -495,6 +495,8 @@ module io
     ! Read the input file
     call read_metropolis_file(control, metropolis, my_rank)
 
+    write(6,'(x,"Parameters to be used are as follows",/)')
+
     if(my_rank == 0) then
       call echo_metropolis_file(metropolis)
       write(6,'(/,15("-"),x,"Parsed Metropolis input file successfully",x,14("-"),/)')
@@ -526,13 +528,21 @@ module io
     ios=0; line=0
 
     ! Defaults if these are not specified.
+    metropolis%burn_in_start = .False.
     metropolis%burn_in = .False.
-    metropolis%burn_in_steps = 0
-    metropolis%radial_sample_steps = 0
-    metropolis%asro = .false.
-    metropolis%alro = .false.
-    metropolis%asro = .false.
-    metropolis%dump_grids = .false.
+    metropolis%n_burn_in_steps = 0
+    metropolis%calculate_energies = .true.
+    metropolis%write_trajectory_energy = .false.
+    metropolis%calculate_asro = .true.
+    metropolis%calculate_alro = .false.
+    metropolis%n_sample_steps_asro = 0
+    metropolis%n_sample_steps_alro = 0
+    metropolis%write_trajectory_xyz = .false.
+    metropolis%write_trajectory_energy = .false.
+    metropolis%write_trajectory_asro = .false.
+    metropolis%n_sample_steps_trajectory = 0
+    metropolis%write_final_config_xyz = .false.
+    metropolis%read_start_config_nc = .false.
     metropolis%T_steps = 1
     metropolis%delta_T = 1
     metropolis%nbr_swap = .false.
@@ -577,24 +587,44 @@ module io
         case ('mode')
           read(buffer, *, iostat=ios) metropolis%mode
           check(1) = .true.
+        case ('n_mc_steps')
+          read(buffer, *, iostat=ios) metropolis%n_mc_steps
+          check(2) = .true.
+        case ('burn_in_start')
+          read(buffer, *, iostat=ios) metropolis%burn_in_start
         case ('burn_in')
           read(buffer, *, iostat=ios) metropolis%burn_in
-        case ('burn_in_steps')
-          read(buffer, *, iostat=ios) metropolis%burn_in_steps
-        case ('n_mc_steps')
-          read(buffer, *, iostat=ios) metropolis%mc_steps
-          check(2) = .true.
-        case ('sample_steps')
-          read(buffer, *, iostat=ios) metropolis%sample_steps
+        case ('n_burn_in_steps')
+          read(buffer, *, iostat=ios) metropolis%n_burn_in_steps
+        case ('calculate_energies')
+          read(buffer, *, iostat=ios) metropolis%calculate_energies
+        case ('n_sample_steps')
+          read(buffer, *, iostat=ios) metropolis%n_sample_steps
           check(3) = .true.
-        case ('radial_sample_steps')
-          read(buffer, *, iostat=ios) metropolis%radial_sample_steps
-        case ('dump_grids')
-          read(buffer, *, iostat=ios) metropolis%dump_grids
-        case ('asro')
-          read(buffer, *, iostat=ios) metropolis%asro
-        case ('alro')
-          read(buffer, *, iostat=ios) metropolis%alro
+        case ('calculate_asro')
+          read(buffer, *, iostat=ios) metropolis%calculate_asro
+        case ('n_sample_steps_asro')
+          read(buffer, *, iostat=ios) metropolis%n_sample_steps_asro
+        case ('calculate_alro')
+          read(buffer, *, iostat=ios) metropolis%calculate_alro
+        case ('n_sample_steps_alro')
+          read(buffer, *, iostat=ios) metropolis%n_sample_steps_alro
+        case ('n_sample_steps_trajectory')
+          read(buffer, *, iostat=ios) metropolis%n_sample_steps_trajectory
+        case ('write_trajectory_xyz')
+          read(buffer, *, iostat=ios) metropolis%write_trajectory_xyz
+        case ('write_trajectory_energy')
+          read(buffer, *, iostat=ios) metropolis%write_trajectory_energy
+        case ('write_trajectory_asro')
+          read(buffer, *, iostat=ios) metropolis%write_trajectory_asro
+        case ('write_final_config_xyz')
+          read(buffer, *, iostat=ios) metropolis%write_final_config_xyz
+        case ('write_final_config_nc')
+          read(buffer, *, iostat=ios) metropolis%write_final_config_nc
+        case ('read_start_config_nc')
+          read(buffer, *, iostat=ios) metropolis%read_start_config_nc
+        case ('start_config_file')
+          read(buffer, *, iostat=ios) metropolis%start_config_file
         case ('T')
           read(buffer, *, iostat=ios) metropolis%T
           check(4) = .true.
@@ -611,9 +641,14 @@ module io
 
     close(15)
 
-
-    if (metropolis%radial_sample_steps .eq. 0) then
-      metropolis%radial_sample_steps = metropolis%sample_steps
+    if (metropolis%n_sample_steps_alro .eq. 0) then
+      metropolis%n_sample_steps_asro = metropolis%n_sample_steps
+    endif
+    if (metropolis%n_sample_steps_alro .eq. 0) then
+      metropolis%n_sample_steps_alro = metropolis%n_sample_steps
+    endif
+    if (metropolis%n_sample_steps_trajectory .eq. 0) then
+      metropolis%n_sample_steps_trajectory = metropolis%n_sample_steps
     endif
 
     ! Check that the user has provided all the necessary inputs
@@ -625,7 +660,7 @@ module io
       else if (.not. check(2)) then
         stop "Missing 'n_mc_steps' in Metropolis input file"
       else if (.not. check(3)) then
-        stop "Missing 'sample_steps' in Metropolis input file"
+        stop "Missing 'n_sample_steps' in Metropolis input file"
       else if (.not. check(4)) then
         stop "Missing 'T' in Metropolis input file"
       else
@@ -648,19 +683,31 @@ module io
 
     type(metropolis_params) :: metropolis
 
-    print*, ' Using mode =          ', metropolis%mode
-    print*, ' Using burn_in =       ', metropolis%burn_in
-    print*, ' Using burn_in_steps = ', metropolis%burn_in_steps
-    print*, ' Using n_mc_steps =    ', metropolis%mc_steps
-    print*, ' Using sample_steps =  ', metropolis%sample_steps
-    print*, ' Using n_species =     ', metropolis%radial_sample_steps
-    print*, ' Using dump_grids =    ', metropolis%dump_grids
-    print*, ' Using asro =          ', metropolis%asro
-    print*, ' Using alro =          ', metropolis%alro
-    print*, ' Using T =             ', metropolis%T
-    print*, ' Using T_steps =       ', metropolis%T_steps
-    print*, ' Using delta_T =       ', metropolis%delta_T
-    print*, ' Using nbr_swap =      ', metropolis%nbr_swap
+    print*, ' mode =                       ', metropolis%mode
+    print*, ' n_mc_steps =                 ', metropolis%n_mc_steps
+    print*, ' burn_in_start =              ', metropolis%burn_in_start
+    print*, ' burn_in =                    ', metropolis%burn_in
+    print*, ' n_burn_in_steps =            ', metropolis%n_burn_in_steps
+    print*, ' n_sample_steps =             ', metropolis%n_sample_steps
+    print*, ' calculate_energies =         ', metropolis%calculate_energies
+    print*, ' write_trajectory_energy =    ', metropolis%write_trajectory_energy
+    print*, ' write_trajectory_asro =      ', metropolis%write_trajectory_asro
+    print*, ' calculate_asro =             ', metropolis%calculate_asro
+    print*, ' n_sample_steps_asro =        ', metropolis%n_sample_steps_asro
+    print*, ' calculate_alro =             ', metropolis%calculate_alro
+    print*, ' n_sample_steps_alro =        ', metropolis%n_sample_steps_alro
+    print*, ' write_trajectory_xyz =       ', metropolis%write_trajectory_xyz
+    print*, ' n_sample_steps_trajectory =  ', metropolis%n_sample_steps_trajectory
+    print*, ' write_final_config_xyz =     ', metropolis%write_final_config_xyz
+    print*, ' write_final_config_nc =      ', metropolis%write_final_config_nc
+    print*, ' read_start_config_nc =       ', metropolis%read_start_config_nc
+    if (metropolis%read_start_config_nc) then
+      print*, ' starting configuration file  ', metropolis%start_config_file
+    end if
+    print*, ' T =                          ', metropolis%T
+    print*, ' T_steps =                    ', metropolis%T_steps
+    print*, ' delta_T =                    ', metropolis%delta_T
+    print*, ' nbr_swap =                   ', metropolis%nbr_swap
 
   end subroutine echo_metropolis_file
 
