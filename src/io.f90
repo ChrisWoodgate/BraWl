@@ -536,7 +536,6 @@ module io
     metropolis%calculate_asro = .true.
     metropolis%calculate_alro = .false.
     metropolis%n_sample_steps_asro = 0
-    metropolis%calculate_alro = .false.
     metropolis%n_sample_steps_alro = 0
     metropolis%write_trajectory_xyz = .false.
     metropolis%write_trajectory_energy = .false.
@@ -607,9 +606,9 @@ module io
         case ('n_sample_steps_asro')
           read(buffer, *, iostat=ios) metropolis%n_sample_steps_asro
         case ('calculate_alro')
-          read(buffer, *, iostat=ios) metropolis%calculate_asro
+          read(buffer, *, iostat=ios) metropolis%calculate_alro
         case ('n_sample_steps_alro')
-          read(buffer, *, iostat=ios) metropolis%n_sample_steps_asro
+          read(buffer, *, iostat=ios) metropolis%n_sample_steps_alro
         case ('n_sample_steps_trajectory')
           read(buffer, *, iostat=ios) metropolis%n_sample_steps_trajectory
         case ('write_trajectory_xyz')
