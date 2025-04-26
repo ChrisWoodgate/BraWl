@@ -3,17 +3,18 @@ mode = simulated_annealing
 
 # The number of trial Monte Carlo moves to make
 # (at each temperature, if looping over temperatures)
-n_mc_steps = 20480
+n_mc_steps = 2048000
 
 # Would we like to burn in at the first temperature?
 burn_in_start = F
 
 # Would we like to burn in at *every* temperature?
 # (If T, then burn_in_start will also be T)
-burn_in = T
+burn_in = F
 
-# How many MC trials to make
-n_burn_in_steps = 2048
+# How many burn-in steps to make
+# (not used if no burn in is applied)
+n_burn_in_steps = 0
 
 # How frequently to sample simulation information, e.g. energy
 n_sample_steps = 2048
@@ -23,13 +24,13 @@ calculate_energies = T
 
 # How frequently to simulation trajectory information if gathered
 # Must be an integer multiple of n_sample_steps
-n_sample_steps_trajectory = 2048
+n_sample_steps_trajectory = 256
 
 # Would we like to write the energy trajectory to file?
 write_trajectory_energy = T
 
 # Would we like to write the ASRO trajectory to file?
-write_trajectory_asro = F
+write_trajectory_asro = T
 
 # Would we like to calculate the ASRO?
 calculate_asro = T
@@ -47,7 +48,7 @@ calculate_alro = F
 n_sample_steps_alro = 2048
 
 # Would we like to write an (extended) xyz file of the trajectory
-write_trajectory_xyz = F
+write_trajectory_xyz = T
 
 # Would we like to write the final config (at the end of a temperature) to an xyz file?
 write_final_config_xyz = F
@@ -60,10 +61,10 @@ write_final_config_nc = F
 read_start_config_nc = F
 
 # (Initial) temperature to use in simulation
-T = 1200.0
+T = 300.0
 
 # How many temperature steps to use, if more than one
-T_steps = 12
+T_steps = 1
 
 # Increment by which to change the temperature
 delta_T = -100.0
