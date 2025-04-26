@@ -124,11 +124,11 @@ module metropolis_output
 
     open(unit=7, file=filename)
 
-    write(7, *) 'T, E, C, Acceptance Rate'
+    write(7, *) '# T E C acceptance_rate'
 
     do i=1, n_steps
-      write(7,*) temps(i), ', ', energies(i), ', ', C(i), &
-                 ', ', acceptance(i)
+      write(7,*) temps(i), ' ', energies(i), ' ', C(i), &
+                 ' ', acceptance(i)
     end do
 
     close(7)

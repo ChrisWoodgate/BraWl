@@ -30,7 +30,7 @@ program main
   type(run_params) :: setup
 
   ! Metropolis parameters type
-  type(metropolis_params) :: metropolis_setup
+  type(metropolis_params) :: metropolis
 
   ! Nested Sampling parameters type
   type(ns_params) :: ns_setup
@@ -80,26 +80,18 @@ program main
   !---------------------------------!
   if (setup%mode == 301) then
 
-    ! Make the relevant directories
-    if(my_rank == 0) call execute_command_line('mkdir -p grids')
-    if(my_rank == 0) call execute_command_line('mkdir -p diagnostics')
-    if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
-    if(my_rank == 0) call execute_command_line('mkdir -p trajectories')
-    if(my_rank == 0) call execute_command_line('mkdir -p alro')
-    if(my_rank == 0) call execute_command_line('mkdir -p energies')
-
     ! Run Metropolis with Kawasaki dynamics
-    call metropolis_simulated_annealing(setup, metropolis_setup, my_rank)
+    call metropolis_simulated_annealing(setup, metropolis, my_rank)
 
   else if (setup%mode == 302) then
 
     ! Make the relevant directories
-    if(my_rank == 0) call execute_command_line('mkdir -p grids')
-    if(my_rank == 0) call execute_command_line('mkdir -p diagnostics')
-    if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
+    if(my_rank == 0) call execute_command_line('mkdir -p configs')
+    if(my_rank == 0) call execute_command_line('mkdir -p energies')
+    if(my_rank == 0) call execute_command_line('mkdir -p asro')
 
     ! Draw decorrelated samples
-    call metropolis_decorrelated_samples(setup, metropolis_setup, my_rank)
+    call metropolis_decorrelated_samples(setup, metropolis, my_rank)
 
   !---------------------------!
   ! Nested sampling algorithm !
@@ -137,7 +129,7 @@ program main
   else if (setup%mode == 305) then
 
     ! Make the relevant directories
-    if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
+    if(my_rank == 0) call execute_command_line('mkdir -p asro')
 
     ! Read the Wang-Landau input file
     call read_wl_file("wl_input.inp", wl_setup, my_rank)

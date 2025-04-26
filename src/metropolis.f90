@@ -81,6 +81,23 @@ module metropolis
     ! Read the Metropolis control file
     call parse_metropolis_inputs(metropolis, my_rank)
 
+    ! Make the relevant directories
+    if ((metropolis%write_final_config_xyz).or.(metropolis%write_final_config_nc)) then
+      if(my_rank == 0) call execute_command_line('mkdir -p configs')
+    end if
+    if (metropolis%calculate_energies) then
+      if(my_rank == 0) call execute_command_line('mkdir -p energies')
+    end if
+    if (metropolis%calculate_asro) then
+      if(my_rank == 0) call execute_command_line('mkdir -p asro')
+    end if
+    if (metropolis%calculate_alro) then
+      if(my_rank == 0) call execute_command_line('mkdir -p alro')
+    end if
+    if ((metropolis%write_trajectory_energy).or.(metropolis%write_trajectory_energy).or.(metropolis%write_trajectory_energy)) then
+      if(my_rank == 0) call execute_command_line('mkdir -p trajectories')
+    end if
+
     ! Initialise some global arrays
     call initialise_global_metropolis_arrays(setup, metropolis)
 
@@ -192,13 +209,13 @@ module metropolis
       end if
 
       if (metropolis%write_trajectory_energy) then
-        write(energy_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'energies/proc_', &
-        my_rank, '_energy_trajectory_at_T_', int(temp), temp-int(temp),'.xyz'
+        write(energy_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'trajectories/proc_', &
+        my_rank, '_energy_trajectory_at_T_', int(temp), temp-int(temp),'.dat'
       end if
 
       if (metropolis%write_trajectory_asro) then
-        write(asro_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'energies/proc_', &
-        my_rank, '_asro_trajectory_at_T_', int(temp), temp-int(temp),'.xyz'
+        write(asro_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'trajectories/proc_', &
+        my_rank, '_asro_trajectory_at_T_', int(temp), temp-int(temp),'.dat'
       end if
 
       !-----------------------!
@@ -297,7 +314,7 @@ module metropolis
 
       ! Dump grids as xyz files if needed
       if (metropolis%write_final_config_xyz) then
-          write(xyz_file, '(A11 I4.4 A12 I4.4 F2.1 A4)') 'grids/proc_', &
+          write(xyz_file, '(A11 I4.4 A12 I4.4 F2.1 A4)') 'configs/proc_', &
           my_rank, '_config_at_T_', int(temp), temp-int(temp),'.xyz'
 
           ! Write xyz file
@@ -306,7 +323,7 @@ module metropolis
   
       ! Dump grids as NetCDF files if needed
       if (metropolis%write_final_config_xyz) then
-        write(grid_file, '(A11 I4.4 A11 I4.4 F2.1 A3)') 'grids/proc_', my_rank, '_grid_at_T_', &
+        write(grid_file, '(A11 I4.4 A11 I4.4 F2.1 A3)') 'configs/proc_', my_rank, '_grid_at_T_', &
                                              int(temp), temp-int(temp), '.nc'
         ! Write grid to file
         call ncdf_grid_state_writer(trim(grid_file), ierr, config, temp, setup)
@@ -335,7 +352,7 @@ module metropolis
     
     ! Write energy diagnostics
     if (metropolis%calculate_energies) then
-      write(diagnostics_file, '(A17 I4.4 A22)') 'diagnostics/proc_', my_rank, &
+      write(diagnostics_file, '(A,I4.4,A)') 'energies/proc_', my_rank, &
                                            'energy_diagnostics.dat'
       call diagnostics_writer(trim(diagnostics_file), temperature, &
                               energies_of_T, C_of_T, acceptance_of_T)
@@ -343,7 +360,7 @@ module metropolis
 
     ! Write radial densities
     if (metropolis%calculate_asro) then
-      write(radial_file, '(A22 I3.3 A12)') 'radial_densities/proc_', my_rank, '_rho_of_T.nc'
+      write(radial_file, '(A,I3.3,A)') 'asro/proc_', my_rank, '_rho_of_T.nc'
       ! Write the radial densities to file
       call ncdf_radial_density_writer(trim(radial_file), rho_of_T, &
                                       shells, temperature, energies_of_T, setup)
@@ -363,14 +380,14 @@ module metropolis
     if (my_rank .eq. 0) then
       ! Write energy diagnostics
       if (metropolis%calculate_energies) then
-        call diagnostics_writer('diagnostics/av_energy_diagnostics.dat', temperature, &
+        call diagnostics_writer('energies/av_energy_diagnostics.dat', temperature, &
                                 av_energies_of_T, av_C_of_T, av_acceptance_of_T)
       end if
 
       ! Write radial densities
       if (metropolis%calculate_asro) then
         !Write the radial densities to file
-        call ncdf_radial_density_writer('radial_densities/av_radial_density.nc', av_rho_of_T, &
+        call ncdf_radial_density_writer('asro/av_radial_density.nc', av_rho_of_T, &
                                       shells, temperature, av_energies_of_T, setup)
       end if
     end if
@@ -515,7 +532,7 @@ module metropolis
           current_energy = setup%full_energy(config)
 
           write(xyz_file, '(A11 I3.3 A8 I4.4 A6 I4.4 F2.1 A4)') &
-          'grids/proc_', my_rank, '_config_',                   &
+          'configs/proc_', my_rank, '_config_',                   &
           int(i/metropolis%n_sample_steps_asro), '_at_T_', int(temp),&
           temp-int(temp),'.xyz'
 

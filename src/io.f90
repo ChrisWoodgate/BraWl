@@ -111,9 +111,9 @@ module io
 
     ! make a directory for the grid states, diagnostics, 
     ! and radial_densities for each thread
-    if(my_rank == 0) call execute_command_line('mkdir -p grids')
-    if(my_rank == 0) call execute_command_line('mkdir -p diagnostics')
-    if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
+    if(my_rank == 0) call execute_command_line('mkdir -p configs')
+    if(my_rank == 0) call execute_command_line('mkdir -p energies')
+    if(my_rank == 0) call execute_command_line('mkdir -p asro')
 
   end subroutine make_data_directories
 

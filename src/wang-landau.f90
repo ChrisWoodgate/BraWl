@@ -976,7 +976,7 @@ module wang_landau
     rho_of_E = 0.0_real64
 
     ! Path to radial file and name of radial file
-    radial_file = "radial_densities/rho_of_E.dat"
+    radial_file = "asro/rho_of_E.dat"
 
     num_walkers = mpi_processes/wl_setup_internal%num_windows
     wl_setup_internal%radial_samples = INT(wl_setup_internal%radial_samples/num_walkers)
