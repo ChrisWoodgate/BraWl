@@ -20,8 +20,6 @@ module nested_sampling
   use analytics
   use write_netcdf
   use write_xyz
-  use metropolis_output
-  use metropolis
   
   implicit none
 
