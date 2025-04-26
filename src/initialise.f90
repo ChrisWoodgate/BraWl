@@ -91,17 +91,28 @@ module initialise
     type(run_params), intent(inout) :: setup
     type(metropolis_params), intent(inout) :: metropolis
 
-    ! Array for storing energy as a function of temperature
-    allocate(av_energies_of_T(metropolis%T_steps))
-    ! Array for storing energy as a function of temperature
-    allocate(av_C_of_T(metropolis%T_steps))
+    if (metropolis%calculate_energies) then
+      ! Array for storing energy as a function of temperature
+      allocate(av_energies_of_T(metropolis%T_steps))
+      ! Array for storing heat capacity as a function of temperature
+      allocate(av_C_of_T(metropolis%T_steps))
+    end if
     ! Array for storing energy as a function of temperature
     allocate(av_acceptance_of_T(metropolis%T_steps))
-    ! Radial densities as a function of temperature
-    allocate(av_rho_of_T(setup%n_species, setup%n_species, &
-                     setup%wc_range, metropolis%T_steps))
 
-    av_rho_of_T = 0.0_real64
+    if (metropolis%calculate_asro) then
+      ! Radial densities as a function of temperature
+      allocate(av_rho_of_T(setup%n_species, setup%n_species, &
+                       setup%wc_range, metropolis%T_steps))
+      av_rho_of_T = 0.0_real64
+    end if
+
+    if (metropolis%calculate_alro) then
+      ! Radial densities as a function of temperature
+      allocate(av_order_of_T(setup%n_basis, setup%n_1, setup%n_2, &
+                             setup%n_3, metropolis%T_steps))
+      av_order_of_T = 0.0_real64
+    end if
 
   end subroutine initialise_global_metropolis_arrays
 
@@ -272,22 +283,33 @@ module initialise
     type(run_params), intent(inout) :: setup
     type(metropolis_params), intent(inout) :: metropolis
 
-    ! Array for storing energy as a function of temperature
-    allocate(energies_of_T(metropolis%T_steps))
-    energies_of_T = 0.0_real64
+    if (metropolis%calculate_energies) then
+      ! Array for storing energy as a function of temperature
+      allocate(energies_of_T(metropolis%T_steps))
+      energies_of_T = 0.0_real64
 
-    ! Array for storing energy as a function of temperature
-    allocate(C_of_T(metropolis%T_steps))
-    C_of_T = 0.0_real64
+      ! Array for storing energy as a function of temperature
+      allocate(C_of_T(metropolis%T_steps))
+      C_of_T = 0.0_real64
+    end if
 
     ! Array for storing energy as a function of temperature
     allocate(acceptance_of_T(metropolis%T_steps))
     acceptance_of_T = 0.0_real64
 
-    ! Radial densities as a function of temperature
-    allocate(rho_of_T(setup%n_species, setup%n_species, &
-                     setup%wc_range, metropolis%T_steps))
-    rho_of_T = 0.0_real64
+    if (metropolis%calculate_asro) then
+      ! Radial densities as a function of temperature
+      allocate(rho_of_T(setup%n_species, setup%n_species, &
+                       setup%wc_range, metropolis%T_steps))
+      rho_of_T = 0.0_real64
+    end if
+
+    if (metropolis%calculate_alro) then
+      ! Radial densities as a function of temperature
+      allocate(order_of_T(setup%n_basis, setup%n_1, setup%n_2, &
+                          setup%n_3, metropolis%T_steps))
+      order_of_T = 0.0_real64
+    end if
 
     ! Array for storing temperatures
     allocate(temperature(metropolis%T_steps))
@@ -321,9 +343,10 @@ module initialise
 
     type(run_params), intent(inout) :: setup
 
-    deallocate(shells)
-    deallocate(config)
-    deallocate(setup%species_names, setup%species_concentrations)
+    if (allocated(shells)) deallocate(shells)
+    if (allocated(config)) deallocate(config)
+    if (allocated(setup%species_names)) deallocate(setup%species_names)
+    if (allocated(setup%species_concentrations)) deallocate(setup%species_concentrations)
 
   end subroutine local_clean_up
 
@@ -338,9 +361,12 @@ module initialise
   !> @return None
   subroutine local_metropolis_clean_up()
 
-    deallocate(rho_of_T)
-    deallocate(temperature)
-    deallocate(energies_of_T, C_of_T, acceptance_of_T)
+    if (allocated(rho_of_T)) deallocate(rho_of_T)
+    if (allocated(order_of_T)) deallocate(order_of_T)
+    if (allocated(temperature)) deallocate(temperature)
+    if (allocated(energies_of_T)) deallocate(energies_of_T)
+    if (allocated(C_of_T)) deallocate(C_of_T)
+    if (allocated(acceptance_of_T)) deallocate(acceptance_of_T)
 
   end subroutine local_metropolis_clean_up
 
@@ -353,8 +379,11 @@ module initialise
   !> @return None
   subroutine global_metropolis_clean_up()
 
-    deallocate(av_rho_of_T)
-    deallocate(av_energies_of_T, av_C_of_T, av_acceptance_of_T)
+    if (allocated(av_rho_of_T)) deallocate(av_rho_of_T)
+    if (allocated(av_order_of_T)) deallocate(av_order_of_T)
+    if (allocated(av_energies_of_T)) deallocate(av_energies_of_T)
+    if (allocated(av_C_of_T)) deallocate(av_C_of_T)
+    if (allocated(av_acceptance_of_T)) deallocate(av_acceptance_of_T)
 
   end subroutine global_metropolis_clean_up
 

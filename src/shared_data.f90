@@ -23,6 +23,7 @@ module shared_data
                                              av_C_of_T,               &
                                              av_acceptance_of_T
   real(real64), allocatable, dimension(:,:,:,:) :: av_rho_of_T
+  real(real64), allocatable, dimension(:,:,:,:,:) :: av_order_of_T
 
   ! Arrays used on all processors
   ! Indices run (basis, x, y, z)

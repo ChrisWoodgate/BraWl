@@ -96,26 +96,54 @@ module derived_types
     !      apart (for producing indicative equilibrated atomic configs
     !      at a given temperature.
     character(len=20) :: mode
-    ! Burn in if doing simulated annealing?
+    ! Number of monte carlo steps (at each temperature if annealing)
+    integer :: n_mc_steps
+    ! Burn in at FIRST temperature if doing simulated annealing?
+    logical :: burn_in_start
+    ! Burn in at ALL temperatures if doing simulated annealing?
     logical :: burn_in
     ! Number of burn-in steps (at each temperature if annealing)
-    integer :: burn_in_steps
-    ! Number of monte carlo steps (at each temperature if annealing)
-    integer :: mc_steps
-    ! Number of monte carlo steps between drawing energies
-    integer :: sample_steps
-    ! Number of monte carlo steps between drawing radial densities
-    ! (MUST be a multiple of sample_steps)
-    integer :: radial_sample_steps
-    ! Do we want to store atomic short-range order parameters
-    logical :: asro
+    integer :: n_burn_in_steps
+    ! Number of Monte Carlo trial moves between drawing samples
+    ! of ANY quantity
+    integer :: n_sample_steps
+    ! Do we want to total simulation energy and store it?
+    logical :: calculate_energies
+    ! Do we want to write the trajectory's energy to file
+    logical :: write_trajectory_energy
+    ! Do we want to calculate atomic short-range order parameters?
+    logical :: calculate_asro
+    ! Do we want to write the trajectory's energy to file
+    logical :: write_trajectory_asro
+    ! Number of monte carlo steps between drawing ASRO parameters
+    ! (MUST be an integer multiple of n_sample_steps)
+    integer :: n_sample_steps_asro
     ! Do we want to store atomic long-range order parameters
-    logical :: alro
-    ! Do we want to store grids
-    logical :: dump_grids
+    logical :: calculate_alro
+    ! Number of monte carlo steps between drawing ALRO parameters
+    ! (MUST be an integer multiple of n_sample_steps)
+    integer :: n_sample_steps_alro
+    ! Do we want to write the trajectory as an xyz file
+    ! (for visualisation)
+    logical :: write_trajectory_xyz
+    ! Number of monte carlo steps between drawing ALRO parameters
+    ! (MUST be an integer multiple of n_sample_steps)
+    integer :: n_sample_steps_trajectory
+    ! Do we want to write the final config (at each temp if annealing)
+    ! as an xyz file?
+    logical :: write_final_config_xyz
+    ! Do we want to write the final config (at each temp if annealing)
+    ! as a NetCDF file? (For restart later.)
+    logical :: write_final_config_nc
+    ! Do we want to read a starting config from file?
+    ! (Useful if restarting an earlier run...)
+    logical :: read_start_config_nc
+    ! Name of file from which to read if so
+    character(len=144) :: start_config_file
     ! Inverse temperature
     real(real64) :: beta
     ! Temperature of simulation (or start temperature if annealing)
+    ! Should come in units of Kelvin
     real(real64) :: T
     ! Number of temperature steps (if annealing)
     integer :: T_steps

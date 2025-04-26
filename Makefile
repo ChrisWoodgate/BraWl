@@ -108,19 +108,20 @@ $(OBJFILES): | $(OBJDIR)
 ################
 shared_data.o: kinds.o constants.o
 derived_types.o: kinds.o constants.o
-comms.o: kinds.o shared_data.o constants.o
-io.o: kinds.o shared_data.o command_line.o display.o comms.o constants.o
-write_netcdf.o: kinds.o shared_data.o constants.o
-write_xyz.o: shared_data.o kinds.o analytics.o constants.o
+comms.o: kinds.o shared_data.o constants.o derived_types.o
+io.o: kinds.o shared_data.o command_line.o display.o comms.o constants.o derived_types.o
+write_netcdf.o: kinds.o shared_data.o constants.o derived_types.o
+write_xyz.o: shared_data.o kinds.o analytics.o constants.o derived_types.o
 metropolis_output.o: shared_data.o kinds.o analytics.o constants.o
 command_line.o: kinds.o
+tmmc.o: kinds.o shared_data.o constants.o derived_types.o
+wang-landau.o: kinds.o shared_data.o constants.o derived_types.o
 c_functions.o: mt19937ar.o
 display.o: kinds.o shared_data.o constants.o derived_types.o constants.o
-bw_hamiltonian.o: kinds.o shared_data.o c_functions.o io.o constants.o
-analytics.o: shared_data.o kinds.o display.o io.o constants.o
+bw_hamiltonian.o: kinds.o shared_data.o c_functions.o io.o constants.o derived_types.o
+analytics.o: shared_data.o kinds.o display.o io.o constants.o derived_types.o
 random_site.o: shared_data.o kinds.o c_functions.o analytics.o constants.o
-metropolis.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o
-nested_sampling.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o metropolis.o constants.o
-initialise.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o comms.o constants.o
+metropolis.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o derived_types.o
+initialise.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o comms.o constants.o derived_types.o
 main.o: initialise.o shared_data.o kinds.o c_functions.o write_netcdf.o\
-	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o
+	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o derived_types.o
