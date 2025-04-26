@@ -327,37 +327,46 @@ module metropolis
     
     end do ! Loop over temperature
 
-    write(radial_file, '(A22 I3.3 A12)') 'radial_densities/proc_', my_rank, '_rho_of_T.nc'
-    write(diagnostics_file, '(A17 I4.4 A22)') 'diagnostics/proc_', my_rank, &
-                                         'energy_diagnostics.dat'
   
     
     ! Write energy diagnostics
-    call diagnostics_writer(diagnostics_file, temperature, &
-                            energies_of_T, C_of_T, acceptance_of_T)
+    if (metropolis%calculate_energies) then
+      write(diagnostics_file, '(A17 I4.4 A22)') 'diagnostics/proc_', my_rank, &
+                                           'energy_diagnostics.dat'
+      call diagnostics_writer(diagnostics_file, temperature, &
+                              energies_of_T, C_of_T, acceptance_of_T)
+    end if
 
-    ! Write the radial densities to file
-    call ncdf_radial_density_writer(radial_file, rho_of_T, &
-                                  shells, temperature, energies_of_T, setup)
+    ! Write radial densities
+    if (metropolis%calculate_asro) then
+      write(radial_file, '(A22 I3.3 A12)') 'radial_densities/proc_', my_rank, '_rho_of_T.nc'
+      ! Write the radial densities to file
+      call ncdf_radial_density_writer(radial_file, rho_of_T, &
+                                      shells, temperature, energies_of_T, setup)
+    end if
 
     ! Average results across the simulation
     call comms_reduce_metropolis_results(setup, metropolis)
 
+    ! Write averaged results to file if needed
     if (my_rank .eq. 0) then
       ! Write energy diagnostics
-      call diagnostics_writer('diagnostics/av_energy_diagnostics.dat', temperature, &
-                              av_energies_of_T, av_C_of_T, av_acceptance_of_T)
-      !Write the radial densities to file
-      call ncdf_radial_density_writer('radial_densities/av_radial_density.nc', av_rho_of_T, &
-                                    shells, temperature, av_energies_of_T, setup)
+      if (metropolis%calculate_energies) then
+        call diagnostics_writer('diagnostics/av_energy_diagnostics.dat', temperature, &
+                                av_energies_of_T, av_C_of_T, av_acceptance_of_T)
+      end if
+
+      ! Write radial densities
+      if (metropolis%calculate_asro) then
+        !Write the radial densities to file
+        call ncdf_radial_density_writer('radial_densities/av_radial_density.nc', av_rho_of_T, &
+                                      shells, temperature, av_energies_of_T, setup)
+      end if
     end if
 
     if (allocated(r_densities)) deallocate(r_densities)
     if (allocated(asro)) deallocate(asro)
     if (allocated(order)) deallocate(order)
-
-    ! Allocate memory for order_parameters
-    allocate(order(setup%n_basis, setup%n_1, setup%n_2, setup%n_3))
 
     ! Clean up
     call local_metropolis_clean_up()
