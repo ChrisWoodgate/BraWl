@@ -94,7 +94,7 @@ module metropolis
     if (metropolis%calculate_alro) then
       if(my_rank == 0) call execute_command_line('mkdir -p alro')
     end if
-    if ((metropolis%write_trajectory_energy).or.(metropolis%write_trajectory_energy).or.(metropolis%write_trajectory_energy)) then
+    if ((metropolis%write_trajectory_energy).or.(metropolis%write_trajectory_asro).or.(metropolis%write_trajectory_xyz)) then
       if(my_rank == 0) call execute_command_line('mkdir -p trajectories')
     end if
 
