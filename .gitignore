@@ -35,5 +35,5 @@
 !LICENSE.txt
 
 # Also ignore the examples directories
-!examples/*
-!examples/*/*
+!examples/00_examples_tests/*
+!examples/01_CrCoNi/*
