@@ -495,7 +495,9 @@ module io
     ! Read the input file
     call read_metropolis_file(control, metropolis, my_rank)
 
-    write(6,'(x,"Parameters to be used are as follows",/)')
+    if(my_rank == 0) then
+      write(6,'(x,"Parameters to be used are as follows",/)')
+    end if
 
     if(my_rank == 0) then
       call echo_metropolis_file(metropolis)
