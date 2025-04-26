@@ -74,6 +74,8 @@ program main
     if(my_rank == 0) call execute_command_line('mkdir -p grids')
     if(my_rank == 0) call execute_command_line('mkdir -p diagnostics')
     if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
+    if(my_rank == 0) call execute_command_line('mkdir -p trajectories')
+    if(my_rank == 0) call execute_command_line('mkdir -p energies')
 
     ! Run Metropolis with Kawasaki dynamics
     call metropolis_simulated_annealing(setup, metropolis_setup, my_rank)
