@@ -97,17 +97,19 @@ module comms
 
     ! Bring all simulation energy arrays, <E>(T), to rank 0
     ! and sum them.
-    call mpi_reduce(energies_of_T, av_energies_of_T,                   &
-                    metropolis%T_steps, MPI_DOUBLE, MPI_SUM, 0,        &
-                    mpi_comm_world, ierr)
+    if (metropolis%calculate_energies) then
+      call mpi_reduce(energies_of_T, av_energies_of_T,                   &
+                      metropolis%T_steps, MPI_DOUBLE, MPI_SUM, 0,        &
+                      mpi_comm_world, ierr)
 
-    ! Divide by the number of simulations to get the average
-    av_energies_of_T = av_energies_of_T/real(p)
+      ! Divide by the number of simulations to get the average
+      av_energies_of_T = av_energies_of_T/real(p)
   
-    ! Do the same for the heat capacity data
-    call mpi_reduce(C_of_T, av_C_of_T,metropolis%T_steps,              &
-                 MPI_DOUBLE_PRECISION, MPI_SUM, 0, mpi_comm_world, ierr)
-    av_C_of_T = av_C_of_T/real(p)
+      ! Do the same for the heat capacity data
+      call mpi_reduce(C_of_T, av_C_of_T,metropolis%T_steps,              &
+                   MPI_DOUBLE_PRECISION, MPI_SUM, 0, mpi_comm_world, ierr)
+      av_C_of_T = av_C_of_T/real(p)
+    end if
   
     ! Do the same with the acceptance rates
     call mpi_reduce(acceptance_of_T, av_acceptance_of_T,               &
@@ -115,12 +117,14 @@ module comms
                     0, mpi_comm_world, ierr)
     av_acceptance_of_T = av_acceptance_of_T/real(p)
   
-    ! Do the same with the radial densities
-    call mpi_reduce(rho_of_T, av_rho_of_T,                             &
-               metropolis%T_steps*(setup%n_species**2)*setup%wc_range, &
-                    MPI_DOUBLE_PRECISION, MPI_SUM, 0, mpi_comm_world,  &
-                    ierr)
-    av_rho_of_T = av_rho_of_T/real(p)
+    if (metropolis%calculate_asro) then
+      ! Do the same with the radial densities
+      call mpi_reduce(rho_of_T, av_rho_of_T,                             &
+                 metropolis%T_steps*(setup%n_species**2)*setup%wc_range, &
+                      MPI_DOUBLE_PRECISION, MPI_SUM, 0, mpi_comm_world,  &
+                      ierr)
+      av_rho_of_T = av_rho_of_T/real(p)
+    end if
 
   end subroutine comms_reduce_metropolis_results
 
