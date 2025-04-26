@@ -1,9 +1,9 @@
-Example 1: Simulated Annealing of the CrCoNi system.
+Example 1: Metropolis-Hastings Monte Carlo.
 
-This example demonstrates simulated annealing of the CrCoNi system. Atom-atom interactions are taken from:
-C. D. Woodgate, J. B. Staunton, Phys. Rev. B 105, 115124 (2023)
-DOI: https://doi.org/10.1103/PhysRevB.105.115124
+These examples demonstrate applications of Metropolis-Hastings Monte Carlo to the  FeNi system. 
 
-The file 'input.txt' contains all relevant parameters for the simulation, while 'NiCoCr_V_ijs.txt' contains the atom-atom interaction parameters.
+Atom-atom interactions are taken from:
+C. D. Woodgate, L. H. Lewis, J. B. Staunton, npj Comput. Mater. 10, 272 (2024).
+DOI: https://doi.org/10.1038/s41524-024-01435-y
 
-Run 'mpirun -n 10 ~/codes/bontewarlo/bontewarlo.run' to launch the simulation. Once it has finished, analyse the results with 01_analyse.py
+Currently this directory is 'work in progress'. Please check back later for a full example!
