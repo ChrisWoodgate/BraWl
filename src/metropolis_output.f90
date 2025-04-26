@@ -73,8 +73,6 @@ module metropolis_output
 
     asro_size = shape(asro)
 
-    print*, asro_size
-
     inquire(file=filename, exist=exist)
     if (exist) then
       open(7, file=filename, status="old", position="append", action="write")
