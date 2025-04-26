@@ -2,6 +2,8 @@
 !>
 !> @brief   Main BraWl program
 !>
+!> @author  H. J. Naguszewski
+!> @author  L. B. Partay
 !> @author  C. D. Woodgate
 !>
 !> @date    2019-2025
@@ -39,6 +41,10 @@ program main
   ! Wang Landau parameters type
   type(wl_params) :: wl_setup
 
+  !--------------------------------------------------------------------!
+  !                          Initial Setup                             !
+  !--------------------------------------------------------------------!
+
   ! Start MPI
   call comms_initialise()
 
@@ -65,9 +71,13 @@ program main
   ! Initialise some local arrays
   call initialise_local_arrays(setup)
 
-  !---------------!
-  ! Main Routines !
-  !---------------!
+  !--------------------------------------------------------------------!
+  !                           Main Routines                            !
+  !--------------------------------------------------------------------!
+
+  !---------------------------------!
+  ! Metropolis-Hastings Monte Carlo !
+  !---------------------------------!
   if (setup%mode == 301) then
 
     ! Make the relevant directories
@@ -88,6 +98,9 @@ program main
     ! Draw decorrelated samples
     call metropolis_decorrelated_samples(setup, metropolis_setup, my_rank)
 
+  !---------------------------!
+  ! Nested sampling algorithm !
+  !---------------------------!
   else if (setup%mode == 303) then
 
     ! The variable 'p' is defined in comms.f90 and is the number of MPI
@@ -102,26 +115,49 @@ program main
     ! Nested Sampling algorithm
     call nested_sampling_main(setup, ns_setup)
 
+  !-------------------------------!
+  ! Transition matrix Monte Carlo !
+  !-------------------------------!
   else if (setup%mode == 304) then
 
-    ! Tmmc algorithm
+    ! Read TMMC input file
     call read_tmmc_file("tmmc_input.inp", tmmc_setup, my_rank)
+
+    ! Run main TMMC routine
+    ! Note: this is currently under development. The program will exit
+    !       if you try to use this routine.
     call tmmc_main(setup, tmmc_setup, my_rank)
 
+  !----------------------!
+  ! Wang-Landau sampling !
+  !----------------------!
   else if (setup%mode == 305) then
 
     ! Make the relevant directories
     if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
 
-    ! Wang Landau algorithm
+    ! Read the Wang-Landau input file
     call read_wl_file("wl_input.inp", wl_setup, my_rank)
+
+    ! Run Wang Landau sampling
     call wl_main(setup, wl_setup)
 
+  !-------------------------------------!
+  ! Case of unrecognised mode requested !
+  !-------------------------------------!
   else
 
-   print*, ' Unrecognised mode', setup%mode
+   if (my_rank .eq. 1) then
+     print*, ' Unrecognised mode', setup%mode
+   end if
+   call comms_finalise()
+   stop 'Exiting as unrecognised mode requested'
 
   end if
+
+  !--------------------------------------------------------------------!
+  !                     Cleanup at end of run                          !
+  !--------------------------------------------------------------------!
 
   ! Clean up
   call clean_up_interaction()
