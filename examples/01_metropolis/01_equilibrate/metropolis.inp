@@ -48,7 +48,7 @@ calculate_alro = F
 n_sample_steps_alro = 2048
 
 # Would we like to write an (extended) xyz file of the trajectory
-write_trajectory_xyz = T
+write_trajectory_xyz = F
 
 # Would we like to write the final config (at the end of a temperature) to an xyz file?
 write_final_config_xyz = F
