@@ -23,7 +23,7 @@ module shared_data
                                              av_C_of_T,               &
                                              av_acceptance_of_T
   real(real64), allocatable, dimension(:,:,:,:) :: av_rho_of_T
-  real(real64), allocatable, dimension(:,:,:,:,:) :: av_order_of_T
+  real(real64), allocatable, dimension(:,:,:,:,:,:) :: av_order_of_T
 
   ! Arrays used on all processors
   ! Indices run (basis, x, y, z)
@@ -31,7 +31,7 @@ module shared_data
   real(real64), allocatable, dimension(:) :: energies_of_T, C_of_T,   &
                                              acceptance_of_T,         &
                                              temperature
-  real(real64), allocatable, dimension(:,:,:,:,:) :: order_of_T
+  real(real64), allocatable, dimension(:,:,:,:,:,:) :: order_of_T
   real(real64), allocatable, dimension(:,:,:,:) :: rho_of_T
   real(real64), dimension(:,:,:,:), allocatable :: order
   real(real64), dimension(:,:,:), allocatable :: V_ex

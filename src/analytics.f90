@@ -41,23 +41,26 @@ module analytics
   !>
   !> @return None
   subroutine store_state(averages, config, setup)
-    !integer(array_int), allocatable, dimension(:,:,:), intent(in) :: config
-    integer(array_int), dimension(:,:,:), intent(in) :: config
-    type(run_params), intent(in) :: setup
-    real(real64), dimension(:,:,:,:), intent(inout), allocatable :: averages
-    integer :: i,j,k,l
 
-    do i=1, setup%n_species
-      do l=1, 2*setup%n_3
-        do k=1, 2*setup%n_2
-          do j=1, 2*setup%n_1
-            if (config(j,k,l) == i) then
-              averages(i,j,k,l) = averages(i,j,k,l) + 1.0_real64
-            end if
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    type(run_params), intent(in) :: setup
+    real(real64), dimension(:,:,:,:,:), intent(inout), allocatable :: averages
+    integer :: i,j,k,l,m
+
+    do m=1, 2*setup%n_3
+      do l=1, 2*setup%n_2
+        do k=1, 2*setup%n_1
+          do j=1, setup%n_basis
+            do i=1, setup%n_species
+              if (config(j,k,l,m) == i) then
+                averages(i,j,k,l,m) = averages(i,j,k,l,m) + 1.0_real64
+              end if
+            end do
           end do
         end do
       end do
     end do
+
   end subroutine store_state
 
   !> @brief   Subroutine to compute average occupancies

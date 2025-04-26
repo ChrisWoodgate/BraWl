@@ -109,8 +109,8 @@ module initialise
 
     if (metropolis%calculate_alro) then
       ! Radial densities as a function of temperature
-      allocate(av_order_of_T(setup%n_basis, setup%n_1, setup%n_2, &
-                             setup%n_3, metropolis%T_steps))
+      allocate(av_order_of_T(setup%n_species, setup%n_basis, 2*setup%n_1,&
+                             2*setup%n_2, 2*setup%n_3, metropolis%T_steps))
       av_order_of_T = 0.0_real64
     end if
 
@@ -306,8 +306,8 @@ module initialise
 
     if (metropolis%calculate_alro) then
       ! Radial densities as a function of temperature
-      allocate(order_of_T(setup%n_basis, setup%n_1, setup%n_2, &
-                          setup%n_3, metropolis%T_steps))
+      allocate(order_of_T(setup%n_species, setup%n_basis, 2*setup%n_1,  &
+                          2*setup%n_2, 2*setup%n_3, metropolis%T_steps))
       order_of_T = 0.0_real64
     end if
 

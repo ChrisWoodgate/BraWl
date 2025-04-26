@@ -70,13 +70,13 @@ module metropolis
     character(len=43) :: diagnostics_file
   
     ! Name of file for writing radial densities at the end
-    character(len=37) :: radial_file
+    character(len=37) :: radial_file, alro_file
 
     ! Radial densities at each temperature step
     real(real64), allocatable, dimension(:,:,:) :: r_densities, asro
 
     ! Long-range order parameters at each temperature step
-    real(real64), allocatable, dimension(:,:,:,:) :: order
+    real(real64), allocatable, dimension(:,:,:,:,:) :: order
 
     ! Read the Metropolis control file
     call parse_metropolis_inputs(metropolis, my_rank)
@@ -111,12 +111,16 @@ module metropolis
       setup%mc_step => monte_carlo_step_lattice
     end if
 
-    ! Allocate memory for radial densities
-    allocate(r_densities(setup%n_species, setup%n_species, setup%wc_range))
-    allocate(asro(setup%n_species, setup%n_species, setup%wc_range))
+    !if (metropolis%calculate_asro) then
+      ! Allocate memory for radial densities
+      allocate(r_densities(setup%n_species, setup%n_species, setup%wc_range))
+      allocate(asro(setup%n_species, setup%n_species, setup%wc_range))
+    !end if
 
-    ! Allocate memory for order_parameters
-    allocate(order(setup%n_basis, setup%n_1, setup%n_2, setup%n_3))
+    !if (metropolis%calculate_alro) then
+      ! Allocate memory for order_parameters
+      allocate(order(setup%n_species, setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3))
+    !end if
 
     if(my_rank == 0) then
       write(6,'(24("-"),x,"Commencing Simulation!",x,24("-"),/)')
@@ -125,8 +129,13 @@ module metropolis
     ! Loop over temperature steps
     do j=1, metropolis%T_steps
   
+      ! Zero relevant values at each temperature step as needed
+      if (allocated(order)) order = 0.0_real64
+      if (allocated(r_densities)) r_densities = 0.0_real64
+      if (allocated(asro)) r_densities = 0.0_real64
+
       step_E = 0.0_real64; step_Esq=0.0_real64
-      acceptance = 0.0_real64; r_densities = 0.0_real64
+      acceptance = 0.0_real64
     
       ! Work out the temperature and corresponding beta
       temp = metropolis%T + real(j-1, real64)*metropolis%delta_T
@@ -245,7 +254,7 @@ module metropolis
           if (metropolis%calculate_alro) then
             if (mod(i, metropolis%n_sample_steps_alro) .eq. 0) then
               ! Add radial densities for averaging
-              order = order + real(config)
+              call store_state(order, config, setup)
             end if
           end if
 
@@ -283,7 +292,7 @@ module metropolis
 
       if (metropolis%calculate_alro) then
         ! Store the average radial densities at this temperature
-        order_of_T(:,:,:,:,j) = order/n_save_alro
+        order_of_T(:,:,:,:,:,j) = order/real(n_save_alro)
       end if
 
       ! Dump grids as xyz files if needed
@@ -328,7 +337,7 @@ module metropolis
     if (metropolis%calculate_energies) then
       write(diagnostics_file, '(A17 I4.4 A22)') 'diagnostics/proc_', my_rank, &
                                            'energy_diagnostics.dat'
-      call diagnostics_writer(diagnostics_file, temperature, &
+      call diagnostics_writer(trim(diagnostics_file), temperature, &
                               energies_of_T, C_of_T, acceptance_of_T)
     end if
 
@@ -336,8 +345,15 @@ module metropolis
     if (metropolis%calculate_asro) then
       write(radial_file, '(A22 I3.3 A12)') 'radial_densities/proc_', my_rank, '_rho_of_T.nc'
       ! Write the radial densities to file
-      call ncdf_radial_density_writer(radial_file, rho_of_T, &
+      call ncdf_radial_density_writer(trim(radial_file), rho_of_T, &
                                       shells, temperature, energies_of_T, setup)
+    end if
+
+    ! Write radial densities
+    if (metropolis%calculate_alro) then
+      write(alro_file, '(A22 I3.3 A12)') 'alro/proc_', my_rank, '_rho_of_T.nc'
+      ! Write the radial densities to file
+      call ncdf_order_writer(trim(alro_file), ierr, order_of_T, temperature, setup)
     end if
 
     ! Average results across the simulation
