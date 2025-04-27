@@ -3,7 +3,7 @@ mode = simulated_annealing
 
 # The number of trial Monte Carlo moves to make
 # (at each temperature, if looping over temperatures)
-n_mc_steps = 2048000
+n_mc_steps = 256000
 
 # Would we like to burn in at the first temperature?
 burn_in_start = F
@@ -17,7 +17,7 @@ burn_in = F
 n_burn_in_steps = 0
 
 # How frequently to sample simulation information, e.g. energy
-n_sample_steps = 2048
+n_sample_steps = 256
 
 # Would we like to calculate and store the simulation energy?
 calculate_energies = T
@@ -38,14 +38,14 @@ calculate_asro = T
 # How frequently to sample the ASRO?
 # Must be an integer multiple of n_sample_steps
 # This is more demanding than an energy calculation, so it is possible to sample less frequently
-n_sample_steps_asro = 2048
+n_sample_steps_asro = 256
 
 # Would we like to calculate the ALRO?
 calculate_alro = F
 
 # How frequently to sample the ALRO?
 # Must be an integer multiple of n_sample_steps
-n_sample_steps_alro = 2048
+n_sample_steps_alro = 256
 
 # Would we like to write an (extended) xyz file of the trajectory
 write_trajectory_xyz = F
