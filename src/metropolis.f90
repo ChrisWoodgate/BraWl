@@ -218,6 +218,30 @@ module metropolis
         my_rank, '_asro_trajectory_at_T_', int(temp), temp-int(temp),'.dat'
       end if
 
+      !-----------------------------------------------------------------!
+      ! Gather information about initial state of trajectory, if needed !
+      !-----------------------------------------------------------------!
+      ! Storing of data to do with energies
+      if (metropolis%calculate_energies) then
+        current_energy = setup%full_energy(config)
+        if (metropolis%write_trajectory_energy) then
+          call energy_trajectory_writer(energy_trajectory_file, 0, current_energy)
+        end if
+      end if
+
+      ! Storing of data to do with ASRO
+      if (metropolis%calculate_asro) then
+        asro = radial_densities(setup, config, setup%wc_range, shells)
+        if (metropolis%write_trajectory_asro) then
+          call asro_trajectory_writer(asro_trajectory_file, 0, asro)
+        end if
+      end if
+
+      ! Write (or append) trajectory configuration to .xyz file
+      if (metropolis%write_trajectory_xyz) then
+        call xyz_writer(trim(xyz_trajectory_file), config, setup, .True.)
+      end if
+
       !-----------------------!
       ! Main Monte Carlo loop !
       !-----------------------!
@@ -328,7 +352,7 @@ module metropolis
         ! Write grid to file
         call ncdf_grid_state_writer(trim(grid_file), ierr, config, temp, setup)
       end if
-  
+
       if (my_rank ==0) then
         ! Write that we have completed a particular temperature
         write(6,'(a,f7.2,a)',advance='yes') &
