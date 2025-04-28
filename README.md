@@ -60,6 +60,7 @@ The in addition to this README and the provided examples, the code also has (sea
 1. Obtain [Doxygen](https://www.doxygen.nl), which is typically available through a package manager.
 2. Run `doxygen docs/doxyfile` from the code's main directory.
 3. Navigate to the freshly-generated `docs/html` directory and `open` index.html. (Alternatively, use your system's filemanager to open this in your web browser.)
+
 This documentation contains information about all modules, functions, subroutines, and derived types, so is particularly useful if you are looking to develop a new feature.
 
 ## Citations
