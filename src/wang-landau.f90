@@ -191,7 +191,7 @@ module wang_landau
         end if
       end if 
       call sweeps(wl_logdos, mpi_wl_hist)
-      if (MOD(i_sweeps, 10) == 0) then        
+      if (MOD(i_sweeps, 10) == 0) then
         call replica_exchange(config)
       end if
 
@@ -601,7 +601,7 @@ module wang_landau
     beta_end = 1.0_real64/(k_B_in_Ry*1.0_real64)
     beta = beta_start
     ! Non-blocking MPI receive
-    !call MPI_IRECV(stop_enter_energy_window, 1, MPI_LOGICAL, MPI_ANY_SOURCE, 10000, MPI_COMM_WORLD, request, ierr)
+    call MPI_IRECV(stop_enter_energy_window, 1, MPI_LOGICAL, MPI_ANY_SOURCE, 10000, MPI_COMM_WORLD, request, ierr)
 
     i_steps = 0
     i_sweeps = 0
@@ -617,13 +617,13 @@ module wang_landau
 
       if (wl_setup_internal%num_windows > 1) then
       ! Check if MPI message received
-      !  call MPI_TEST(request, flag, MPI_STATUS_IGNORE, ierr)
+        call MPI_TEST(request, flag, MPI_STATUS_IGNORE, ierr)
       end if
 
       ! Stop burn if other rank in window is burnt in
       ! or if burnt in send configuration to rest of window
       if (flag) then
-        call MPI_RECV(config, SIZE(config), MPI_SHORT, MPI_ANY_SOURCE, 10001, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr) ! Check if you can put an array of accepted values in the source variable
+        call MPI_RECV(config, SIZE(config), MPI_INTEGER1, MPI_ANY_SOURCE, 10001, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr) ! Check if you can put an array of accepted values in the source variable
         exit
       else if (e_unswapped < max_e-condition .and. e_unswapped > min_e+condition) then
         e_unswapped = setup_internal%full_energy(config)
@@ -631,17 +631,17 @@ module wang_landau
         else
           cycle
         end if
-        !if (.not. flag) then
-        !  stop_enter_energy_window = .True.
-        !  call MPI_CANCEL(request, ierr)
-        !  call MPI_REQUEST_FREE(request, ierr)
-        !  do rank=window_rank_index(mpi_index, 1), window_rank_index(mpi_index, 2)
-        !    if (rank /= my_rank) then
-        !      call MPI_ISEND(stop_enter_energy_window, 1, MPI_LOGICAL, rank, 10000, MPI_COMM_WORLD, request, ierr)
-        !      call MPI_ISEND(config, SIZE(config), MPI_SHORT, rank, 10001, MPI_COMM_WORLD, request, ierr)
-        !    end if
-        !  end do
-        !end if
+        if (.not. flag) then
+          stop_enter_energy_window = .True.
+          call MPI_CANCEL(request, ierr)
+          call MPI_REQUEST_FREE(request, ierr)
+          do rank=window_rank_index(mpi_index, 1), window_rank_index(mpi_index, 2)
+            if (rank /= my_rank) then
+              call MPI_ISEND(stop_enter_energy_window, 1, MPI_LOGICAL, rank, 10000, MPI_COMM_WORLD, request, ierr)
+              call MPI_ISEND(config, SIZE(config), MPI_INTEGER1, rank, 10001, MPI_COMM_WORLD, request, ierr)
+            end if
+          end do
+        end if
         exit
       end if
 
@@ -673,6 +673,8 @@ module wang_landau
         end if
       end if
     end do
+    call comms_wait()
+    call comms_purge()
   end subroutine enter_energy_window
 
   !> @brief   Pre-sampling routine that performs initial sweeps
@@ -1319,15 +1321,14 @@ module wang_landau
 
     ! MPI SEND RECV calls for replica exchange
     do j=1, COUNT(overlap_exchange(:,1) > -1)
-      call comms_wait()
       if (my_rank == overlap_exchange(j,1)) then
         call MPI_RECV(e_swapped, 1, MPI_DOUBLE_PRECISION, overlap_exchange(j,2), 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         jbin = bin_index(e_swapped, bin_edges, wl_setup_internal%bins)
         if (genrand() .lt. exp((wl_logdos(ibin) - wl_logdos(jbin)))) then
           accept = .True.
           call MPI_SEND(accept, 1, MPI_INT, overlap_exchange(j,2), 1, MPI_COMM_WORLD, ierr)
-          call MPI_ISEND(config, SIZE(config), MPI_SHORT, overlap_exchange(j,2), 2, MPI_COMM_WORLD, request, ierr)
-          call MPI_RECV(config, SIZE(config), MPI_SHORT, overlap_exchange(j,2), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+          call MPI_ISEND(config, SIZE(config), MPI_INTEGER1, overlap_exchange(j,2), 2, MPI_COMM_WORLD, request, ierr)
+          call MPI_RECV(config, SIZE(config), MPI_INTEGER1, overlap_exchange(j,2), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         else
           call MPI_SEND(accept, 1, MPI_INT, overlap_exchange(j,2), 1, MPI_COMM_WORLD, ierr)
         end if
@@ -1335,12 +1336,13 @@ module wang_landau
         call MPI_SEND(e_unswapped, 1, MPI_DOUBLE_PRECISION, overlap_exchange(j,1), 0, MPI_COMM_WORLD, ierr)
         call MPI_RECV(accept, 1, MPI_INT, overlap_exchange(j,1), 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         if (accept) then
-          call MPI_ISEND(config, SIZE(config), MPI_SHORT, overlap_exchange(j,1), 2, MPI_COMM_WORLD, request, ierr)
-          call MPI_RECV(config, SIZE(config), MPI_SHORT, overlap_exchange(j,1), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+          call MPI_ISEND(config, SIZE(config), MPI_INTEGER1, overlap_exchange(j,1), 2, MPI_COMM_WORLD, request, ierr)
+          call MPI_RECV(config, SIZE(config), MPI_INTEGER1, overlap_exchange(j,1), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         end if
       end if
     end do
    end do
+
  end subroutine replica_exchange
   
   !> @brief   Routine that shuffles rows in integer array
