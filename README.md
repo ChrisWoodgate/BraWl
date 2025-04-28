@@ -54,6 +54,14 @@ Most of the options specified in the input file are fairly self-explanatory. The
 - 02: Draw Decorellated Samples. Optionally performs simulated annealing then draws samples of the grid N Monte Carlo steps apart. Good for generating supercell configurations for use other methods. *E.g.* this recent reference where the code was used to generate training/test data for a machine-learned interatomic potential: L. Shenoy, C. D. Woodgate, J. B. Staunton, A. P. Bartók, C. S. Becquart, C. Domain, J. R. Kermode, [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
 - 03: Nested sampling. Uses the nested sampling algorithm to sample the configuration space from random initial configurations, allowing to calculate the partition function at an arbitrary temperature during the post-processing step. This procedure is outlined in a recent publication: C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
 
+## Documentation
+
+The in addition to this README and the provided examples, the code also has (searchable) documentation which is auto-generated using [Doxygen](https://www.doxygen.nl), which lets users 'host' a web interface to the documentation locally on their machine. To view this documentation: 
+1. Obtain [Doxygen](https://www.doxygen.nl), which is typically available through a package manager.
+2. Run `doxygen docs/doxyfile` from the code's main directory.
+3. Navigate to the freshly-generated `docs/html` directory and `open` index.html. (Alternatively, use your system's filemanager to open this in your web browser.)
+This documentation contains information about all modules, functions, subroutines, and derived types, so is particularly useful if you are looking to develop a new feature.
+
 ## Citations
 ANY publications/presentations/further work resulting from the use of this software should cite the original publication for which it was developed:
 * C. D. Woodgate, J. B. Staunton, [Phys. Rev. B **105**, 115124 (2023)](https://doi.org/10.1103/PhysRevB.105.115124)
