@@ -22,6 +22,9 @@
 # Ignore pdfs
 *.pdf
 
+# Ignore svgs
+*.svg
+
 # Ignore executables
 *.exe
 
