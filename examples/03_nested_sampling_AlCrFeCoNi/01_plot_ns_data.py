@@ -19,10 +19,12 @@ heat_capacity = ns_data[:,4]
 
 # Rescale the energy so that the highest energy is set as the 'zero' of the energy scale
 energy = energy - energy[-1]
-energy = energy/108.0*1000.0*ry_in_ev
+energy = energy/108.0*1000.0*ry_in_ev # make unit meV/atom
 
 # TODO Need to check unit conversion on Cv. Would like k_B/atom
-heat_capacity = heat_capacity * 1.0 # Replace 1.0 with correct conversion factor
+#heat_capacity = heat_capacity * 1.0 # Replace 1.0 with correct conversion factor
+kB = 8.617333262e-5 # Boltzmann constant in eV/K units
+heat_capacity = heat_capacity/108.0*ry_in_ev/kB # make unit kB/atom
 
 # Make the plots
 fig, ax = plt.subplots(figsize=(5,3.25))
