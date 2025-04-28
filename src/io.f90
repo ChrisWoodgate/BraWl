@@ -81,7 +81,7 @@ module io
       write(6,'(72("-"))')
       ! Start the clock
       call cpu_time(t_stop)
-      write(6,'(20x,"Execution took",1x,f9.1 " seconds")') t_stop-t_start
+      write(6,'(20x,"Execution time",1x,f9.1 " seconds")') t_stop-t_start
     endif
 
     write(6,'(72("="),/)' )
@@ -438,10 +438,10 @@ module io
       if(.not. get_arg('control', control)) then
         if (my_rank == 0) then
           print*, 'Input file not specified with "control=<name>"'
-          print*, 'Defaulting to searching for "input.txt"'
+          print*, 'Defaulting to searching for "input.inp"'
           print*, ' '
         end if
-        control = 'input.txt'
+        control = 'input.inp'
       else
         if (my_rank == 0) then
           print*, 'Input file name is: ', control
