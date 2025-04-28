@@ -191,7 +191,7 @@ module howto_examples
     ! 5. Write the grid to a .xyz file   !
     !------------------------------------!
 
-    write(xyz_file, '(A11 I3.3 A12 I4.4 F2.1 A4)') 'grids/proc_', &
+    write(xyz_file, '(A11 I3.3 A12 I4.4 F2.1 A4)') 'configs/proc_', &
     my_rank, 'config_at_T_', int(temp), temp-int(temp),'.xyz'
   
     ! Write xyz file
@@ -207,10 +207,10 @@ module howto_examples
     ! Compute the radial densities
     r_densities = radial_densities(setup, config, setup%wc_range, shells)
   
-    write(radial_file, '(A22 I3.3 A12)') 'radial_densities/proc_', my_rank, '_rho_of_T.nc'
+    write(radial_file, '(A,I3.3,A)') 'asro/proc_', my_rank, '_rho_of_T.nc'
 
     ! Write the radial densities to file
-    call ncdf_radial_density_writer_once(radial_file, r_densities, shells, setup)
+    call ncdf_radial_density_writer_once(trim(radial_file), r_densities, shells, setup)
 
     if(my_rank == 0) then
       write(6,'(25("-"),x,"Simulation Complete!",x,25("-"))')

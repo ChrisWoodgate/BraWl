@@ -361,12 +361,12 @@ module write_netcdf
   !> @return None
   subroutine ncdf_order_writer(filename, ierr, order, temperature, setup)
 
-    integer, parameter :: grid_ndims = 5
+    integer, parameter :: grid_ndims = 6
 
     type(run_params), intent(in) :: setup
 
     ! Data to write to file
-    real(real64), dimension(:,:,:,:,:), allocatable, intent(in) :: order
+    real(real64), dimension(:,:,:,:,:,:), allocatable, intent(in) :: order
     real(real64), dimension(:), allocatable, intent(in) :: temperature
 
     ! Number of dimensions of my grid data
@@ -374,7 +374,7 @@ module write_netcdf
     integer :: temp_size, temp_dim_id
 
     ! Names of my dimensions
-    character(len=1), dimension(grid_ndims) :: grid_dims=(/"x", "y" , "z", "s", "t"/)
+    character(len=1), dimension(grid_ndims) :: grid_dims=(/"b", "x", "y" , "z", "s", "t"/)
     character(len=4) :: temp_dims = "temp"
 
     ! Filename to which to write
@@ -399,6 +399,8 @@ module write_netcdf
 
     ! Add information about global runtime data
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'N_Basis', setup%n_basis))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'N_1', setup%n_1))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'N_2', setup%n_2))
@@ -416,7 +418,7 @@ module write_netcdf
                             'Warren-Cowley Range', &
                             setup%wc_range))
 
-    ! Define the 4D variables and dimensions !
+    ! Define the variables and dimensions
     do i = 1, grid_ndims
       ierr = nf90_def_dim(file_id, grid_dims(i), grid_sizes(i), grid_dim_ids(i))
       if (ierr /= nf90_noerr) then

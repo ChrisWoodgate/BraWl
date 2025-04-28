@@ -30,6 +30,8 @@ module kinds
 
   implicit none
 
+  public
+
   !> Very short integer
   !> (8 bit, -128 to 127)
   integer, parameter :: int8 = selected_int_kind(2)

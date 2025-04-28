@@ -13,8 +13,7 @@ module bw_hamiltonian
   use kinds
   use constants
   use shared_data
-  use io
-  use c_functions
+  use derived_types
   
   implicit none
 
