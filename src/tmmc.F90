@@ -8,6 +8,8 @@
 !> @date    2024 
 module tmmc
 
+#ifdef USE_MPI
+
   use initialise
   use kinds
   use shared_data
@@ -520,5 +522,7 @@ module tmmc
       intervals(i,1) = INT(index + 1)
     end do
   end subroutine divide_range
+
+#endif
 
 end module tmmc

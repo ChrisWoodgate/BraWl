@@ -98,10 +98,14 @@ module metropolis
       if(my_rank == 0) call execute_command_line('mkdir -p trajectories')
     end if
 
+#ifdef USE_MPI
+
     ! Initialise some global arrays
     call initialise_global_metropolis_arrays(setup, metropolis)
 
-    ! Initialise some global arrays
+#endif
+
+    ! Initialise some local arrays
     call initialise_local_metropolis_arrays(setup, metropolis)
 
     ! Set up the lattice
@@ -373,6 +377,9 @@ module metropolis
       call ncdf_order_writer(trim(alro_file), ierr, order_of_T, temperature, setup)
     end if
 
+
+#ifdef USE_MPI
+
     ! Average results across the simulation
     call comms_reduce_metropolis_results(setup, metropolis)
 
@@ -392,6 +399,8 @@ module metropolis
       end if
     end if
 
+#endif
+
     if (allocated(r_densities)) deallocate(r_densities)
     if (allocated(asro)) deallocate(asro)
     if (allocated(order)) deallocate(order)
@@ -399,8 +408,12 @@ module metropolis
     ! Clean up
     call local_metropolis_clean_up()
 
+#ifdef USE_MPI
+
     ! Clean up
     call global_metropolis_clean_up()
+
+#endif
 
     if(my_rank == 0) then
       write(6,'(25("-"),x,"Simulation Complete!",x,25("-"))')
@@ -445,10 +458,14 @@ module metropolis
     ! Set up the lattice
     call initial_setup(setup, config)
 
+#ifdef USE_MPI
+
     ! Initialise some global arrays
     call initialise_global_metropolis_arrays(setup, metropolis)
 
-    ! Initialise some global arrays
+#endif
+
+    ! Initialise some local arrays
     call initialise_local_metropolis_arrays(setup, metropolis)
 
     call lattice_shells(setup, shells, config)
@@ -553,8 +570,12 @@ module metropolis
     ! Clean up
     call local_metropolis_clean_up()
 
+#ifdef USE_MPI
+
     ! Clean up
     call global_metropolis_clean_up()
+
+#endif
 
     if(my_rank == 0) then
       write(6,'(25("-"),x,"Simulation Complete!",x,25("-"))')

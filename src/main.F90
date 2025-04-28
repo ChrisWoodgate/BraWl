@@ -14,8 +14,6 @@ program main
   use shared_data
   use metropolis
   use nested_sampling
-  use tmmc
-  use wang_landau
   use io
   use kinds
   use c_functions
@@ -23,6 +21,13 @@ program main
   use write_xyz
   use metropolis_output
   use display
+
+#ifdef USE_MPI
+
+  use tmmc
+  use wang_landau
+
+#endif
 
   implicit none
 
@@ -35,11 +40,15 @@ program main
   ! Nested Sampling parameters type
   type(ns_params) :: ns_setup
 
+#ifdef USE_MPI
+
   ! Tmmc parameters type
   type(tmmc_params) :: tmmc_setup
 
   ! Wang Landau parameters type
   type(wl_params) :: wl_setup
+
+#endif
 
   !--------------------------------------------------------------------!
   !                          Initial Setup                             !
@@ -115,6 +124,8 @@ program main
   !-------------------------------!
   else if (setup%mode == 304) then
 
+#ifdef USE_MPI
+
     ! Read TMMC input file
     call read_tmmc_file("tmmc_input.inp", tmmc_setup, my_rank)
 
@@ -123,10 +134,14 @@ program main
     !       if you try to use this routine.
     call tmmc_main(setup, tmmc_setup, my_rank)
 
+#endif
+
   !----------------------!
   ! Wang-Landau sampling !
   !----------------------!
   else if (setup%mode == 305) then
+
+#ifdef USE_MPI
 
     ! Make the relevant directories
     if(my_rank == 0) call execute_command_line('mkdir -p asro')
@@ -136,6 +151,8 @@ program main
 
     ! Run Wang Landau sampling
     call wl_main(setup, wl_setup)
+
+#endif
 
   !-------------------------------------!
   ! Case of unrecognised mode requested !

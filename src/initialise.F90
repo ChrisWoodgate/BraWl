@@ -26,12 +26,17 @@ module initialise
 
   private
 
-  public :: initialise_prng, initialise_global_metropolis_arrays,      &
-            initialise_function_pointers, initialise_interaction,      &
-            initialise_local_arrays, clean_up_interaction,             &
-            initialise_local_metropolis_arrays, local_clean_up,        &
-            local_metropolis_clean_up, global_metropolis_clean_up,     &
-            initial_setup
+  public :: initialise_prng, initialise_function_pointers,             &
+            initialise_interaction, initialise_local_arrays,           &
+            clean_up_interaction, initialise_local_metropolis_arrays,  &
+            local_clean_up, local_metropolis_clean_up, initial_setup
+
+#ifdef USE_MPI
+
+  public :: initialise_global_metropolis_arrays,                       &
+            global_metropolis_clean_up
+
+#endif
 
   contains
 
@@ -69,13 +74,23 @@ module initialise
 
     call comms_wait()
 
+#ifdef USE_MPI
+
     print*, 'Thread ', my_rank, ' has seed ', seed
+
+#else
+
+    print*, 'Using seed '
+
+#endif
 
     call flush(6)
 
     call comms_wait()
 
   end subroutine initialise_prng
+
+#ifdef USE_MPI
 
   !> @brief   Subroutine to initalise the global Metropolis arrays
   !>
@@ -115,6 +130,8 @@ module initialise
     end if
 
   end subroutine initialise_global_metropolis_arrays
+
+#endif
 
   !> @brief   Subroutine to initalise function pointers
   !>
@@ -370,6 +387,8 @@ module initialise
 
   end subroutine local_metropolis_clean_up
 
+#ifdef USE_MPI
+
   !> @brief   Subroutine to clean up memory used by process 1 for a
   !>          parallel Metropolis simulation
   !>
@@ -386,6 +405,8 @@ module initialise
     if (allocated(av_acceptance_of_T)) deallocate(av_acceptance_of_T)
 
   end subroutine global_metropolis_clean_up
+
+#endif
 
   !> @brief   Subroutine to initialise the simulation in a random
   !>          configuration with the correct overall concentration of

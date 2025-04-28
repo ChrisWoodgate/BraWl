@@ -10,6 +10,8 @@
 
 module wang_landau
 
+#ifdef USE_MPI
+
   use kinds
   use constants
   use derived_types
@@ -1368,5 +1370,7 @@ module wang_landau
         array(rand_index, :) = temp
     end do
   end subroutine
+
+#endif
 
 end module wang_landau
