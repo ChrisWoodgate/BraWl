@@ -51,7 +51,7 @@ mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=custom_cmap.colors)
 
 subfolders = [ f.name for f in os.scandir(os.getcwd()) if f.is_dir() ]
 print("Available directories:")
-print(subfolders)
+print(sorted(subfolders))
 directory = input("Input directory to pull data from: ")
 
 filename = "{}/wl_dos_bins.dat".format(directory)
@@ -112,7 +112,7 @@ for i in range(len(U_data)):
   wcs[i] = wcoft
 
 elements = ""  # Initialize an empty string to store species data
-with open("{}/input.txt".format(directory), 'r') as file:
+with open("{}/input.inp".format(directory), 'r') as file:
     for line in file:
         if 'species_name' in line:  # Check if the line contains the species_name variable
             parts = line.split("=")  # Split the line by '=' and get everything after it
@@ -324,11 +324,11 @@ ax3.set_ylim(np.min(heat_caps)-0.025*np.abs(heat_cap_diff), np.max(heat_caps)+0.
 ax5.set_ylim(np.min(heat_caps)-0.025*np.abs(heat_cap_diff), np.max(heat_caps)+0.025*np.abs(heat_cap_diff))
 ax7.set_ylim(np.min(entropies)-0.025*np.abs(entropies_diff), np.max(entropies)+0.025*np.abs(entropies_diff))
 
-fig1.savefig('figures/{}_energy_histogram.svg'.format(''.join(elements)), bbox_inches='tight')
-fig2.savefig('figures/{}_mean_energy.svg'.format(''.join(elements)), bbox_inches='tight')
-fig3.savefig('figures/{}_heat_capacity_1.svg'.format(''.join(elements)), bbox_inches='tight')
-fig4.savefig('figures/{}_heat_capacity_2.svg'.format(''.join(elements)), bbox_inches='tight')
-fig5.savefig('figures/{}_entropy.svg'.format(''.join(elements)), bbox_inches='tight')
+#fig1.savefig('figures/{}_energy_histogram.svg'.format(''.join(elements)), bbox_inches='tight')
+#fig2.savefig('figures/{}_mean_energy.svg'.format(''.join(elements)), bbox_inches='tight')
+#fig3.savefig('figures/{}_heat_capacity_1.svg'.format(''.join(elements)), bbox_inches='tight')
+#fig4.savefig('figures/{}_heat_capacity_2.svg'.format(''.join(elements)), bbox_inches='tight')
+#fig5.savefig('figures/{}_entropy.svg'.format(''.join(elements)), bbox_inches='tight')
 
 y_offset = -0.135
 x_offset = 0.5
@@ -424,10 +424,10 @@ cv_ax2_asro.set_ylim(asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
 print("Hist y-limit", prob_max*1.01)
 print("SHC y-limit", cv_ax1.get_ylim()[1])
 print("ASRO y-limit", asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
-custom_h = 0.23301609938053558
-custom_l = -2.616536458333333
-custom_u = 1.0366145833333336
-custom_c = 1.1793471814868697
+custom_h = 0.028926694463725887
+custom_l = -2.700703125
+custom_u = 1.0366406250000002
+custom_c = 0.9292878820012196
 
 cv_ax1.set_ylim(0, custom_c)
 cv_ax2.set_ylim(0, custom_c)
@@ -435,4 +435,6 @@ cv_ax1_asro.set_ylim(custom_l, custom_u)
 cv_ax2_asro.set_ylim(custom_l, custom_u)
 hist_ax.set_ylim(0, custom_h)
 
-cv_fig.savefig('figures/{}.svg'.format(''.join(elements)), bbox_inches='tight')
+cv_fig.savefig('figures/{}.pdf'.format(''.join(elements)), bbox_inches='tight')
+
+plt.close()
