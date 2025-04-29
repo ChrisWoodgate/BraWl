@@ -1,11 +1,10 @@
-# 🧠 BraWl: A Modern Fortran90 Scientific Framework
+# 🔩 BraWl: Simulating the thermodynamics and phase stability of multicomponent alloys using conventional and enhanced sampling techniques
 
-**BraWl** is a modular, high-performance Fortran90 codebase designed for scientific simulations and data-driven computation.  
-It provides a flexible foundation for:
+The Fortran package **BraWl** (named after the Bragg-Williams model)  facilitates simulation of the thermodynamics and phase stability of both binary and multicomponent alloys. It achieves this by providing implementation of both the Bragg-Williams Hamiltonian (a lattice based model expressing the internal energy of an alloy as a sum of atom-atom effective pair interactions) concurrently with a range of conventional and enhanced sampling techniques for exploration of the alloy configuration space. The result is a package which can determine phase equilibria as a function of both temperature and alloy composition, which leads to the construction of alloy phase diagrams. Additionally, the package can be used for extraction of representative equilibrated atomic configurations for visualisation, as well as for use in complementary modelling approaches.
 
-- Modular numerical components
-- Parallel MPI computation
-- High-precision simulation workflows
+It provides a lightweight, fast and flexible foundation for a range of simulations relating to alloy thermodynamics and phase diagrams.
+
+For an overview of the capabilities of the package, you can check out our recent preprint: [Link to paper/preprint once uploaded](https://example.com).
 
 ---
 
@@ -13,7 +12,7 @@ It provides a flexible foundation for:
 
 - 💡 Clean Fortran90 module structure
 - 📦 Organized components for reusability
-- ⚙️ MPI support for parallelism
+- ⚙️  MPI support for parallelism
 - 🔬 Designed for scientific extensibility
 
 ---
@@ -21,9 +20,10 @@ It provides a flexible foundation for:
 ## 🧭 Documentation Guide
 
 - **Modules** — High-level structure of the project
-- **Routines** — Functions and subroutines
-- **Call Graphs** — Flow of execution
-- **Source Listings** — Browse the actual Fortran code
+    - **Modules List** – List of modules
+    - **Module Members** – Complete list of members of *all* modules
+- **Data Types** — Derived types/classes used in the project
+- **Files** — Browse the project's file structure
 
 ---
 
@@ -31,11 +31,13 @@ It provides a flexible foundation for:
 
 <pre>
 BraWl/
-├── src/           # Core source code
-│   ├── modules/   # Core scientific modules
-│   ├── math/      # Numerical methods
-│   └── io/        # Input/output handling
-├── tests/         # Test cases
-├── docs/          # Documentation (this!)
-└── CMakeLists.txt # Build system
+├── src/               # Core source code
+├── include/           # Any header files
+├── examples/          # Examples of use
+├── tests/             # Test cases
+├── docs/              # Documentation (this!)
+├── README.md          # High-level overview and README
+├── Makefile           # Makefile (for building the code!)
+├── LICENSE.txt        # Copyright statement and license (LGPL-3.0)
+└── CODE_OF_CONDUCT.md # Contributor Covenant Code of Conduct
 </pre>
