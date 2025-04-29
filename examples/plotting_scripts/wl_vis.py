@@ -51,31 +51,38 @@ mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=custom_cmap.colors)
 
 subfolders = [ f.name for f in os.scandir(os.getcwd()) if f.is_dir() ]
 print("Available directories:")
-print(sorted(subfolders))
+print(subfolders)
 directory = input("Input directory to pull data from: ")
 
-filename = "{}/wl_dos_bins.dat".format(directory)
+filename = "wl_dos_bins.dat"
 bin_edges = nc.Dataset(filename)
 bin_edges = np.array(bin_edges["grid data"][:], dtype=np.float64)
 
-filename = "{}/wl_dos.dat".format(directory)
+filename = "wl_dos.dat"
 wl_logdos = nc.Dataset(filename)
 wl_logdos = np.array(wl_logdos["grid data"][:], dtype=np.float64)
 plt.plot(wl_logdos)
 
-filename = "{}/radial_densities/rho_of_E.dat".format(directory)  
+filename = "radial_densities/rho_of_E.dat"
 rho_of_E = nc.Dataset(filename)
 
 rho = rho_of_E.variables['rho data'][:]
 U_data = rho_of_E.variables['U data'][:]
 
-elements = ['Al', 'Ti', 'Cr', 'Mo']
-n_species = 4
+elements = ""  # Initialize an empty string to store species data
+with open("input.inp"), 'r') as file:
+    for line in file:
+        if 'species_name' in line:  # Check if the line contains the species_name variable
+            parts = line.split("=")  # Split the line by '=' and get everything after it
+            if len(parts) > 1:
+                elements = parts[1].strip().split()  # Get the data after '=' and strip spaces
+            break  # Exit the loop after finding species_name
+n_species = len(elements)
 concentrations = 1.0/n_species*np.ones(n_species)
 
 wl_logdos = wl_logdos - np.max(wl_logdos)
 
-filename = "{}/wl_hist.dat".format(directory)
+filename = "wl_hist.dat"
 wl_hist = nc.Dataset(filename)
 wl_hist = np.array(wl_hist["grid data"][:], dtype=np.float64)
 
@@ -110,15 +117,6 @@ for i in range(len(U_data)):
           wcoft[j,k,0] = 1.0-1.0/8.0*rho[i,1,j,k]/concentrations[j]
           wcoft[j,k,1] = 1.0-1.0/6.0*rho[i,2,j,k]/concentrations[j]
   wcs[i] = wcoft
-
-elements = ""  # Initialize an empty string to store species data
-with open("{}/input.inp".format(directory), 'r') as file:
-    for line in file:
-        if 'species_name' in line:  # Check if the line contains the species_name variable
-            parts = line.split("=")  # Split the line by '=' and get everything after it
-            if len(parts) > 1:
-                elements = parts[1].strip().split()  # Get the data after '=' and strip spaces
-            break  # Exit the loop after finding species_name
 
 pairs = np.zeros([int(len(elements)*(len(elements)+1)/2),2], dtype=np.int16)
 k = 0
@@ -424,10 +422,10 @@ cv_ax2_asro.set_ylim(asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
 print("Hist y-limit", prob_max*1.01)
 print("SHC y-limit", cv_ax1.get_ylim()[1])
 print("ASRO y-limit", asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
-custom_h = 0.028926694463725887
-custom_l = -2.700703125
-custom_u = 1.0366406250000002
-custom_c = 0.9292878820012196
+custom_h = 0.23301609938053558
+custom_l = -2.616536458333333
+custom_u = 1.0366145833333336
+custom_c = 1.1793471814868697
 
 cv_ax1.set_ylim(0, custom_c)
 cv_ax2.set_ylim(0, custom_c)
@@ -435,6 +433,4 @@ cv_ax1_asro.set_ylim(custom_l, custom_u)
 cv_ax2_asro.set_ylim(custom_l, custom_u)
 hist_ax.set_ylim(0, custom_h)
 
-cv_fig.savefig('figures/{}.pdf'.format(''.join(elements)), bbox_inches='tight')
-
-plt.close()
+cv_fig.savefig('{}.pdf'.format(''.join(elements)), bbox_inches='tight')
