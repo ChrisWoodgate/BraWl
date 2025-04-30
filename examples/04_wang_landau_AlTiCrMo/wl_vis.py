@@ -11,10 +11,7 @@ import itertools
 from cycler import cycler
 font_size = 13
 np.set_printoptions(suppress=True)
-plt.rcParams.update({"text.usetex": True,
-                     "font.size": font_size})
-plt.rc('font', family='serif')
-plt.rc('text', usetex=True)
+plt.rcParams.update({"font.size": font_size})
 
 def flip(items, ncol):
     return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
@@ -120,46 +117,10 @@ for i in range(len(elements)):
         pairs[k] = [i, j]
         k += 1
 
-# Setup plots
-#fig, [ax1, ax2, ax3, ax4] = plt.subplots(1, 4, figsize=(24, 7), constrained_layout=True)
-#fig, [ax1, ax2, ax3] = plt.subplots(1, 3, figsize=(24, 9), constrained_layout=True)
-
 fig_height = 4; fig_width=fig_height*1.68
-fig1, ax1 = plt.subplots(figsize=(fig_width,fig_height), constrained_layout=True)
-fig2, ax2 = plt.subplots(figsize=(fig_width,fig_height), constrained_layout=True)
-fig3, ax3 = plt.subplots(figsize=(fig_width,fig_height), constrained_layout=True)
-ax4 = ax3.twinx()
-fig4, ax5 = plt.subplots(figsize=(fig_width,fig_height), constrained_layout=True)
-ax6 = ax5.twinx()
-fig5, ax7 = plt.subplots(figsize=(fig_width,fig_height), constrained_layout=True)
 
-ax1.set_xlabel(r'Energy $U$ (meV/atom)')
-ax1.set_ylabel(r'Probability P($U$)')
-#ax1.set_title(r'Energy Histograms')
-
-ax2.set_xlabel(r'Temperature (K)')
-ax2.set_ylabel(r'$\langle U \rangle$ (meV/atom)')
-#ax2.set_title(r'Mean Energy $\langle U \rangle$')  
-
-ax3.set_xlabel(r'Temperature (K)')
-ax3.set_ylabel(r'$C_v$ ($k_B$/atom)')
-#ax3.set_title(r'Heat Capacity $C_v$') 
-
-ax4.set_ylabel(r'$\alpha^{pq}_1$')
-
-ax5.set_xlabel(r'Temperature (K)')
-ax5.set_ylabel(r'$C_v$ ($k_B$/atom)')
-#ax5.set_title(r'Heat Capacity $C_v$') 
-
-ax6.set_ylabel(r'$\alpha^{pq}_2$')
-
-ax7.set_xlabel(r'Temperature (K)')
-ax7.set_ylabel(r'Entropy ($k_B$/atom)')
-#ax7.set_title(r'Entropy $S$')
-
-cv_fig, [hist_ax, cv_ax1, cv_ax2] = plt.subplots(3, 1, figsize=(fig_width,fig_height*3.3), constrained_layout=True)
+cv_fig, [hist_ax, cv_ax1] = plt.subplots(2, 1, figsize=(fig_width*1.1,fig_height*2.75), constrained_layout=True)
 cv_ax1_asro = cv_ax1.twinx()
-cv_ax2_asro = cv_ax2.twinx()
 
 # Initialise arrays 
 mean_energies   = np.zeros(len(temperatures))
@@ -167,7 +128,6 @@ gibbs_energies  = np.zeros(len(temperatures))
 heat_caps       = np.zeros(len(temperatures))
 entropies       = np.zeros(len(temperatures))
 asr_orders_1      = np.zeros((len(pairs),len(temperatures)))
-asr_orders_2      = np.zeros((len(pairs),len(temperatures)))
 
 beta = 1.0/(kb_ev*temperatures[-1])
 prob = np.zeros(len(bin_edges)-1)
@@ -211,16 +171,8 @@ for itemp, new_temp in enumerate(temperatures):
         hist_prob = copy.deepcopy(prob)
         hist_prob[index_to_zero] = 0
         non_zero = np.nonzero(hist_prob)
-        #ax1.stairs(hist_prob[np.min(non_zero):np.max(non_zero)], bin_edges[np.min(non_zero):np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=True)
-        #hist_ax.stairs(hist_prob[np.min(non_zero):np.max(non_zero)], bin_edges[np.min(non_zero):np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=True)
-        ax1.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, fill=True, alpha=0.1)
         hist_ax.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, fill=True, alpha=0.1)
-        ax1.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=False, alpha=1)
         hist_ax.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=False, alpha=1)
-        #ax1.stairs(np.log(prob), bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, baseline=np.log(1e-5), fill=True, alpha=0.3)
-        #hist_ax.stairs(np.log(prob), bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, baseline=np.log(1e-5), fill=True, alpha=0.3)
-        #ax1.stairs(np.log(prob), bin_edges/n_atoms*ev_to_mev-zero_energy, baseline=None, fill=False)
-        #hist_ax.stairs(np.log(prob), bin_edges/n_atoms*ev_to_mev-zero_energy, baseline=None, fill=False)
         if (bin_edges[np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy > hist_max):
           hist_max = bin_edges[np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy
         if (bin_edges[np.min(non_zero)]/n_atoms*ev_to_mev-zero_energy < hist_min):
@@ -235,8 +187,6 @@ for itemp, new_temp in enumerate(temperatures):
     for ipair, pair in enumerate(pairs):
       asr_order_1 = np.dot(wcs[:,pair[0],pair[1],0], prob)
       asr_orders_1[ipair,itemp] = asr_order_1
-      asr_order_2 = np.dot(wcs[:,pair[0],pair[1],1], prob)
-      asr_orders_2[ipair,itemp] = asr_order_2
 
     # Compute heat capacity using the histogram
     msq_dev = np.zeros(len(bin_edges)-1)
@@ -260,12 +210,6 @@ for itemp in range(2,len(temperatures)):
 for itemp, new_temp in enumerate(temperatures):
   entropies[itemp] = (mean_energies[itemp]-gibbs_energies[itemp])/new_temp
 
-# Clear out nan
-#mean_energies = np.nan_to_num(mean_energies)
-#heat_caps = np.nan_to_num(heat_caps)
-#entropies = np.nan_to_num(heat_caps)
-#asr_orders_1 = np.nan_to_num(asr_orders_1)
-#asr_orders_2 = np.nan_to_num(asr_orders_2)
 
 # Complete plots using data computed above
 local_max_indices = np.where((heat_caps[1:-1] > heat_caps[:-2]) & (heat_caps[1:-1] > heat_caps[2:]))[0] + 1
@@ -276,71 +220,26 @@ mean_energies = mean_energies/n_atoms*ev_to_mev
 heat_caps = heat_caps/kb_ev/n_atoms
 entropies = entropies/kb_ev/n_atoms
 
-ax2.plot(temperatures, mean_energies, '-o', markersize=4)
-ax3.plot(temperatures, heat_caps, '-o', markersize=4, label="Heat Capacity")
-for ipair, pair in enumerate(pairs):
-  ax4.plot(temperatures, asr_orders_1[ipair], label = elements[pair[0]] + '-' + elements[pair[1]])
-ax5.plot(temperatures, heat_caps, '-o', markersize=4, label="Heat Capacity")
-for ipair, pair in enumerate(pairs):
-  ax6.plot(temperatures, asr_orders_2[ipair], label = elements[pair[0]] + '-' + elements[pair[1]])
-ax7.plot(temperatures, entropies, '-o', markersize=4)
-
 y_offset = -0.175
 x_offset = 0.5
-ax1.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset), ncol=4)
-
-ax3.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.225))
-ax4.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset), ncol=int(len(pairs)/2))
-
-ax5.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.225))
-ax6.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset), ncol=int(len(pairs)/2))
-
-ax3.tick_params(direction="in")
-ax4.tick_params(direction="in")
-ax5.tick_params(direction="in")
-ax6.tick_params(direction="in")
 
 mean_energies_diff = np.max(mean_energies) - np.min(mean_energies)
 heat_cap_diff = np.max(heat_caps) - np.min(heat_caps)
 entropies_diff = np.max(entropies) - np.min(entropies)
-
-for x in local_max_indices:
-  ax2.vlines(x=temperatures[x], ymin=np.min(mean_energies)-0.1*mean_energies_diff, ymax=np.max(mean_energies), color=colors["firebrick_red"], linestyle='--')
-  ax3.vlines(x=temperatures[x], ymin=np.min(heat_caps)-0.1*heat_cap_diff, ymax=np.max(heat_caps), color=colors["firebrick_red"], linestyle='--')
-  ax5.vlines(x=temperatures[x], ymin=np.min(heat_caps)-0.1*heat_cap_diff, ymax=np.max(heat_caps), color=colors["firebrick_red"], linestyle='--')
-  ax7.vlines(x=temperatures[x], ymin=np.min(entropies)-0.1*entropies_diff, ymax=np.max(entropies), color=colors["firebrick_red"], linestyle='--')
-
-ax1.set_xlim(hist_min,hist_max)
-ax1.set_ylim(0, prob_max*1.01)
-ax2.set_ylim(np.min(mean_energies)-0.025*np.abs(mean_energies_diff), np.max(mean_energies)+0.025*np.abs(mean_energies_diff))
-ax3.set_ylim(np.min(heat_caps)-0.025*np.abs(heat_cap_diff), np.max(heat_caps)+0.025*np.abs(heat_cap_diff))
-ax5.set_ylim(np.min(heat_caps)-0.025*np.abs(heat_cap_diff), np.max(heat_caps)+0.025*np.abs(heat_cap_diff))
-ax7.set_ylim(np.min(entropies)-0.025*np.abs(entropies_diff), np.max(entropies)+0.025*np.abs(entropies_diff))
-
-#fig1.savefig('figures/{}_energy_histogram.svg'.format(''.join(elements)), bbox_inches='tight')
-#fig2.savefig('figures/{}_mean_energy.svg'.format(''.join(elements)), bbox_inches='tight')
-#fig3.savefig('figures/{}_heat_capacity_1.svg'.format(''.join(elements)), bbox_inches='tight')
-#fig4.savefig('figures/{}_heat_capacity_2.svg'.format(''.join(elements)), bbox_inches='tight')
-#fig5.savefig('figures/{}_entropy.svg'.format(''.join(elements)), bbox_inches='tight')
 
 y_offset = -0.135
 x_offset = 0.5
 
 hist_ax.tick_params(direction="in")
 cv_ax1.tick_params(direction="in")
-cv_ax2.tick_params(direction="in")
 
 label_size_offset = 3
 hist_ax.set_xlabel(r'Energy $E$ (meV/atom)', fontsize=font_size+label_size_offset)
 hist_ax.set_ylabel(r'Probability Density P($E$) (meV$^{-1}$)', fontsize=font_size+label_size_offset)
-cv_ax2.set_xlabel(r'Temperature (K)', fontsize=font_size+label_size_offset)
 cv_ax1.set_ylabel(r'$C$ ($k_B$/atom)', fontsize=font_size+label_size_offset)
-cv_ax2.set_ylabel(r'$C$ ($k_B$/atom)', fontsize=font_size+label_size_offset)
 cv_ax1_asro.set_ylabel(r'$\alpha^{pq}_1$', fontsize=font_size+label_size_offset)
-cv_ax2_asro.set_ylabel(r'$\alpha^{pq}_2$', fontsize=font_size+label_size_offset)
 cv_ax1_asro.set_xticklabels([])
 cv_ax1.grid(True, axis='x')
-cv_ax2.grid(True, axis='x')
 
 asro_max = 0
 asro_min = 0
@@ -351,27 +250,19 @@ for ipair, pair in enumerate(pairs):
     asro_max = np.max(asr_orders_1[ipair])
   if (np.min(asr_orders_1[ipair]) < asro_min):
     asro_min = np.min(asr_orders_1[ipair])
-cv_ax2.plot(temperatures, heat_caps, '-o', markersize=4, label="Heat Capacity")
-for ipair, pair in enumerate(pairs):
-  cv_ax2_asro.plot(temperatures, asr_orders_2[ipair], label = elements[pair[0]] + '-' + elements[pair[1]])
-  if (np.max(asr_orders_2[ipair]) > asro_max):
-    asro_max = np.max(asr_orders_2[ipair])
-  if (np.min(asr_orders_2[ipair]) < asro_min):
-    asro_min = np.min(asr_orders_2[ipair])
 
 cv_ticks = 400
 x_ticks_subplots = np.arange(np.around(start_temp/cv_ticks, decimals=0)*cv_ticks, np.around(end_temp/cv_ticks, decimals=0)*cv_ticks+cv_ticks, cv_ticks)
 cv_ax1.set_xticks(x_ticks_subplots)
-cv_ax2.set_xticks(x_ticks_subplots)
-cv_ax2.tick_params(axis='both', pad=6)
+cv_ax1.tick_params(axis='both', pad=6)
 
 x_ticks_subplots = np.arange(np.around((bin_edges[0]/n_atoms*ev_to_mev-zero_energy)/10, decimals=0)*10, np.around((bin_edges[-1]/n_atoms*ev_to_mev-zero_energy)/10, decimals=0)*10+10, 10)
 hist_ax.set_xticks(x_ticks_subplots)
 
 handles, labels = hist_ax.get_legend_handles_labels()
 hist_ax_legend = hist_ax.legend(flip(handles, 4), flip(labels, 4), loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.05), ncol=4)
-cv_ax2.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.25))
-cv_ax2_asro.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.0275), ncol=int(len(pairs)/2))
+cv_ax1.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.25))
+cv_ax1_asro.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.0275), ncol=int(len(pairs)/2))
 
 # Loop through the legend handles and change their linewidth
 for handle in hist_ax_legend.legend_handles:
@@ -379,10 +270,9 @@ for handle in hist_ax_legend.legend_handles:
 
 alternate_colors = list(colors.values())[::2]
 cv_ax1_asro.set_prop_cycle(cycler(color=alternate_colors))
-cv_ax2_asro.set_prop_cycle(cycler(color=alternate_colors))
 
 margin_pct = 0.05
-for ax in [hist_ax, cv_ax1, cv_ax2, cv_ax1_asro, cv_ax2_asro]:
+for ax in [hist_ax, cv_ax1, cv_ax1_asro]:
   # Get axis limits
   x_min, x_max = ax.get_xlim()
   y_min, y_max = ax.get_ylim()
@@ -410,9 +300,6 @@ hist_ax.set_ylim(0, prob_max*1.01)
 cv_ax1.set_xlim(start_temp, end_temp)
 cv_ax1.set_ylim(0, cv_ax1.get_ylim()[1]*1.01)
 cv_ax1_asro.set_ylim(asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
-cv_ax2.set_xlim(start_temp, end_temp)
-cv_ax2.set_ylim(0, cv_ax2.get_ylim()[1]*1.01)
-cv_ax2_asro.set_ylim(asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
 
 print("Hist y-limit", prob_max*1.01)
 print("SHC y-limit", cv_ax1.get_ylim()[1])
@@ -423,9 +310,7 @@ custom_u = 1.04
 custom_c = 1
 
 cv_ax1.set_ylim(0, custom_c)
-cv_ax2.set_ylim(0, custom_c)
 cv_ax1_asro.set_ylim(custom_l, custom_u)
-cv_ax2_asro.set_ylim(custom_l, custom_u)
 hist_ax.set_ylim(0, custom_h)
 
 cv_fig.savefig('{}.pdf'.format(''.join(elements)), bbox_inches='tight')
