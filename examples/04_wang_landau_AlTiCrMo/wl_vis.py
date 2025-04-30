@@ -17,7 +17,7 @@ plt.rc('font', family='serif')
 plt.rc('text', usetex=True)
 
 def flip(items, ncol):
-    return itertools.chain(*[items[i::ncol] for i in range(ncol)])
+    return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
 
 def inner_mod(a,b):
     res = a%b
@@ -157,7 +157,7 @@ ax7.set_xlabel(r'Temperature (K)')
 ax7.set_ylabel(r'Entropy ($k_B$/atom)')
 #ax7.set_title(r'Entropy $S$')
 
-cv_fig, [hist_ax, cv_ax1, cv_ax2] = plt.subplots(3, 1, figsize=(fig_width,fig_height*3), constrained_layout=True)
+cv_fig, [hist_ax, cv_ax1, cv_ax2] = plt.subplots(3, 1, figsize=(fig_width,fig_height*3.3), constrained_layout=True)
 cv_ax1_asro = cv_ax1.twinx()
 cv_ax2_asro = cv_ax2.twinx()
 
@@ -374,7 +374,7 @@ cv_ax2.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.25))
 cv_ax2_asro.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.0275), ncol=int(len(pairs)/2))
 
 # Loop through the legend handles and change their linewidth
-for handle in hist_ax_legend.legendHandles:
+for handle in hist_ax_legend.legend_handles:
     handle.set_linewidth(3)  # Increase the line width for each legend line
 
 alternate_colors = list(colors.values())[::2]
