@@ -26,6 +26,28 @@ $$H(\{\xi_{i\alpha}\}) = \frac{1}{2}\sum_{i} \sum_{n} \left(\sum_{j \in n(i)} \s
 
 where $n(i)$ denotes the set of lattice sites which are $n$ th nearest-neighbours to site $i$, and $V_{\alpha \alpha'}^{(n)}$ denotes the interaction between species $\alpha$ and $\alpha'$ on coordination shell $n$. This is the description which with BraWL works internally.
 
+## Dependencies
+The following dependencies are required to run the main executable `brawl.run`:
+```
+GCC/13.2.0
+OpenMPI/4.1.6
+netCDF/4.6.1
+```
+In order to analyse the Nested Sampling output the following is required
+```
+pymatnest https://github.com/libAtoms/pymatnest
+``` 
+The installation instructions can be found on the pymatnest github repository.
+For the plotting software to function the following dependencies are required:
+```
+Python/3.11.5
+Numpy/2.2.5
+Matplotlib/3.10.1
+Cycler/0.12.1
+netCDF/1.7.2
+```
+The Python modules can be installed using `pip install -r requirements.txt`, executed in the main directory. It is recommended to install these within a virtual environment which can be created within BraWl using `python -m venv venv` and the activated using `source venv/bin/activate`.
+
 ## Compilation
 At the moment the code is only tested with gfortran and OpenMPI. Put the code in a directory like `~/codes/BraWl`. It is my intention to test other compilers in future: watch this space!
 
