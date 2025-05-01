@@ -18,8 +18,7 @@ module derived_types
 
   private
 
-  public :: run_params, metropolis_params, ns_params, tmmc_params, &
-            wl_params, es_params
+  public :: run_params, metropolis_params, ns_params, tmmc_params, wl_params
 
   !> @brief   Derived type for parameters specifying general simulation
   !>          parameters which are common to all sampling methods.
@@ -299,17 +298,6 @@ module derived_types
     integer :: radial_samples
 
   end type wl_params
-
-  !--------------------------------------------------------------------!
-  ! Type storing parameters defining energy spectrum determining       !
-  !  (used at runtime)                                                 !
-  !                                                                    !
-  ! H. Naguszewski,  Warwick                                      2024 !
-  !--------------------------------------------------------------------!
-  type es_params
-    ! Number of mc sweeps (each sweep is n_atoms mc steps)
-    integer :: mc_sweeps
-  end type es_params
 
   !--------------------------------------------------------------------!
   ! Interfaces for various Hamiltonian and dynamics implementations    !
