@@ -108,6 +108,34 @@ module derived_types
   !> @author  C. D. Woodgate
   !>
   !> @date    2020-2025
+  !>
+  !> @param mode Paramater defining the mode of Metropolis operation
+  !> @param n_mc_steps
+  !> @param burn_in_start Whether to burn in at the initial temperature
+  !> @param burn_in Whether to burn in at all temperatures
+  !> @param n_burn_in_steps Number of trial Monte Carlo steps to use for burn-in
+  !> @param n_sample_steps Number of trial Monte Carlo steps between collecting statistics
+  !> @param calculate_energies Whether to output energy data. Defaults to True
+  !> @param write_trajectory_energy Whether to output the energy as a function of step #. Default to False
+  !> @param calculate_asro Whether to calculate ASRO parameters
+  !> @param write_trajectory_asro Whether to output the ASRO as a function of step #. Default to False
+  !> @param n_sample_steps_asro Number of trial Monte Carlo steps between sampling ASRO.
+  !>                            Note: must be a multiple of n_sample_steps
+  !> @param calculate_alro Whether to calculate ALRO parameters
+  !> @param n_sample_steps_alro Number of trial Monte Carlo steps between sampling ALRO.
+  !>                            Note: must be a multiple of n_sample_steps
+  !> @param write_trajectory_xyz Whether to output the trajectory. Default to False---can generate BIG files.
+  !> @param n_sample_steps_trajectory Number of trial Monte Carlo steps between sampling trajectory. 
+  !>                                  Note: must be a multiple of n_sample_steps
+  !> @param write_final_config_nc Whether to output the final config at each T in binary format
+  !> @param write_final_config_xyz Whether to output the final config at each T in xyz format
+  !> @param read_start_config_nc Whether to real the initial config from binary file
+  !> @param start_config_file Name of file from which to read initial config
+  !> @param beta Inverse temperature, internally in Ry
+  !> @param T Temperature (or start temperature, if using simulated annealing)
+  !> @param T_steps Number of temperature steps for simulated annealing
+  !> @param delta_T Temperature step size for simulated annealing
+  !> @param nbr_swap Whether to trial just neighbour swaps, or swaps across the whole lattice
   type metropolis_params
 
     ! Paramater defining the mode of Metropolis operation
