@@ -26,36 +26,83 @@ $$H(\{\xi_{i\alpha}\}) = \frac{1}{2}\sum_{i} \sum_{n} \left(\sum_{j \in n(i)} \s
 
 where $n(i)$ denotes the set of lattice sites which are $n$ th nearest-neighbours to site $i$, and $V_{\alpha \alpha'}^{(n)}$ denotes the interaction between species $\alpha$ and $\alpha'$ on coordination shell $n$. This is the description which with BraWL works internally.
 
-## Compilation
-At the moment the code is only tested with gfortran and OpenMPI. Put the code in a directory like `~/codes/BraWl`. It is my intention to test other compilers in future: watch this space!
+## Dependencies
 
-On the Warwick SCRTP system, which uses environment modules, run
+### Main package
+To build and run the main package with full functionality, you will require:
+- A Fortran compiler.
+- A Message Passing Interface (MPI) implementation.
+- The NetCDF-Fortran library. (This is _usually_ dependent on the standard NetCDF library.)
+- GNU Make, for building the package.
+
+Optionally, to build a serial version of the code with more limited functionality (Wang-Landau sampling is currently _only_ a parallel implementation due to the nature of the algorithm), it is sufficient simply to have a Fortran compiler and the NetCDF-Fortran library.
+
+The code has been explicitly tested and verified to function with the following combination of compiler and library versions:
+```
+GCC/13.2.0
+OpenMPI/4.1.6
+netCDF-Fortran/4.6.1
+```
+From experience, compatibility with earlier/later versions of these libraries is strongly expected, but not explicitly guaranteed.
+
+### Nested Sampling analysis
+In order to _analyse_ the output of a Nested Sampling simulation, you will require the `pymatnest` package, for which a list of dependencies and installation instructions can be found at the GitHub repository: [https://github.com/libAtoms/pymatnest](https://github.com/libAtoms/pymatnest).
+
+### Example plotting scripts
+For the example plotting scripts to function the following dependencies are required:
+```
+Python/3.11.5
+Numpy/2.2.5
+Matplotlib/3.10.1
+Cycler/0.12.1
+netCDF/1.7.2
+```
+The Python modules can be installed using `pip install -r requirements.txt`, executed in the main directory. It is recommended to install these within a virtual environment which can be created within BraWl using `python -m venv venv` and the activated using `source venv/bin/activate`. (Compatibility of the plotting scripts with later/earlier versions of the listed packages is anticipated, but not guaranteed.)
+
+## Compilation
+At the moment the code tested with GCC and OpenMPI, versions as specified above. Put the code in a directory like `~/codes/BraWl` and navigate to that directory.
+
+On the Warwick SCRTP system, which uses environment modules, the relevant modules can be loaded using the commands
 ```
 module purge
-module load GCC/11.3.0 OpenMPI/4.1.4 netCDF-Fortran/4.6.0
+module load GCC/13.2.0 OpenMPI/4.1.6 netCDF-Fortran/4.6.1
 ```
-then you should be able to build the code with
+On Bristol's `bluepebble` cluster, the relevant modules are (as of 2025/03) `gcc/12.3.0 openmpi/5.0.3 netcdf-c/4.9.2 netcdf-fortran`.
+
+Once any required modules are loaded and/or dependencies installed, you should be able to build the code using
+```
+make compiler=mpifort
+```
+if a parallel compilation is desired, or
 ```
 make compiler=gfortran
 ```
-and run it in a directory with a suitable input file via
-```
-~/codes/BraWl/brawl.run
-```
-(Note that the code, by default, will look for a file called `input.txt` as its input.)
-
-On Bristol's `bluepebble` cluster, the relevant modules are (as of 2025/03) `gcc/12.3.0 openmpi/5.0.3 netcdf-c/4.9.2 netcdf-fortran`.
+if a serial compilation is desired.
 
 ## Running the code
-If you navigate to the `examples` subdirectory, you should find two examples demonstrating the code's usage which can be run inside those directories.
+The code can be run from any directory containing the relevant input files, simply by running
+```
+mpirun -np <num_processors> /path/to/BraWl/brawl.run
+```
+if built in parallel, or
+```
+/path/to/BraWl/brawl.run
+```
+in serial.
 
-Most of the options specified in the input file are fairly self-explanatory. The least obvious is the `mode' option. Because it is my intention to include a 2D (and potentially 1D) option in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented options are:
+By default, the code will look for input files named `brawl.inp` (defining the model), an interaction file specified in `brawl.inp`, and then an additional input file relevant to the sampling algorithm being used. For Metropolis-Hastings, Wang-Landau sampling, and Nested Sampling, the default behaviour is to look for files named `metropolis.inp`, `wang-landau.inp`, and `nested_sampling.inp` for these, respectively. If you wish to use files with names different to these, the code accepts command-line arguments which allow the user to specify the names of these files, _e.g._
+```
+mpirun -np <num_processors> /path/to/BraWl/brawl.run input=<brawl_input_name> metropolis=<metropolis_input_name>
+```
+
+If you navigate to the `examples` subdirectory, you should find some example input files demonstrating the code's usage which can be run inside those directories. These input files are commented to explain what the various parameters mean and do.
+
+Most options specified in the input files are fairly self-explanatory. The least obvious is the `mode' option of `brawl.inp`. Because it is out intention to include 2D (and potentially 1D) options in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented options are:
 - 01: Simulated Annealing. Uses the Metropolis Monte Carlo algorithm with Kawasaki dynamics to perform simulated annealing on a system in an initially random configuration.
 - 02: Draw Decorellated Samples. Optionally performs simulated annealing then draws samples of the grid N Monte Carlo steps apart. Good for generating supercell configurations for use other methods. *E.g.* this recent reference where the code was used to generate training/test data for a machine-learned interatomic potential: L. Shenoy, C. D. Woodgate, J. B. Staunton, A. P. Bartók, C. S. Becquart, C. Domain, J. R. Kermode, [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
 - 03: Nested sampling. Uses the nested sampling algorithm to sample the configuration space from random initial configurations, allowing to calculate the partition function at an arbitrary temperature during the post-processing step. This procedure is outlined in a recent publication: C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
 
 ## Documentation
-
 The in addition to this README and the provided examples, the code also has (searchable) documentation which is auto-generated using [Doxygen](https://www.doxygen.nl), which lets users 'host' a web interface to the documentation locally on their machine. To view this documentation: 
 1. Obtain [Doxygen](https://www.doxygen.nl), which is typically available through a package manager.
 2. Run `doxygen docs/doxyfile` from the code's main directory.
@@ -67,7 +114,7 @@ This documentation contains information about all modules, functions, subroutine
 ANY publications/presentations/further work resulting from the use of this software should cite the original publication for which it was developed:
 * C. D. Woodgate, J. B. Staunton, [Phys. Rev. B **105**, 115124 (2023)](https://doi.org/10.1103/PhysRevB.105.115124)
 
-# List of publications
+## List of publications
 A (hopefully fairly complete) list of publications obtained using this code is:
 1. G. A. Marchant, C. D. Woodgate, C. E. Patrick, J. B. Staunton, [Phys. Rev. B **103**, 094414 (2021)](https://doi.org/10.1103/PhysRevB.103.094414).
 2. C. D. Woodgate, J. B. Staunton, [Phys. Rev. B **105**, 115124 (2022)](https://doi.org/10.1103/PhysRevB.105.115124).
