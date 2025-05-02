@@ -25,6 +25,7 @@ module write_netcdf
 
   public :: ncdf_radial_density_writer_once,          &
             ncdf_radial_density_writer,               &
+            ncdf_radial_density_reader,               &
             ncdf_radial_density_writer_across_energy, &
             ncdf_order_writer,                        &
             ncdf_grid_state_writer,                   &
@@ -1382,7 +1383,7 @@ module write_netcdf
     integer :: file_id, n_basis, n_1, n_2, n_3
 
     ! Ids for variables
-    integer :: grid_id, n_basis_id, n_1_id, n_2_id, n_3_id, lattice_id
+    integer :: grid_id
 
     ! Open the file for read-in
     call check(nf90_open(filename, NF90_NOWRITE, file_id))
@@ -1427,5 +1428,92 @@ module write_netcdf
     call check(nf90_close(file_id))
 
   end subroutine ncdf_config_reader
+
+  !> @brief   Routine to read an array of calculated ASRO parameters
+  !>          and energies. (Mainly for testing purposes.)
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2025
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  state Current grid configuration
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
+  subroutine ncdf_radial_density_reader(filename, asro, energy, setup, &
+                                        n_steps)
+
+    type(run_params), intent(in) :: setup
+
+    ! Names of my dimensions
+    integer, parameter :: rho_ndims = 4
+    character(len=1), dimension(rho_ndims) :: rho_dims=(/"i", "j", "r", "T"/)
+    integer, dimension(rho_ndims) :: rho_sizes, rho_dim_ids
+
+    ! Data to read from file
+    real(real64), dimension(:,:,:,:), allocatable, intent(out) :: asro
+    real(real64), dimension(:), allocatable, intent(out) :: energy
+
+    integer :: U_size, U_dim_id, U_id, file_id
+    character(len=3) :: U_dims = "U_i"
+
+    integer :: n_steps, i
+
+    character(len=20) :: lattice
+
+    ! Filename from to which to read
+    character(len=*), intent(in) :: filename
+
+    ! Ids for variables
+    integer :: rho_id
+
+    ! Open the file for read-in
+    call check(nf90_open(filename, NF90_NOWRITE, file_id))
+
+    ! Double-check the lattice type
+    call check(nf90_inquire_attribute(file_id, NF90_GLOBAL, "Lattice Type"))
+    call check(nf90_get_att(file_id, NF90_GLOBAL, "Lattice Type", lattice))
+
+    ! Check the dimensions
+    do i = 1, rho_ndims
+      call check(nf90_inq_dimid(file_id, rho_dims(i), rho_dim_ids(i)))
+      call check(nf90_inquire_dimension(file_id, rho_dim_ids(i), rho_dims(i), rho_sizes(i)))
+    end do
+
+    ! Check that these match the current simulation
+    if (trim(lattice) .ne. trim(setup%lattice)) then
+      stop "Lattice types do not match in ncdf_radial_density_reader()"
+    else if (rho_sizes(1) .ne. setup%n_species) then
+      stop "n_species values do not match in ncdf_radial_density_reader()"
+    else if (rho_sizes(2) .ne. setup%n_species) then
+      stop "n_species values do not match in ncdf_radial_density_reader()"
+    else if (rho_sizes(3) .ne. setup%wc_range) then
+      stop "wc_range values do not match in ncdf_radial_density_reader()"
+    else if (rho_sizes(4) .ne. n_steps) then
+      stop "n_steps values do not match in ncdf_radial_density_reader()"
+    end if
+
+    ! Allocate array for read-in
+    allocate(asro(rho_sizes(1), rho_sizes(2), rho_sizes(3), rho_sizes(4)))
+
+    ! Get the ID of the variable
+    call check(nf90_inq_varid(file_id, "rho data", rho_id))
+
+    ! Read it in
+    call check(nf90_get_var(file_id, rho_id, asro))
+
+    call check(nf90_inq_dimid(file_id, U_dims, U_dim_id))
+    call check(nf90_inquire_dimension(file_id, U_dim_id, U_dims, U_size))
+
+    allocate(energy(U_size))
+
+    call check(nf90_inq_varid(file_id, "U data", U_id))
+    call check(nf90_get_var(file_id, U_id, energy))
+
+    ! Close the file
+    call check(nf90_close(file_id))
+
+  end subroutine ncdf_radial_density_reader
 
 end module write_netcdf
