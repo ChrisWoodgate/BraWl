@@ -17,7 +17,6 @@ module write_netcdf
   use kinds
   use constants
   use netcdf
-  use shared_data
   use derived_types
 
   implicit none
@@ -29,6 +28,7 @@ module write_netcdf
             ncdf_radial_density_writer_across_energy, &
             ncdf_order_writer,                        &
             ncdf_grid_state_writer,                   &
+            ncdf_config_reader,                       &
             ncdf_grid_states_writer,                  &
             ncdf_writer_1d,                           &
             ncdf_writer_2d,                           &
@@ -492,8 +492,7 @@ module write_netcdf
   !> @param  setup Derived type containing simulation parameters
   !>
   !> @return None
-  subroutine ncdf_grid_state_writer(filename, ierr, &
-                                    state, temperature, setup)
+  subroutine ncdf_grid_state_writer(filename, ierr, state, setup)
 
     integer, parameter :: grid_ndims = 4
 
@@ -501,7 +500,6 @@ module write_netcdf
 
     ! Data to write to file
     integer(array_int), dimension(:,:,:,:), allocatable, intent(in) :: state
-    real(real64), intent(in) :: temperature
 
     ! Number of dimensions of my grid data
     integer, dimension(grid_ndims) :: grid_sizes, grid_dim_ids
@@ -542,16 +540,9 @@ module write_netcdf
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Number of Species', setup%n_species))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'temperature', temperature))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Interaction file', setup%interaction_file))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Concentrations', setup%species_concentrations))
-    call check(nf90_put_att(file_id, NF90_GLOBAL, &
-                            'Warren-Cowley Range', &
-                            setup%wc_range))
 
     ! Define the 4D variables and dimensions !
     do i = 1, grid_ndims
@@ -1315,7 +1306,7 @@ module write_netcdf
     !> check for error
     if(stat /= nf90_noerr) then
       print *, trim(nf90_strerror(stat))
-      stop "stopped"
+      stop "Stopped due to NetCDF error"
     end if
   end subroutine check
 
@@ -1362,5 +1353,5 @@ module write_netcdf
     end if
 
   end subroutine read_1D_array
-   
+
 end module write_netcdf

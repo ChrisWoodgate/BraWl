@@ -330,7 +330,7 @@ module metropolis
         write(grid_file, '(A11 I4.4 A11 I4.4 F2.1 A3)') 'configs/proc_', my_rank, '_grid_at_T_', &
                                              int(temp), temp-int(temp), '.nc'
         ! Write grid to file
-        call ncdf_grid_state_writer(trim(grid_file), ierr, config, temp, setup)
+        call ncdf_grid_state_writer(trim(grid_file), ierr, config, setup)
       end if
   
       if (my_rank ==0) then
