@@ -108,8 +108,11 @@ module metropolis
     ! Initialise some local arrays
     call initialise_local_metropolis_arrays(setup, metropolis)
 
-    ! Set up the lattice
-    call initial_setup(setup, config)
+    if (metropolis%read_start_config_nc) then
+      call ncdf_config_reader(metropolis%start_config_file, config, setup)
+    else
+      call initial_setup(setup, config)
+    end if
 
     call lattice_shells(setup, shells, config)
 
@@ -326,7 +329,7 @@ module metropolis
       end if
   
       ! Dump grids as NetCDF files if needed
-      if (metropolis%write_final_config_xyz) then
+      if (metropolis%write_final_config_nc) then
         write(grid_file, '(A11 I4.4 A11 I4.4 F2.1 A3)') 'configs/proc_', my_rank, '_grid_at_T_', &
                                              int(temp), temp-int(temp), '.nc'
         ! Write grid to file
