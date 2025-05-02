@@ -208,18 +208,39 @@ module metropolis
       end if
 
       if (metropolis%write_trajectory_xyz) then
+
+        ! Name of xyz file to which we will write trajectory
         write(xyz_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'trajectories/proc_', &
         my_rank, '_trajectory_at_T_', int(temp), temp-int(temp),'.xyz'
+
+        ! Delete this file if it already exists
+        open(unit=100, iostat=ierr, file=xyz_trajectory_file, status='old')
+        if (ierr == 0) close(100, status='delete')
+
       end if
 
       if (metropolis%write_trajectory_energy) then
+
+        ! Name of file to which we will write trajectory energies
         write(energy_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'trajectories/proc_', &
         my_rank, '_energy_trajectory_at_T_', int(temp), temp-int(temp),'.dat'
+
+        ! Delete this file if it already exists
+        open(unit=101, iostat=ierr, file=energy_trajectory_file, status='old')
+        if (ierr == 0) close(101, status='delete')
+
       end if
 
       if (metropolis%write_trajectory_asro) then
+
+        ! Name of file to which we will write trajectory ASRO parameters
         write(asro_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'trajectories/proc_', &
         my_rank, '_asro_trajectory_at_T_', int(temp), temp-int(temp),'.dat'
+
+        ! Delete this file if it already exists
+        open(unit=102, iostat=ierr, file=asro_trajectory_file, status='old')
+        if (ierr == 0) close(102, status='delete')
+
       end if
 
       !-----------------------------------------------------------------!
