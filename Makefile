@@ -129,7 +129,7 @@ analytics.o: shared_data.o kinds.o display.o io.o constants.o derived_types.o
 random_site.o: shared_data.o kinds.o c_functions.o analytics.o constants.o
 nested_sampling.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o derived_types.o
 metropolis.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o derived_types.o metropolis_output.o
-initialise.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o comms.o constants.o derived_types.o
+initialise.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o comms.o constants.o derived_types.o comms.o
 tests.o: initialise.o shared_data.o kinds.o c_functions.o write_netcdf.o\
 	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o derived_types.o
 test.o: tests.o
