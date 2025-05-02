@@ -28,7 +28,8 @@ module metropolis
   private
 
   public :: metropolis_simulated_annealing,                            &
-            metropolis_decorrelated_samples
+            metropolis_decorrelated_samples,                           &
+            monte_carlo_step_lattice
 
   contains
 
