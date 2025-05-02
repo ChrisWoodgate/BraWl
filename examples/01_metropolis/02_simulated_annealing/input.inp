@@ -1,0 +1,34 @@
+# Mode 301 means run a 3D simulation ('3') using Metropolis-Hastings ('01')
+mode=301
+
+# The code currently works with the cubic representation of the fcc lattice. 4 atoms per unit cell
+lattice = fcc
+
+# The lattice parameter
+# This only matters for xyz file output. Internally the code works with normalised coordination shells for a given lattice type
+lattice_parameter = 3.568
+
+# Number of atoms in directions 1 (x), 2(y), and 3(z)
+n_1=3
+n_2=3
+n_3=3
+
+# Number of chemical species
+n_species = 2
+
+# The species names and concentrations
+species_names =Fe Ni
+species_concentrations =0.5 0.5
+
+# The range of the interaction and the file where the parameters can be found
+interaction_range = 4
+interaction_file = 'FeNi.vij'
+
+# N+1, where N is the distance to which you would like to compute conditional pair probabilities, ASRO parameters
+wc_range = 3
+
+# Swap just nearest-neighbours (if 'true') or any pair of lattice sites (if 'false')
+nbr_swap = .false.
+
+# Static or time-based random seed?
+static_seed=T
