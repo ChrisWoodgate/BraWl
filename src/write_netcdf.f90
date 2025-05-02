@@ -1354,4 +1354,78 @@ module write_netcdf
 
   end subroutine read_1D_array
 
+  !> @brief   Routine to read current state of the grid from file.
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2020-2025
+  !>
+  !> @param  filename Name of file to which to write
+  !> @param  state Current grid configuration
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
+  subroutine ncdf_config_reader(filename, config, setup)
+
+    type(run_params), intent(in) :: setup
+
+    ! Data to read from file
+    integer(array_int), dimension(:,:,:,:), allocatable, intent(out) :: config
+
+    ! Filename from to which to read
+    character(len=*), intent(in) :: filename
+
+    ! Filename from to which to read
+    character(len=20) :: lattice
+
+    ! Variables used in writing process
+    integer :: file_id, n_basis, n_1, n_2, n_3
+
+    ! Ids for variables
+    integer :: grid_id, n_basis_id, n_1_id, n_2_id, n_3_id, lattice_id
+
+    ! Open the file for read-in
+    call check(nf90_open(filename, NF90_NOWRITE, file_id))
+
+    ! Get the IDs of the relevant attributes
+    call check(nf90_inquire_attribute(file_id, n_basis_id, "N_basis"))
+    call check(nf90_inquire_attribute(file_id, n_1_id, "N_1"))
+    call check(nf90_inquire_attribute(file_id, n_2_id, "N_2"))
+    call check(nf90_inquire_attribute(file_id, n_3_id, "N_3"))
+    call check(nf90_inquire_attribute(file_id, lattice_id, "lattice"))
+
+    ! Get the values of the relevant attributes
+    call check(nf90_get_att(file_id, n_basis_id, "N_basis", n_basis))
+    call check(nf90_get_att(file_id, n_1_id, "N_1", n_1))
+    call check(nf90_get_att(file_id, n_2_id, "N_2", n_2))
+    call check(nf90_get_att(file_id, n_3_id, "N_3", n_3))
+    call check(nf90_get_att(file_id, lattice_id, "lattice", lattice))
+
+    ! Check that these match the current simulation
+    if (trim(lattice) .ne. trim(setup%lattice)) then
+      stop "Lattice types do not match in ncdf_config_reader()"
+    else if (n_basis .ne. setup%n_basis) then
+      stop "n_basis values do not match in ncdf_config_reader()"
+    else if (n_1 .ne. setup%n_1) then
+      stop "n_1 values do not match in ncdf_config_reader()"
+    else if (n_2 .ne. setup%n_2) then
+      stop "n_2 values do not match in ncdf_config_reader()"
+    else if (n_3 .ne. setup%n_3) then
+      stop "n_3 values do not match in ncdf_config_reader()"
+    end if
+
+    ! Check that the variable ID exists
+    call check(nf90_inq_varid(file_id, "configuration", grid_id))
+
+    ! Allocate my grid for reading in
+    allocate(config(n_basis, 2*n_1, 2*n_2, 2*n_3))
+
+    ! Read in
+    call check(nf90_get_var(file_id, grid_id, config))
+
+    ! Close the file
+    call check(nf90_close(file_id))
+
+  end subroutine ncdf_config_reader
+
 end module write_netcdf
