@@ -22,8 +22,8 @@ energy_data = np.loadtxt('trajectories/proc_0000_energy_trajectory_at_T_0300.0.d
 step_numbers = energy_data[:,0]
 energies = energy_data[:,1] - energy_data[0,1]
 
-# Convert energy to meV/atom
-energies = energies/2048.0*1000.0*ry_in_ev
+# Convert total simulation energy (in Ry) to meV/atom
+energies = energies/256.0*1000.0*ry_in_ev
 
 # One 'sweep' is one trial move per atom
 sweeps = step_numbers/256
@@ -40,15 +40,13 @@ asro_2 = asro_data[:,10]/6.0
 fig, ax = plt.subplots(2, 1, figsize=(4,5), sharex=True)
 
 ax[0].plot(sweeps, energies, color='black')
-ax[0].ticklabel_format(style='sci', scilimits=(10, 1e9))
 ax[0].set_ylabel('Simulation energy (meV/atom)')
-#ax[0].set_title('Energies')
+ax[0].ticklabel_format(axis='x', style='sci', scilimits=(10, 1e9))
 
 ax[1].plot(sweeps, asro_1, label='Fe-Ni 1st nearest-neighbours')
 ax[1].plot(sweeps, asro_2, label='Fe-Ni 2nd nearest-neighbours')
 ax[1].set_xlabel('# of Monte Carlo sweeps')
 ax[1].set_ylabel('Pair Probabilities')
-#ax[1].set_title('Conditional Pair Probabilities')
 ax[1].legend(fontsize='small')
 
 fig.suptitle('Equilibration of FeNi at $T=300$ K')

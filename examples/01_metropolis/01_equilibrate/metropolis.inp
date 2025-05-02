@@ -66,7 +66,7 @@ T = 300.0
 # How many temperature steps to use, if more than one
 T_steps = 1
 
-# Increment by which to change the temperature
+# Increment by which to change the temperature (unused if only one temperature is considered)
 delta_T = -100.0
 
 # Are we strictly swapping nearest-neighbours only, or swapping across the entire lattice?
