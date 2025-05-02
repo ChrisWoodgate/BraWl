@@ -68,30 +68,30 @@ program test
   call print_centered_message('Testing FCC example', '-')
 
   ! Parse inputs
-  ! call parse_inputs(setup, my_rank)
+  call parse_inputs(setup, my_rank)
 
   ! Allocate space for atom-atom interaction parameters
-  ! call initialise_interaction(setup)
+  call initialise_interaction(setup)
 
   ! Read in atom-atom interaction
-  ! call read_exchange(setup, my_rank)
+  call read_exchange(setup, my_rank)
 
   ! Initialise PNRG
   ! static_seed is true if we would like to use a fixed seed and false
   ! otherwise
-  ! call initialise_prng(setup%static_seed)
+  call initialise_prng(setup%static_seed)
 
   ! Initialise some function pointers
-  ! call initialise_function_pointers(setup)
+  call initialise_function_pointers(setup)
 
   ! Initialise some local arrays
-  ! call initialise_local_arrays(setup)
+  call initialise_local_arrays(setup)
 
   ! Clean up
-  ! call clean_up_interaction()
+  call clean_up_interaction()
 
   ! Clean up
-  ! call local_clean_up(setup)
+  call local_clean_up(setup)
 
   ! Print software info to the screen
   if(my_rank == 0) call write_info('f')
