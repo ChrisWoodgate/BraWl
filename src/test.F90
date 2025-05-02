@@ -48,16 +48,21 @@ program test
   setup%n_2 = 4
   setup%n_3 = 4
   setup%n_basis = 1
-  setup%n_species=3
+  setup%n_species=5
   setup%lattice='fcc'
-  allocate(setup%species_concentrations(3))
-  setup%species_concentrations=(/0.333, 0.333, 0.334/)
-  setup%interaction_file = 'fcc.vij'
+  allocate(setup%species_concentrations(0:5))
+  setup%species_concentrations = 0.0_real64
+  allocate(setup%species_numbers(5))
+  setup%species_numbers = 0
+  allocate(setup%species_names(5))
+  setup%species_names = (/ 'Al', 'Cr', 'Fe', 'Co', 'Ni' /)
+  setup%species_concentrations=(/0.0, 0.2, 0.2, 0.2, 0.2, 0.2/)
+  setup%interaction_file = 'fcc_epi.vij'
   setup%interaction_range = 4
   setup%static_seed = .True.
   setup%wc_range = 3
 
-  call test_suite(setup, my_rank, 256, 'generate')
+  call test_suite(setup, my_rank, 256, 'test')
 
   ! Print software info to the screen
   if(my_rank == 0) call write_info('f')

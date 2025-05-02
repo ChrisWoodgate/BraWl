@@ -68,6 +68,9 @@ module tests
     ! Arrays for checking energies of trajectories
     real(real64), dimension(:,:,:,:), allocatable :: trajectory_asro, trajectory_asro_test
 
+    if (.not. allocated(config)) allocate(config(setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3))
+    if (.not. allocated(shells)) allocate(shells(setup%wc_range))
+
     call initialise_function_pointers(setup)
 
     ! Allocate space for atom-atom interaction parameters
@@ -90,7 +93,8 @@ module tests
     if (trim(mode) .eq. 'test') then
       call ncdf_config_reader('99_ref/fcc_start_config.nc', test_config, setup)
     else if (trim(mode) .eq. 'generate') then
-      call ncdf_grid_state_writer('99_ref/fcc_start_config.nc', ierr, test_config, setup)
+      call ncdf_grid_state_writer('99_ref/fcc_start_config.nc', ierr, config, setup)
+      test_config=config
     end if
 
     allocate(trajectory_energy(n_steps))
@@ -117,7 +121,13 @@ module tests
 
     ! Check the energy trajectories
 
-    call ncdf_config_reader('99_ref/fcc_end_config.nc', test_config, setup)
+    if (trim(mode) .eq. 'test') then
+      call ncdf_config_reader('99_ref/fcc_end_config.nc', test_config, setup)
+    else if (trim(mode) .eq. 'generate') then
+      call ncdf_grid_state_writer('99_ref/fcc_end_config.nc', ierr, config, setup)
+      test_config=config
+    end if
+
 
     if (.not.(configs_equal(config, test_config))) then
       stop 'Final configurations are different'
@@ -126,6 +136,8 @@ module tests
     ! Clean up
     call clean_up_interaction()
 
+    if(allocated(config)) deallocate(config)
+    if(allocated(shells)) deallocate(shells)
     if(allocated(indices)) deallocate(indices)
     if(allocated(trajectory_energy)) deallocate(trajectory_energy)
     if(allocated(trajectory_asro)) deallocate(trajectory_asro)
