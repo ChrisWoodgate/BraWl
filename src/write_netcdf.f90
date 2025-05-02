@@ -553,7 +553,7 @@ module write_netcdf
       end if
     end do 
 
-    ierr = nf90_def_var(file_id, "grid data", NF90_SHORT, grid_dim_ids, grid_id)
+    ierr = nf90_def_var(file_id, "configuration", NF90_SHORT, grid_dim_ids, grid_id)
     if (ierr /= nf90_noerr) then
       print*, trim(nf90_strerror(ierr))
       return
@@ -1388,18 +1388,18 @@ module write_netcdf
     call check(nf90_open(filename, NF90_NOWRITE, file_id))
 
     ! Get the IDs of the relevant attributes
-    call check(nf90_inquire_attribute(file_id, n_basis_id, "N_basis"))
-    call check(nf90_inquire_attribute(file_id, n_1_id, "N_1"))
-    call check(nf90_inquire_attribute(file_id, n_2_id, "N_2"))
-    call check(nf90_inquire_attribute(file_id, n_3_id, "N_3"))
-    call check(nf90_inquire_attribute(file_id, lattice_id, "lattice"))
+    call check(nf90_inquire_attribute(file_id, NF90_GLOBAL, "N_basis"))
+    call check(nf90_inquire_attribute(file_id, NF90_GLOBAL, "N_1"))
+    call check(nf90_inquire_attribute(file_id, NF90_GLOBAL, "N_2"))
+    call check(nf90_inquire_attribute(file_id, NF90_GLOBAL, "N_3"))
+    call check(nf90_inquire_attribute(file_id, NF90_GLOBAL, "Lattice Type"))
 
     ! Get the values of the relevant attributes
-    call check(nf90_get_att(file_id, n_basis_id, "N_basis", n_basis))
-    call check(nf90_get_att(file_id, n_1_id, "N_1", n_1))
-    call check(nf90_get_att(file_id, n_2_id, "N_2", n_2))
-    call check(nf90_get_att(file_id, n_3_id, "N_3", n_3))
-    call check(nf90_get_att(file_id, lattice_id, "lattice", lattice))
+    call check(nf90_get_att(file_id, NF90_GLOBAL, "N_basis", n_basis))
+    call check(nf90_get_att(file_id, NF90_GLOBAL, "N_1", n_1))
+    call check(nf90_get_att(file_id, NF90_GLOBAL, "N_2", n_2))
+    call check(nf90_get_att(file_id, NF90_GLOBAL, "N_3", n_3))
+    call check(nf90_get_att(file_id, NF90_GLOBAL, "Lattice Type", lattice))
 
     ! Check that these match the current simulation
     if (trim(lattice) .ne. trim(setup%lattice)) then
