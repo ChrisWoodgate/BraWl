@@ -19,7 +19,7 @@ module initialise
   use c_functions
   use bw_hamiltonian
   use random_site
-  use comms
+  use comms, only : comms_finalise, my_rank, comms_wait
   use iso_c_binding
   
   implicit none
@@ -154,8 +154,8 @@ module initialise
       if (setup%interaction_range .eq. 1) then
         setup%nbr_energy => simple_cubic_energy_1shells
       else
-        print*, 'Unsupported number of shells'
-        stop
+        call comms_finalise()
+        stop 'Unsupported number of shells'
       end if
       setup%rdm_site => simple_cubic_random_site
       setup%rdm_nbr => simple_cubic_random_nbr
@@ -192,12 +192,13 @@ module initialise
       else if (setup%interaction_range .eq. 10) then
         setup%nbr_energy => bcc_energy_10shells
       else
-        print*, 'Unsupported number of shells'
-        stop
+        call comms_finalise()
+        stop 'Unsupported number of shells'
       end if
       setup%rdm_site => bcc_random_site
       setup%rdm_nbr => bcc_random_nbr
     else if(trim(setup%lattice) == 'fcc') then
+
       setup%n_basis = 1
       setup%n_atoms = 4*setup%n_1*setup%n_2*setup%n_3
       setup%lattice_vectors = reshape( (/ 0.5, 0.0, 0.0,     &
@@ -222,15 +223,15 @@ module initialise
       else if (setup%interaction_range .eq. 6) then
         setup%nbr_energy => fcc_energy_6shells
       else
-        print*, 'Unsupported number of shells'
-        stop
+        call comms_finalise()
+        stop 'Unsupported number of shells'
       end if
       setup%rdm_site => fcc_random_site
       setup%rdm_nbr => fcc_random_nbr
     ! Bomb if we ask for a lattice type we don't have!
     else
-      print*, 'Lattice type not yet implemented!'
-      stop
+      call comms_finalise()
+      stop 'Lattice type not yet implemented!'
     end if
 
     ! Check on concentrations and numbers of atoms
@@ -238,8 +239,8 @@ module initialise
                                         .gt. 0.001_real64) &
     .and. (sum(setup%species_numbers) .ne. setup%n_atoms)) &
     then
-      print*, 'Invalid numbers of atoms or concentrations specified'
-      stop
+      call comms_finalise()
+      stop 'Invalid numbers of atoms or concentrations specified'
     end if
 
   end subroutine initialise_function_pointers
@@ -437,11 +438,13 @@ module initialise
     else if (setup%lattice == 'fcc') then
       n_sites = setup%n_1*setup%n_2*setup%n_3*4
     else
+      call comms_finalise()
       stop 'Lattice type not supported!'
     end if
 
     ! Make sure my arrays have been allocated and bomb if not
     if (.not. allocated(config)) then
+      call comms_finalise()
       stop 'config not allocated in function initial_setup'
     end if
 
@@ -557,6 +560,7 @@ module initialise
         end do ! j
       end do ! k
     else
+      call comms_finalise()
       print*, 'Lattice type: ', setup%lattice, ' not yet implemented'
       stop
     end if
