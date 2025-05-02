@@ -212,18 +212,63 @@ module metropolis
       end if
 
       if (metropolis%write_trajectory_xyz) then
+
+        ! Name of xyz file to which we will write trajectory
         write(xyz_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'trajectories/proc_', &
         my_rank, '_trajectory_at_T_', int(temp), temp-int(temp),'.xyz'
+
+        ! Delete this file if it already exists
+        open(unit=100, iostat=ierr, file=xyz_trajectory_file, status='old')
+        if (ierr == 0) close(100, status='delete')
+
       end if
 
       if (metropolis%write_trajectory_energy) then
+
+        ! Name of file to which we will write trajectory energies
         write(energy_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'trajectories/proc_', &
         my_rank, '_energy_trajectory_at_T_', int(temp), temp-int(temp),'.dat'
+
+        ! Delete this file if it already exists
+        open(unit=101, iostat=ierr, file=energy_trajectory_file, status='old')
+        if (ierr == 0) close(101, status='delete')
+
       end if
 
       if (metropolis%write_trajectory_asro) then
+
+        ! Name of file to which we will write trajectory ASRO parameters
         write(asro_trajectory_file, '(A,I4.4,A,I4.4,F2.1,A)') 'trajectories/proc_', &
         my_rank, '_asro_trajectory_at_T_', int(temp), temp-int(temp),'.dat'
+
+        ! Delete this file if it already exists
+        open(unit=102, iostat=ierr, file=asro_trajectory_file, status='old')
+        if (ierr == 0) close(102, status='delete')
+
+      end if
+
+      !-----------------------------------------------------------------!
+      ! Gather information about initial state of trajectory, if needed !
+      !-----------------------------------------------------------------!
+      ! Storing of data to do with energies
+      if (metropolis%calculate_energies) then
+        current_energy = setup%full_energy(config)
+        if (metropolis%write_trajectory_energy) then
+          call energy_trajectory_writer(energy_trajectory_file, 0, current_energy)
+        end if
+      end if
+
+      ! Storing of data to do with ASRO
+      if (metropolis%calculate_asro) then
+        asro = radial_densities(setup, config, setup%wc_range, shells)
+        if (metropolis%write_trajectory_asro) then
+          call asro_trajectory_writer(asro_trajectory_file, 0, asro)
+        end if
+      end if
+
+      ! Write (or append) trajectory configuration to .xyz file
+      if (metropolis%write_trajectory_xyz) then
+        call xyz_writer(trim(xyz_trajectory_file), config, setup, .True.)
       end if
 
       !-----------------------!
@@ -336,7 +381,7 @@ module metropolis
         ! Write grid to file
         call ncdf_grid_state_writer(trim(grid_file), ierr, config, setup)
       end if
-  
+
       if (my_rank ==0) then
         ! Write that we have completed a particular temperature
         write(6,'(a,f7.2,a)',advance='yes') &

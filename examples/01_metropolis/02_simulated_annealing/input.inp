@@ -9,9 +9,9 @@ lattice = fcc
 lattice_parameter = 3.568
 
 # Number of atoms in directions 1 (x), 2(y), and 3(z)
-n_1=4
-n_2=4
-n_3=4
+n_1=3
+n_2=3
+n_3=3
 
 # Number of chemical species
 n_species = 2
