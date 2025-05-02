@@ -84,7 +84,7 @@ VPATH = $(SRCDIR):$(SRCDIR)/core:$(OBJDIR):$(INCDIR)
 brawl: $(OBJFILES) main.o
 	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/main.o $(LDFLAGS)
 
-tests: $(OBJFILES) tests.o
+tests: $(OBJFILES) tests.o test.o
 	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/tests.o $(LDFLAGS)
 
 example: $(OBJFILES) howto_examples.o example.o
@@ -132,5 +132,6 @@ metropolis.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o
 initialise.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o comms.o constants.o derived_types.o
 tests.o: initialise.o shared_data.o kinds.o c_functions.o write_netcdf.o\
 	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o derived_types.o
+test.o: tests.o
 main.o: initialise.o shared_data.o kinds.o c_functions.o write_netcdf.o\
 	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o derived_types.o

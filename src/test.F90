@@ -18,7 +18,6 @@ program test
   use comms
   use shared_data
   use metropolis
-  use nested_sampling
   use io
   use kinds
   use c_functions
@@ -26,34 +25,12 @@ program test
   use write_xyz
   use metropolis_output
   use display
-
-#ifdef USE_MPI
-
-  use tmmc
-  use wang_landau
-
-#endif
+  use tests
 
   implicit none
 
   ! Runtime parameters type
   type(run_params) :: setup
-
-  ! Metropolis parameters type
-  type(metropolis_params) :: metropolis
-
-  ! Nested Sampling parameters type
-  type(ns_params) :: ns_setup
-
-#ifdef USE_MPI
-
-  ! Tmmc parameters type
-  type(tmmc_params) :: tmmc_setup
-
-  ! Wang Landau parameters type
-  type(wl_params) :: wl_setup
-
-#endif
 
   ! Start MPI
   call comms_initialise()
@@ -67,31 +44,20 @@ program test
   ! We will test both fcc and bcc implementations
   call print_centered_message('Testing FCC example', '-')
 
-  ! Parse inputs
-  call parse_inputs(setup, my_rank)
+  setup%n_1 = 4
+  setup%n_2 = 4
+  setup%n_3 = 4
+  setup%n_basis = 1
+  setup%n_species=3
+  setup%lattice='fcc'
+  allocate(setup%species_concentrations(3))
+  setup%species_concentrations=(/0.333, 0.333, 0.334/)
+  setup%interaction_file = 'fcc.vij'
+  setup%interaction_range = 4
+  setup%static_seed = .True.
+  setup%wc_range = 3
 
-  ! Allocate space for atom-atom interaction parameters
-  call initialise_interaction(setup)
-
-  ! Read in atom-atom interaction
-  call read_exchange(setup, my_rank)
-
-  ! Initialise PNRG
-  ! static_seed is true if we would like to use a fixed seed and false
-  ! otherwise
-  call initialise_prng(setup%static_seed)
-
-  ! Initialise some function pointers
-  call initialise_function_pointers(setup)
-
-  ! Initialise some local arrays
-  call initialise_local_arrays(setup)
-
-  ! Clean up
-  call clean_up_interaction()
-
-  ! Clean up
-  call local_clean_up(setup)
+  call test_suite(setup, my_rank, 256, 'generate')
 
   ! Print software info to the screen
   if(my_rank == 0) call write_info('f')
