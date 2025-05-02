@@ -1,15 +1,22 @@
 !> @file    comms.f90
 !>
-!> @brief   Routines associated with calls to the MPI library
+!> @brief   Routines associated with calls to the MPI library. If the
+!>          code is compiled in serial, use of pre-processor directives
+!>          ensures that this module functions but is largely 'empty'.
 !>
 !> @author  C. D. Woodgate
 !> @date    2021-2025
 module comms
 
-  use mpi
   use kinds
   use shared_data
   use derived_types
+
+#ifdef USE_MPI
+
+  use mpi
+
+#endif
 
   implicit none
 
@@ -17,8 +24,13 @@ module comms
 
   public :: my_rank, p
 
-  public :: comms_initialise, comms_wait,                              &
-            comms_reduce_metropolis_results, comms_finalise, comms_purge
+  public :: comms_initialise, comms_wait, comms_finalise
+
+#ifdef USE_MPI
+
+  public :: comms_reduce_metropolis_results, comms_purge
+
+#endif
 
   save
 
@@ -27,6 +39,8 @@ module comms
 
   ! rank of my processor
   integer :: my_rank
+
+#ifdef USE_MPI
 
   ! start and end times for mpi
   real(real64) :: t1, t2
@@ -43,15 +57,19 @@ module comms
   ! size of message
   integer :: mpi_counter
 
+#endif
+
   contains
 
   !> @brief   Subroutine to initialise MPI
   !>
   !> @author  C. D. Woodgate
-  !> @date    2021-2023
+  !> @date    2021-2025
   !>
   !> @return None
   subroutine comms_initialise()
+
+#ifdef USE_MPI
 
     ! initialise mpi
     call mpi_init(ierr)
@@ -63,26 +81,39 @@ module comms
     ! start the clock
     t1 = mpi_wtime()
 
+#else
+
+    p = 1
+    my_rank = 0
+
+#endif
+
   end subroutine comms_initialise
 
   !> @brief   Subroutine to call MPI_BARRIER---all processes wait
   !>
   !> @author  C. D. Woodgate
-  !> @date    2019-2023
+  !> @date    2019-2025
   !>
   !> @return None
   subroutine comms_wait()
 
+#ifdef USE_MPI
+
     ! Call MPI_BARRIER
     call mpi_barrier(mpi_comm_world, ierr)
 
+#endif
+
   end subroutine comms_wait
+
+#ifdef USE_MPI
 
   !> @brief   Reduces (averages) results of a parallel ensemble of 
   !>          Metropolis Monte Carlo simulations.
   !>
   !> @author  C. D. Woodgate
-  !> @date    2021-2023
+  !> @date    2021-2025
   !>
   !> @param  setup Derived type containing simulation parameters
   !> @param  setup Derived type containing Metropolis parameters
@@ -128,16 +159,20 @@ module comms
 
   end subroutine comms_reduce_metropolis_results
 
+#endif
+
   !> @brief   Subroutine to finalise MPI
   !>
   !> @details The block which is currently commented out can be used to
   !>          display the time taken.
   !>
   !> @author  C. D. Woodgate
-  !> @date    2021-2023
+  !> @date    2021-2025
   !>
   !> @return None
   subroutine comms_finalise()
+
+#ifdef USE_MPI
 
     ! stop the clock
     t2 = mpi_wtime()
@@ -151,7 +186,11 @@ module comms
     ! clean up mpi
     call mpi_finalize(ierr)
 
+#endif
+
   end subroutine comms_finalise
+
+#ifdef USE_MPI
 
   !> @brief   Purge pending communication
   !>
@@ -178,5 +217,7 @@ module comms
       deallocate(discard)  ! free memory
     end do
   end subroutine comms_purge
+
+#endif
 
 end module comms

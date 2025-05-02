@@ -54,28 +54,35 @@ print("Available directories:")
 print(subfolders)
 directory = input("Input directory to pull data from: ")
 
-filename = "{}/wl_dos_bins.dat".format(directory)
+filename = "wl_dos_bins.dat"
 bin_edges = nc.Dataset(filename)
 bin_edges = np.array(bin_edges["grid data"][:], dtype=np.float64)
 
-filename = "{}/wl_dos.dat".format(directory)
+filename = "wl_dos.dat"
 wl_logdos = nc.Dataset(filename)
 wl_logdos = np.array(wl_logdos["grid data"][:], dtype=np.float64)
 plt.plot(wl_logdos)
 
-filename = "{}/radial_densities/rho_of_E.dat".format(directory)  
+filename = "radial_densities/rho_of_E.dat"
 rho_of_E = nc.Dataset(filename)
 
 rho = rho_of_E.variables['rho data'][:]
 U_data = rho_of_E.variables['U data'][:]
 
-elements = ['Al', 'Ti', 'Cr', 'Mo']
-n_species = 4
+elements = ""  # Initialize an empty string to store species data
+with open("input.inp"), 'r') as file:
+    for line in file:
+        if 'species_name' in line:  # Check if the line contains the species_name variable
+            parts = line.split("=")  # Split the line by '=' and get everything after it
+            if len(parts) > 1:
+                elements = parts[1].strip().split()  # Get the data after '=' and strip spaces
+            break  # Exit the loop after finding species_name
+n_species = len(elements)
 concentrations = 1.0/n_species*np.ones(n_species)
 
 wl_logdos = wl_logdos - np.max(wl_logdos)
 
-filename = "{}/wl_hist.dat".format(directory)
+filename = "wl_hist.dat"
 wl_hist = nc.Dataset(filename)
 wl_hist = np.array(wl_hist["grid data"][:], dtype=np.float64)
 
@@ -110,15 +117,6 @@ for i in range(len(U_data)):
           wcoft[j,k,0] = 1.0-1.0/8.0*rho[i,1,j,k]/concentrations[j]
           wcoft[j,k,1] = 1.0-1.0/6.0*rho[i,2,j,k]/concentrations[j]
   wcs[i] = wcoft
-
-elements = ""  # Initialize an empty string to store species data
-with open("{}/input.txt".format(directory), 'r') as file:
-    for line in file:
-        if 'species_name' in line:  # Check if the line contains the species_name variable
-            parts = line.split("=")  # Split the line by '=' and get everything after it
-            if len(parts) > 1:
-                elements = parts[1].strip().split()  # Get the data after '=' and strip spaces
-            break  # Exit the loop after finding species_name
 
 pairs = np.zeros([int(len(elements)*(len(elements)+1)/2),2], dtype=np.int16)
 k = 0
@@ -324,11 +322,11 @@ ax3.set_ylim(np.min(heat_caps)-0.025*np.abs(heat_cap_diff), np.max(heat_caps)+0.
 ax5.set_ylim(np.min(heat_caps)-0.025*np.abs(heat_cap_diff), np.max(heat_caps)+0.025*np.abs(heat_cap_diff))
 ax7.set_ylim(np.min(entropies)-0.025*np.abs(entropies_diff), np.max(entropies)+0.025*np.abs(entropies_diff))
 
-fig1.savefig('figures/{}_energy_histogram.svg'.format(''.join(elements)), bbox_inches='tight')
-fig2.savefig('figures/{}_mean_energy.svg'.format(''.join(elements)), bbox_inches='tight')
-fig3.savefig('figures/{}_heat_capacity_1.svg'.format(''.join(elements)), bbox_inches='tight')
-fig4.savefig('figures/{}_heat_capacity_2.svg'.format(''.join(elements)), bbox_inches='tight')
-fig5.savefig('figures/{}_entropy.svg'.format(''.join(elements)), bbox_inches='tight')
+#fig1.savefig('figures/{}_energy_histogram.svg'.format(''.join(elements)), bbox_inches='tight')
+#fig2.savefig('figures/{}_mean_energy.svg'.format(''.join(elements)), bbox_inches='tight')
+#fig3.savefig('figures/{}_heat_capacity_1.svg'.format(''.join(elements)), bbox_inches='tight')
+#fig4.savefig('figures/{}_heat_capacity_2.svg'.format(''.join(elements)), bbox_inches='tight')
+#fig5.savefig('figures/{}_entropy.svg'.format(''.join(elements)), bbox_inches='tight')
 
 y_offset = -0.135
 x_offset = 0.5
@@ -435,4 +433,4 @@ cv_ax1_asro.set_ylim(custom_l, custom_u)
 cv_ax2_asro.set_ylim(custom_l, custom_u)
 hist_ax.set_ylim(0, custom_h)
 
-cv_fig.savefig('figures/{}.svg'.format(''.join(elements)), bbox_inches='tight')
+cv_fig.savefig('{}.pdf'.format(''.join(elements)), bbox_inches='tight')

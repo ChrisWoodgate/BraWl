@@ -41,9 +41,6 @@ program example
   ! Wang Landau parameters type
   type(wl_params) :: wl_setup
 
-  ! Energy Spectrum parameters type
-  type(es_params) :: es_setup
-
   ! Start MPI
   call comms_initialise()
 

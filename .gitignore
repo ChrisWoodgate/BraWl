@@ -22,6 +22,9 @@
 # Ignore pdfs
 *.pdf
 
+# Ignore svgs
+*.svg
+
 # Ignore executables
 *.exe
 
@@ -33,7 +36,12 @@
 
 # But not the license file
 !LICENSE.txt
+!requirements.txt
 
 # Also ignore the examples directories
 !examples/00_examples_tests/*
 !examples/01_CrCoNi/*
+
+# And locally Doxygen-generated file
+docs/html/
+docs/latex/

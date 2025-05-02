@@ -17,15 +17,14 @@ ifeq ($(strip $(compiler)),)
   MAKECMDGOALS = error
 error:
 	@echo 'You need to set a value for the compiler variable'
-	@echo ' eg. "make compiler=gfortran"'
+	@echo ' eg. "make compiler=gfortran" or "make compiler=mpifort"'
 	@echo 'Alternatively, you can add "export compiler=gfortran" to $$HOME/.bashrc'
 endif
 
-# Intel
-ifeq ($(strip $(compiler)),intel)
+# mpiifort (Intel)
+ifeq ($(strip $(compiler)),mpiifort)
   FC = mpiifort
-  FFLAGS = -O3 
-  FFLAGS = -O0 -warn all -check all 
+  FFLAGS = -O3 -fpp -DUSE_MPI
   FFLAGS += -module $(OBJDIR)
   CC = icc
   CFLAGS = -O3
@@ -33,10 +32,18 @@ endif
 
 # gfortran
 ifeq ($(strip $(compiler)),gfortran)
+  FC=gfortran
+  FFLAGS = -O3 -cpp -Wall -Wextra -fimplicit-none
+  FFLAGS += -I/usr/local/include -I$(OBJDIR) -J$(OBJDIR)
+  LDFLAGS=-lgcc
+  CC=gcc -I$(INCDIR)
+  CFLAGS=-O3
+endif
+
+# mpifort
+ifeq ($(strip $(compiler)),mpifort)
   FC = mpifort
-#  FFLAGS = -g -Wall -Wextra -fcheck=bounds
-#  FFLAGS = -O3 -g -Wall -Wextra -fcheck=all
-  FFLAGS = -O3 -Wall -Wextra -fimplicit-none
+  FFLAGS = -O3 -cpp -DUSE_MPI -Wall -Wextra -fimplicit-none
   FFLAGS += -I/usr/local/include -I$(OBJDIR) -J$(OBJDIR)
   LDFLAGS=-lgcc -lopenblas
   CC=gcc -I$(INCDIR)
@@ -62,29 +69,26 @@ endif
 LD=$(FC)
 EXE=brawl.run
 
-MODFILES=mt19937ar.c kinds.f90 shared_data.f90 io.f90 comms.f90 write_netcdf.f90 \
+MODFILES=mt19937ar.c kinds.f90 shared_data.f90 io.f90 comms.F90 write_netcdf.f90 \
          write_xyz.f90 metropolis_output.f90 command_line.f90 c_functions.f90 \
          display.f90 bw_hamiltonian.f90 analytics.f90 random_site.f90 \
-         metropolis.f90 nested_sampling.f90 tmmc.f90 wang-landau.f90 \
-         initialise.f90 constants.f90 derived_types.o
+         metropolis.F90 nested_sampling.f90 tmmc.F90 wang-landau.F90 \
+         initialise.F90 constants.f90 derived_types.f90
 
-SRCFILES=$(MODFILES) main.f90
-
-EXFILES=$(MODFILES) howto_examples.f90 example.f90
-
-OBJFILES:=$(SRCFILES:.f90=.o)
+OBJFILES:=$(MODFILES:.f90=.o)
+OBJFILES:=$(OBJFILES:.F90=.o)
 OBJFILES:=$(OBJFILES:.c=.o)
-
-EXOBJFILES:=$(EXFILES:.f90=.o)
-EXOBJFILES:=$(EXOBJFILES:.c=.o)
 
 VPATH = $(SRCDIR):$(SRCDIR)/core:$(OBJDIR):$(INCDIR)
 
-alloy: $(OBJFILES)
-	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) $(LDFLAGS)
+brawl: $(OBJFILES) main.o
+	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/main.o $(LDFLAGS)
 
-example: $(EXOBJFILES)
-	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(EXOBJFILES)) $(LDFLAGS)
+tests: $(OBJFILES) tests.o
+	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/tests.o $(LDFLAGS)
+
+example: $(OBJFILES) howto_examples.o example.o
+	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/howto_examples.o obj/example.o  $(LDFLAGS)
 
 # Purge build files and executable
 clean :
@@ -94,7 +98,9 @@ clean :
 %.o: %.f90
 	$(FC) $(FFLAGS) -c -o $(OBJDIR)/$@ $<
 
-# Rules for building object files
+%.o: %.F90
+	$(FC) $(FFLAGS) -c -o $(OBJDIR)/$@ $<
+
 %.o: %.c
 	$(CC) $(CFLAGS) -c -o $(OBJDIR)/$@ $<
 
@@ -122,7 +128,9 @@ bw_hamiltonian.o: kinds.o shared_data.o c_functions.o io.o constants.o derived_t
 analytics.o: shared_data.o kinds.o display.o io.o constants.o derived_types.o
 random_site.o: shared_data.o kinds.o c_functions.o analytics.o constants.o
 nested_sampling.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o derived_types.o
-metropolis.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o derived_types.o
+metropolis.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o derived_types.o metropolis_output.o
 initialise.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o comms.o constants.o derived_types.o
+tests.o: initialise.o shared_data.o kinds.o c_functions.o write_netcdf.o\
+	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o derived_types.o
 main.o: initialise.o shared_data.o kinds.o c_functions.o write_netcdf.o\
 	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o derived_types.o
