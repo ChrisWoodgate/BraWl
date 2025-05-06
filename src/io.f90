@@ -670,6 +670,11 @@ module io
       end if
     end if
 
+    ! If burning in at all temperatures, we should do the first, too
+    if(metropolis%burn_in) then
+      metropolis%burn_in_start = .True.
+    end if
+
   end subroutine read_metropolis_file
 
   !> @brief   Subroutine to echo the contents of the Metropolis input
