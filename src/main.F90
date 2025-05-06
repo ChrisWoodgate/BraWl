@@ -35,7 +35,7 @@ program main
   type(run_params) :: setup
 
   ! Metropolis parameters type
-  type(metropolis_params) :: metropolis
+  type(metropolis_params) :: metropolis_setup
 
   ! Nested Sampling parameters type
   type(ns_params) :: ns_setup
@@ -90,7 +90,7 @@ program main
   if (setup%mode == 301) then
 
     ! Run Metropolis with Kawasaki dynamics
-    call metropolis_simulated_annealing(setup, metropolis, my_rank)
+    call metropolis_simulated_annealing(setup, metropolis_setup, my_rank)
 
   else if (setup%mode == 302) then
 
@@ -100,7 +100,7 @@ program main
     if(my_rank == 0) call execute_command_line('mkdir -p asro')
 
     ! Draw decorrelated samples
-    call metropolis_decorrelated_samples(setup, metropolis, my_rank)
+    call metropolis_decorrelated_samples(setup, metropolis_setup, my_rank)
 
   !---------------------------!
   ! Nested sampling algorithm !
