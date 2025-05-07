@@ -38,10 +38,15 @@
 !LICENSE.txt
 !requirements.txt
 
-# Also ignore the examples directories
+# Don't ignore the examples directories
 !examples/00_examples_tests/*
 !examples/01_CrCoNi/*
 
-# And locally Doxygen-generated file
+!tests/fcc.vij
+!tests/99_ref/fcc_start_config.nc
+!tests/99_ref/fcc_end_config.nc
+!tests/99_ref/fcc_data.nc
+
+# Ignore locally Doxygen-generated file
 docs/html/
 docs/latex/
