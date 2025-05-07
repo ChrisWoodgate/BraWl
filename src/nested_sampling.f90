@@ -18,7 +18,7 @@ module nested_sampling
   use bw_hamiltonian
   use random_site
   use analytics
-  use write_netcdf
+  use netcdf_io
   use write_xyz
   
   implicit none
