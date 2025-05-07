@@ -234,9 +234,10 @@ hist_ax.tick_params(direction="in")
 cv_ax1.tick_params(direction="in")
 
 label_size_offset = 3
-hist_ax.set_xlabel(r'Energy $E$ (meV/atom)', fontsize=font_size+label_size_offset)
+hist_ax.set_xlabel(r'Internal Energy $E$ (meV/atom)', fontsize=font_size+label_size_offset)
 hist_ax.set_ylabel(r'Probability Density P($E$) (meV$^{-1}$)', fontsize=font_size+label_size_offset)
-cv_ax1.set_ylabel(r'$C$ ($k_B$/atom)', fontsize=font_size+label_size_offset)
+cv_ax1.set_ylabel(r'$C_v$ ($k_B$/atom)', fontsize=font_size+label_size_offset)
+cv_ax1.set_xlabel(r'Temperature (K)', fontsize=font_size+label_size_offset)
 cv_ax1_asro.set_ylabel(r'$\alpha^{pq}_1$', fontsize=font_size+label_size_offset)
 cv_ax1_asro.set_xticklabels([])
 cv_ax1.grid(True, axis='x')
