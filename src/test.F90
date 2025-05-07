@@ -39,11 +39,16 @@ program test
   if(my_rank == 0) call write_info('s')
 
   ! Print that this is a test run
-  call print_centered_message('Test cases', '-')
+  call print_centered_message('Test cases', '-', .True.)
 
   ! We will test both fcc and bcc implementations
+  write(6,'(72("-"))')
   call print_centered_message('Testing FCC example', '-')
+  write(6,'(72("-"),/)')
 
+  !-----------------------!
+  ! Tests for fcc lattice !
+  !-----------------------!
   setup%n_1 = 4
   setup%n_2 = 4
   setup%n_3 = 4
@@ -57,13 +62,44 @@ program test
   allocate(setup%species_names(5))
   setup%species_names = (/ 'Al', 'Cr', 'Fe', 'Co', 'Ni' /)
   ! The '0th' value of species_concentrations should be zero---used in some array initialisations
-  setup%species_concentrations=(/0.0, 0.2, 0.2, 0.2, 0.2, 0.2/)
+  setup%species_concentrations=(/0.0_real64, 0.2_real64, 0.2_real64, 0.2_real64, 0.2_real64, 0.2_real64/)
   setup%interaction_file = 'fcc_epi.vij'
   setup%interaction_range = 4
   setup%static_seed = .True.
   setup%wc_range = 3
 
   call test_suite(setup, my_rank, 256, 'fcc', 'test')
+
+  deallocate(setup%species_concentrations,setup%species_numbers,setup%species_names)
+
+  ! We will test both fcc and bcc implementations
+  write(6,'(72("-"))')
+  call print_centered_message('Testing BCC example', '-')
+  write(6,'(72("-"),/)')
+
+  !-----------------------!
+  ! Tests for bcc lattice !
+  !-----------------------!
+  setup%n_1 = 4
+  setup%n_2 = 4
+  setup%n_3 = 4
+  setup%n_basis = 1
+  setup%n_species=4
+  setup%lattice='bcc'
+  allocate(setup%species_concentrations(0:4))
+  setup%species_concentrations = 0.0_real64
+  allocate(setup%species_numbers(4))
+  setup%species_numbers = 0
+  allocate(setup%species_names(4))
+  setup%species_names = (/ 'Al', 'Ti', ' V', 'Nb'/)
+  ! The '0th' value of species_concentrations should be zero---used in some array initialisations
+  setup%species_concentrations=(/0.0_real64, 0.25_real64, 0.25_real64, 0.25_real64, 0.25_real64/)
+  setup%interaction_file = 'bcc_epi.vij'
+  setup%interaction_range = 6
+  setup%static_seed = .True.
+  setup%wc_range = 3
+
+  call test_suite(setup, my_rank, 128, 'bcc', 'test')
 
   ! Print software info to the screen
   if(my_rank == 0) call write_info('f')

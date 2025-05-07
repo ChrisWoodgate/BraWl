@@ -135,6 +135,8 @@ module tests
     sim_temp = temp*k_b_in_Ry
     beta = 1.0_real64/sim_temp
 
+    print*, 'Will run ', n_steps, ' trial Metropolis-Hastings moves', new_line('a')
+
     do i=1, n_steps
       ! Do some Monte Carlo moves, storing energies
 
@@ -149,15 +151,20 @@ module tests
 
     ! Check the energy trajectories
     if (trim(mode) .eq. 'test') then
-      call ncdf_radial_density_reader('99_ref/'//lattice//'_data.nc', trajectory_asro_test, trajectory_energy_test, setup, 256)
+      call ncdf_radial_density_reader('99_ref/'//lattice//'_data.nc', trajectory_asro_test, trajectory_energy_test, setup, n_steps)
     else if (trim(mode) .eq. 'generate') then
       call ncdf_radial_density_writer('99_ref/'//lattice//'_data.nc', trajectory_asro, shells, indices, trajectory_energy, setup)
+      trajectory_energy_test = trajectory_energy
     end if
+
+    call print_centered_message('Checking '//lattice//' energy trajectory', '-', .True.)
 
     energy_disagreements = array_equal_1D(trajectory_energy, trajectory_energy_test)
 
     if (energy_disagreements .gt. 0) then
-      print*, 'Warning, there are ', energy_disagreements, ' outside tolerance in calculated '//lattice//' energies'
+      print*, 'Warning, there are ', energy_disagreements, ' outside tolerance in calculated '//lattice//' energies', new_line('a')
+    else
+      print*, 'Energy trajectory for '//lattice//' lattice agrees with reference', new_line('a')
     end if
 
     if (trim(mode) .eq. 'test') then
