@@ -177,6 +177,53 @@ module tests
 
   end subroutine test_suite
 
+  !> @brief   Function for comparing two 1D arrays
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2025
+  !>
+  !> @param  config1 First configuration
+  !> @param  config2 Second configuration
+  !> @param  tol Tolerance. Defaults to tiny(real32), i.e. single-bit precision
+  !>
+  !> @return The number of indices where the array elements are not
+  !>         within the specified tolerance.
+  function array_equal_1D(array1, array2, tol) result(disagreements)
+
+    real(real64), dimension(:), allocatable, intent(in) :: array1, array2
+    real(real64), optional :: tol
+    real(real32) :: single
+    integer :: len1, len2
+    integer :: disagreements
+    integer :: i
+
+    if (.not.present(tol)) then
+      tol = real(epsilon(single), kind=real64)
+    end if
+
+    len1 = size(array1)
+    len2 = size(array2)
+
+    ! Check that two configs are of the same shape
+    if (.not. (len1 .eq. len2)) then
+      disagreements = len1
+      print*, 'Warning: input arrays not of same length in array_equal_1D'
+      return
+    end if
+
+    disagreements = 0
+
+    ! Compare the two arrays element by element
+    do i=1, len1
+      if (abs(array1(i)-array2(i)) .gt. tol) then
+        disagreements = disagreements + 1
+        return
+      end if
+    end do
+
+  end function array_equal_1D
+
   !> @brief   Function for comparing two configurations
   !>
   !> @author  C. D. Woodgate
