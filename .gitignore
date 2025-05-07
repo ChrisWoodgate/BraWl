@@ -38,11 +38,23 @@
 !LICENSE.txt
 !requirements.txt
 
-# Don't ignore the examples directories
-!examples/00_examples_tests/*
-!examples/01_CrCoNi/*
+# Ignore input files
+*.inp
+# And interaction files
+*.vij
+# But not those in the examples directories
+!examples/*/*.inp
+!examples/*/*/*.inp
+!examples/*/*.vij
+!examples/*/*/*.vij
 
-# Don't ignore the reference data for testing
+# Don't ignore any text files in the examples directories
+!examples/*/*.txt
+!examples/*/*/*.txt
+
+# Ignore any gumpf that a user has in their tests directory
+tests/
+# But don't ignore the reference data for testing
 !tests/fcc.vij
 !tests/99_ref/fcc_start_config.nc
 !tests/99_ref/fcc_end_config.nc
@@ -52,6 +64,6 @@
 !tests/99_ref/bcc_end_config.nc
 !tests/99_ref/bcc_data.nc
 
-# Ignore locally Doxygen-generated file
+# Ignore locally Doxygen-generated files
 docs/html/
 docs/latex/
