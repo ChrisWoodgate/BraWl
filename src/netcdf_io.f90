@@ -1,18 +1,17 @@
-!> @file    write_netcdf.f90
+!> @file    netcdf_io.f90
 !>
-!> @brief   Routines for interacting with NetCDF library and writing
-!>          data to binary files.
+!> @brief   Routines for interacting with NetCDF library and reading/
+!>          writing from/to binary files.
 !>
-!> @details This module contains routines for writing NetCDF files
-!>          for various simulation outputs. Writing to binary NetCDF
-!>          files saves disk space compared to dumping everything as
-!>          plain text.
+!> @details This module contains routines for reading/writing NetCDF
+!>          files. Writing to binary NetCDF files saves disk space
+!>          compared to dumping everything as plain text.
 !>
 !> @author  C. D. Woodgate
 !> @author  H. J. Naguszewski
 !>
-!> @date    2019-2023
-module write_netcdf
+!> @date    2019-2025
+module netcdf_io
 
   use kinds
   use constants
@@ -1516,4 +1515,4 @@ module write_netcdf
 
   end subroutine ncdf_radial_density_reader
 
-end module write_netcdf
+end module netcdf_io

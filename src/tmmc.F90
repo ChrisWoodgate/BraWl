@@ -14,7 +14,7 @@ module tmmc
   use kinds
   use shared_data
   use derived_types
-  use write_netcdf
+  use netcdf_io
   use comms
   use analytics
   use c_functions

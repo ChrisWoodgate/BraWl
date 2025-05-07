@@ -24,7 +24,7 @@ module wang_landau
   use analytics
   use comms
   use mpi
-  use write_netcdf
+  use netcdf_io
   use display
 
   implicit none

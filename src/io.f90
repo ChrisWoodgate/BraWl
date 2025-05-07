@@ -6,7 +6,7 @@
 !>          information about a simulation (either to the screen or to
 !>          file in plain text format. Data to be stored in binary
 !>          format is written using the NetCDF library, for which the
-!>          relevant routines can be found in write_netcdf.f90
+!>          relevant routines can be found in netcdf_io.f90
 !>
 !> @author  C. D. Woodgate
 !> @date    2020-2025

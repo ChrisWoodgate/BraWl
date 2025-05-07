@@ -21,7 +21,7 @@ program example
   use io
   use kinds
   use c_functions
-  use write_netcdf
+  use netcdf_io
   use write_xyz
   use metropolis_output
   use display
