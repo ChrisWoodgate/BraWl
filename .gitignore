@@ -42,10 +42,15 @@
 !examples/00_examples_tests/*
 !examples/01_CrCoNi/*
 
+# Don't ignore the reference data for testing
 !tests/fcc.vij
 !tests/99_ref/fcc_start_config.nc
 !tests/99_ref/fcc_end_config.nc
 !tests/99_ref/fcc_data.nc
+!tests/bcc.vij
+!tests/99_ref/bcc_start_config.nc
+!tests/99_ref/bcc_end_config.nc
+!tests/99_ref/bcc_data.nc
 
 # Ignore locally Doxygen-generated file
 docs/html/
