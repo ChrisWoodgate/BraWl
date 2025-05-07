@@ -62,7 +62,7 @@ module tests
     integer :: i, accept, n_steps, ierr
 
     ! Integers to count any disagreements
-    integer :: energy_disagreements
+    integer :: energy_disagreements, asro_disagreements
 
     ! Array for loading configuration arrays and cross-checking
     integer(array_int), allocatable, dimension(:,:,:,:) :: test_config
@@ -155,6 +155,7 @@ module tests
     else if (trim(mode) .eq. 'generate') then
       call ncdf_radial_density_writer('99_ref/'//lattice//'_data.nc', trajectory_asro, shells, indices, trajectory_energy, setup)
       trajectory_energy_test = trajectory_energy
+      trajectory_asro_test = trajectory_asro
     end if
 
     call print_centered_message('Checking '//lattice//' energy trajectory', '-', .True.)
@@ -165,6 +166,16 @@ module tests
       print*, 'Warning, there are ', energy_disagreements, ' outside tolerance in calculated '//lattice//' energies', new_line('a')
     else
       print*, 'Energy trajectory for '//lattice//' lattice agrees with reference', new_line('a')
+    end if
+
+    call print_centered_message('Checking '//lattice//' ASRO trajectory', '-', .True.)
+
+    asro_disagreements = array_equal_4D(trajectory_asro, trajectory_asro_test)
+
+    if (asro_disagreements .gt. 0) then
+      print*, 'Warning, there are ', asro_disagreements, ' outside tolerance in calculated '//lattice//' asro', new_line('a')
+    else
+      print*, 'ASRO trajectory for '//lattice//' lattice agrees with reference', new_line('a')
     end if
 
     if (trim(mode) .eq. 'test') then
@@ -223,8 +234,8 @@ module tests
       tol = tolerance
     end if
 
-    len1 = shape(array1)
-    len2 = shape(array2)
+    shape1 = shape(array1)
+    shape2 = shape(array2)
 
     ! Check that two configs are of the same shape
     if (.not. all(shape1 .eq. shape2)) then
@@ -236,10 +247,10 @@ module tests
     disagreements = 0
 
     ! Compare the two arrays element by element
-    do l=1, len1(4)
-      do k=1, len1(3)
-        do j=1, len1(2)
-          do i=1, len1(1)
+    do l=1, shape1(4)
+      do k=1, shape1(3)
+        do j=1, shape1(2)
+          do i=1, shape1(1)
             if (abs(array1(i,j,k,l)-array2(i,j,k,l)) .gt. tol) then
               disagreements = disagreements + 1
             end if
@@ -248,7 +259,7 @@ module tests
       end do
     end do
 
-  end function array_equal_1D
+  end function array_equal_4D
 
   !> @brief   Function for comparing two 1D arrays
   !>
