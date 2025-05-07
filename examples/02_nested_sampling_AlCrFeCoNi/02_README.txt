@@ -1,4 +1,4 @@
-Example 3: Nested Sampling of the AlCrFeCoNi system, in the fcc structure.
+Example 2: Nested Sampling of the AlCrFeCoNi system, in the fcc structure.
 
 This example demonstrates a nested sampling simulation of the AlCrFeCoNi system, in the fcc structure. As a quick demonstration, the input file is set up to use 108 atoms, and only a low-resolution sampling using 100 walkers. 
 Atom-atom interactions are taken from:
