@@ -127,8 +127,7 @@ module metropolis_output
     write(7, *) '# T E C acceptance_rate'
 
     do i=1, n_steps
-      write(7,*) temps(i), ' ', energies(i), ' ', C(i), &
-                 ' ', acceptance(i)
+      write(7,'(F8.1,2X,F24.15,2X,F24.15,2X,F6.4)') temps(i), energies(i), C(i), acceptance(i)
     end do
 
     close(7)
