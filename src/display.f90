@@ -154,20 +154,30 @@ module display
   !> @brief   Centered printing routine  
   !>
   !> @details This routine prints centered text with user specified filler either side of printed message.
-  !>          e.g. "----- Output -----"
+  !>          e.g. "----- Output -----". Optional argument controls whether a newline is inserted.
   !>          
   !> @param  message String to be printed
   !> @param  fill_char String to be used to fill message (can be " ")
+  !> @param  newline If True, a newline is printed after the message. If False, not.
   !> 
   !> @return None
   !>
   !> @author  H. J. Naguszewski
+  !> @author  C. D. Woodgate
   !> @date    2025 
-  subroutine print_centered_message(message, fill_char)
+  subroutine print_centered_message(message, fill_char, newline)
     implicit none
     character(len=*), intent(in) :: message, fill_char
+    logical, optional :: newline
     character(len=72) :: output_str
+    logical :: anewline
     integer :: num_fill_chars
+
+    if (present(newline)) then
+      anewline = newline
+    else
+      anewline = .False.
+    end if
 
     ! Calculate the number of fill characters needed on each side
     num_fill_chars = (72 - len_trim(message) - 2) / 2
@@ -181,7 +191,11 @@ module display
     end if
 
     ! Write formatted output
-    write(6, '(A)') output_str
+    if (anewline) then
+      write(6, '(A,/)') output_str
+    else
+      write(6, '(A)') output_str
+    end if
 
 end subroutine print_centered_message
 
