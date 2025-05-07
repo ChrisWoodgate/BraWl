@@ -61,6 +61,9 @@ module tests
     ! Integers used in calculations
     integer :: i, accept, n_steps, ierr
 
+    ! Integers to count any disagreements
+    integer :: energy_disagreements
+
     ! Array for loading configuration arrays and cross-checking
     integer(array_int), allocatable, dimension(:,:,:,:) :: test_config
 
@@ -97,7 +100,8 @@ module tests
     ! otherwise
     call initialise_prng(setup%static_seed)
 
-    call print_centered_message('Initialising lattice', '-')
+    print*, ' '
+    call print_centered_message('Initialising lattice', '-', .True.)
 
     ! Do an initial setup of the lattice
     call initial_setup(setup, config)
@@ -116,13 +120,15 @@ module tests
     allocate(indices(n_steps))
     allocate(trajectory_asro(setup%n_species, setup%n_species, setup%wc_range, n_steps))
 
+    call print_centered_message('Checking initial random '//lattice//' configurations', '-', .True.)
+
     if (.not.(configs_equal(config, test_config))) then
-      stop 'Initial random configuration generated different from reference'
+      stop 'Initial random '//lattice//' configuration generated different from reference'
     else
-      print*, 'Initial random configurations (fixed seed) are identical!'
+      print*, 'Initial random '//lattice//' configurations (fixed seed) are identical!', new_line('a')
     end if
 
-    call print_centered_message('Starting trial Metropolis-Hastings sweep', '-')
+    call print_centered_message('Starting trial Metropolis-Hastings sweep', '-', .True.)
 
     ! Choose a simulation temperature
     temp=300.0
@@ -139,13 +145,19 @@ module tests
       indices(i) = real(i, kind=real64)
     end do
 
-    call print_centered_message('Completed trial Metropolis-Hastings sweep', '-')
+    call print_centered_message('Completed trial Metropolis-Hastings sweep', '-', .True.)
 
     ! Check the energy trajectories
     if (trim(mode) .eq. 'test') then
       call ncdf_radial_density_reader('99_ref/'//lattice//'_data.nc', trajectory_asro_test, trajectory_energy_test, setup, 256)
     else if (trim(mode) .eq. 'generate') then
       call ncdf_radial_density_writer('99_ref/'//lattice//'_data.nc', trajectory_asro, shells, indices, trajectory_energy, setup)
+    end if
+
+    energy_disagreements = array_equal_1D(trajectory_energy, trajectory_energy_test)
+
+    if (energy_disagreements .gt. 0) then
+      print*, 'Warning, there are ', energy_disagreements, ' outside tolerance in calculated '//lattice//' energies'
     end if
 
     if (trim(mode) .eq. 'test') then
@@ -155,17 +167,16 @@ module tests
       test_config=config
     end if
 
-    if (.not.(configs_equal(config, test_config))) then
-      stop 'Final configurations are different'
-    else
-      print*, 'Final random configurations are identical!'
-    end if
+    call print_centered_message('Checking final '//lattice//' configurations', '-', .True.)
 
-    call print_centered_message('Tests complete!', '-')
+    if (.not.(configs_equal(config, test_config))) then
+      stop 'Final '//lattice//' configurations are different'
+    else
+      print*, 'Final '//lattice//' configurations are identical!', new_line('a')
+    end if
 
     ! Clean up
     call clean_up_interaction()
-
     if(allocated(config)) deallocate(config)
     if(allocated(test_config)) deallocate(test_config)
     if(allocated(shells)) deallocate(shells)
@@ -185,21 +196,24 @@ module tests
   !>
   !> @param  config1 First configuration
   !> @param  config2 Second configuration
-  !> @param  tol Tolerance. Defaults to tiny(real32), i.e. single-bit precision
+  !> @param  tolerance Tolerance. Defaults to tiny(real32), i.e. single-bit precision
   !>
   !> @return The number of indices where the array elements are not
   !>         within the specified tolerance.
-  function array_equal_1D(array1, array2, tol) result(disagreements)
+  function array_equal_1D(array1, array2, tolerance) result(disagreements)
 
     real(real64), dimension(:), allocatable, intent(in) :: array1, array2
-    real(real64), optional :: tol
+    real(real64), optional :: tolerance
     real(real32) :: single
+    real(real64) :: tol
     integer :: len1, len2
     integer :: disagreements
     integer :: i
 
-    if (.not.present(tol)) then
+    if (.not.present(tolerance)) then
       tol = real(epsilon(single), kind=real64)
+    else
+      tol = tolerance
     end if
 
     len1 = size(array1)
