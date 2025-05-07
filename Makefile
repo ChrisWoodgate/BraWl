@@ -96,7 +96,7 @@ brawl: $(OBJFILES) main.o
 	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/main.o $(LDFLAGS)
 
 tests: $(OBJFILES) tests.o test.o
-	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/tests.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/tests.o obj/test.o $(LDFLAGS)
 
 example: $(OBJFILES) howto_examples.o example.o
 	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/howto_examples.o obj/example.o  $(LDFLAGS)
