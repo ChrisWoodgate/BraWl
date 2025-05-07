@@ -39,9 +39,15 @@ module tests
   !>
   !> @param  setup Derived type containing simulation parameters
   !> @param  my_rank Rank of this process
+  !> @param  n_steps Number of trial Metropolis-Hastings moves to run
+  !> @param  lattice Lattice type to test
+  !> @param  mode If 'generate', will generate data. If 'test', will test.
   !>
   !> @return True if all tests pass, False if not
-  subroutine test_suite(setup, my_rank, n_steps, mode)
+  subroutine test_suite(setup, my_rank, n_steps, lattice, mode)
+
+    ! Mode, whether to generate data or test data
+    character(len=*)  :: lattice
 
     ! Mode, whether to generate data or test data
     character(len=*)  :: mode
@@ -69,9 +75,15 @@ module tests
     ! Arrays for checking energies of trajectories
     real(real64), dimension(:,:,:,:), allocatable :: trajectory_asro, trajectory_asro_test
 
-    if (.not. allocated(config)) allocate(config(setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3))
+    ! Allocate the config array
+    if (allocated(config)) deallocate(config)
+    allocate(config(setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3))
+
+    ! Allocate the array for lattice shells
+    if (allocated(shells)) deallocate(shells)
     if (.not. allocated(shells)) allocate(shells(setup%wc_range))
 
+    ! Initialise some function pointers
     call initialise_function_pointers(setup)
 
     ! Allocate space for atom-atom interaction parameters
@@ -94,9 +106,9 @@ module tests
     call lattice_shells(setup, shells, config)
 
     if (trim(mode) .eq. 'test') then
-      call ncdf_config_reader('99_ref/fcc_start_config.nc', test_config, setup)
+      call ncdf_config_reader('99_ref/'//lattice//'_start_config.nc', test_config, setup)
     else if (trim(mode) .eq. 'generate') then
-      call ncdf_grid_state_writer('99_ref/fcc_start_config.nc', ierr, config, setup)
+      call ncdf_grid_state_writer('99_ref/'//lattice//'_start_config.nc', ierr, config, setup)
       test_config=config
     end if
 
@@ -131,15 +143,15 @@ module tests
 
     ! Check the energy trajectories
     if (trim(mode) .eq. 'test') then
-      call ncdf_radial_density_reader('99_ref/fcc_energies.nc', trajectory_asro_test, trajectory_energy_test, setup, 256)
+      call ncdf_radial_density_reader('99_ref/'//lattice//'_data.nc', trajectory_asro_test, trajectory_energy_test, setup, 256)
     else if (trim(mode) .eq. 'generate') then
-      call ncdf_radial_density_writer('99_ref/fcc_energies.nc', trajectory_asro, shells, indices, trajectory_energy, setup)
+      call ncdf_radial_density_writer('99_ref/'//lattice//'_data.nc', trajectory_asro, shells, indices, trajectory_energy, setup)
     end if
 
     if (trim(mode) .eq. 'test') then
-      call ncdf_config_reader('99_ref/fcc_end_config.nc', test_config, setup)
+      call ncdf_config_reader('99_ref/'//lattice//'_end_config.nc', test_config, setup)
     else if (trim(mode) .eq. 'generate') then
-      call ncdf_grid_state_writer('99_ref/fcc_end_config.nc', ierr, config, setup)
+      call ncdf_grid_state_writer('99_ref/'//lattice//'_end_config.nc', ierr, config, setup)
       test_config=config
     end if
 
@@ -155,6 +167,7 @@ module tests
     call clean_up_interaction()
 
     if(allocated(config)) deallocate(config)
+    if(allocated(test_config)) deallocate(test_config)
     if(allocated(shells)) deallocate(shells)
     if(allocated(indices)) deallocate(indices)
     if(allocated(trajectory_energy)) deallocate(trajectory_energy)
@@ -167,6 +180,7 @@ module tests
   !> @brief   Function for comparing two configurations
   !>
   !> @author  C. D. Woodgate
+  !>
   !> @date    2025
   !>
   !> @param  config1 First configuration

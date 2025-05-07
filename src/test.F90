@@ -21,7 +21,7 @@ program test
   use io
   use kinds
   use c_functions
-  use write_netcdf
+  use netcdf_io
   use write_xyz
   use metropolis_output
   use display
@@ -56,13 +56,14 @@ program test
   setup%species_numbers = 0
   allocate(setup%species_names(5))
   setup%species_names = (/ 'Al', 'Cr', 'Fe', 'Co', 'Ni' /)
+  ! The '0th' value of species_concentrations should be zero---used in some array initialisations
   setup%species_concentrations=(/0.0, 0.2, 0.2, 0.2, 0.2, 0.2/)
   setup%interaction_file = 'fcc_epi.vij'
   setup%interaction_range = 4
   setup%static_seed = .True.
   setup%wc_range = 3
 
-  call test_suite(setup, my_rank, 256, 'test')
+  call test_suite(setup, my_rank, 256, 'fcc', 'test')
 
   ! Print software info to the screen
   if(my_rank == 0) call write_info('f')
