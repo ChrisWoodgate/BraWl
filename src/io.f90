@@ -435,13 +435,13 @@ module io
     if(my_rank == 0) then
       write(6,'(22("-"),x,"Parsing name of input file",x,22("-"),/)')
     end if
-      if(.not. get_arg('control', control)) then
+      if(.not. get_arg('input', control)) then
         if (my_rank == 0) then
-          print*, 'Input file not specified with "control=<name>"'
-          print*, 'Defaulting to searching for "input.inp"'
+          print*, 'Input file not specified with "input=<name>"'
+          print*, 'Defaulting to searching for "brawl.inp"'
           print*, ' '
         end if
-        control = 'input.inp'
+        control = 'brawl.inp'
       else
         if (my_rank == 0) then
           print*, 'Input file name is: ', control
