@@ -14,11 +14,12 @@ module tests
   use kinds
   use shared_data
   use io
+  use display, only : print_centered_message
   use c_functions
   use bw_hamiltonian
   use random_site
   use analytics
-  use write_netcdf
+  use netcdf_io
   use write_xyz
   use metropolis_output
   use metropolis, only : monte_carlo_step_lattice
@@ -84,6 +85,8 @@ module tests
     ! otherwise
     call initialise_prng(setup%static_seed)
 
+    call print_centered_message('Initialising lattice', '-')
+
     ! Do an initial setup of the lattice
     call initial_setup(setup, config)
 
@@ -107,19 +110,31 @@ module tests
       print*, 'Initial random configurations (fixed seed) are identical!'
     end if
 
+    call print_centered_message('Starting trial Metropolis-Hastings sweep', '-')
+
+    ! Choose a simulation temperature
+    temp=300.0
+    sim_temp = temp*k_b_in_Ry
+    beta = 1.0_real64/sim_temp
+
     do i=1, n_steps
       ! Do some Monte Carlo moves, storing energies
-      temp=300.0
-      sim_temp = temp*k_b_in_Ry
-      beta = 1.0_real64/sim_temp
 
       accept = monte_carlo_step_lattice(setup, config, beta)
 
       trajectory_energy(i) = setup%full_energy(config)
       trajectory_asro(:,:,:,i) = radial_densities(setup, config, setup%wc_range, shells)
+      indices(i) = real(i, kind=real64)
     end do
 
+    call print_centered_message('Completed trial Metropolis-Hastings sweep', '-')
+
     ! Check the energy trajectories
+    if (trim(mode) .eq. 'test') then
+      call ncdf_radial_density_reader('99_ref/fcc_energies.nc', trajectory_asro_test, trajectory_energy_test, setup, 256)
+    else if (trim(mode) .eq. 'generate') then
+      call ncdf_radial_density_writer('99_ref/fcc_energies.nc', trajectory_asro, shells, indices, trajectory_energy, setup)
+    end if
 
     if (trim(mode) .eq. 'test') then
       call ncdf_config_reader('99_ref/fcc_end_config.nc', test_config, setup)
@@ -128,10 +143,13 @@ module tests
       test_config=config
     end if
 
-
     if (.not.(configs_equal(config, test_config))) then
       stop 'Final configurations are different'
+    else
+      print*, 'Final random configurations are identical!'
     end if
+
+    call print_centered_message('Tests complete!', '-')
 
     ! Clean up
     call clean_up_interaction()
