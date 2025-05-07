@@ -32,11 +32,20 @@ program test
   ! Runtime parameters type
   type(run_params) :: setup
 
+  ! Flag for passing tests for each lattice type
+  logical :: fcc_pass, bcc_pass
+
   ! Start MPI
   call comms_initialise()
 
   ! Print software info to the screen
   if(my_rank == 0) call write_info('s')
+
+  ! If we try to run the test suite in parallel, this is not currently handled
+  if (p .gt. 1) then
+    call comms_finalise()
+    stop 'Please run the test suite on one processor: mpirun -np 1 /path/to/brawl/tests.run'
+  end if
 
   ! Print that this is a test run
   call print_centered_message('Test cases', '-', .True.)
@@ -68,7 +77,12 @@ program test
   setup%static_seed = .True.
   setup%wc_range = 3
 
-  call test_suite(setup, my_rank, 256, 'fcc', 'test')
+  fcc_pass = test_suite(setup, my_rank, 256, 'fcc', 'test')
+
+  ! If we pass, print to the screen
+  if (fcc_pass) then
+    print*, 'Passed fcc lattice tests', new_line('a')
+  end if
 
   deallocate(setup%species_concentrations,setup%species_numbers,setup%species_names)
 
@@ -99,7 +113,23 @@ program test
   setup%static_seed = .True.
   setup%wc_range = 3
 
-  call test_suite(setup, my_rank, 128, 'bcc', 'test')
+  bcc_pass = test_suite(setup, my_rank, 128, 'bcc', 'test')
+
+  ! If we pass, print to the screen
+  if (bcc_pass) then
+    print*, 'Passed bcc lattice tests', new_line('a')
+  end if
+
+  deallocate(setup%species_concentrations,setup%species_numbers,setup%species_names)
+
+  ! If all tests are passed, print to the screen
+  if ((fcc_pass) .and. (bcc_pass)) then
+    print*, 'Passed all tests successfully!'
+  ! Otherwise, tell the user that there is a problem
+  else
+    print*, 'Some (or all) tests failed :-('
+    print*, 'Check the output above to see what the WARNINGs were'
+  end if
 
   ! Print software info to the screen
   if(my_rank == 0) call write_info('f')

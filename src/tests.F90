@@ -44,31 +44,37 @@ module tests
   !> @param  mode If 'generate', will generate data. If 'test', will test.
   !>
   !> @return True if all tests pass, False if not
-  subroutine test_suite(setup, my_rank, n_steps, lattice, mode)
+  function test_suite(setup, my_rank, n_steps, lattice, mode) result(passed)
 
-    ! Mode, whether to generate data or test data
+    ! Derived type describing simulation setup
+    type(run_params) :: setup
+
+    ! Rank of this processor
+    integer, intent(in) :: my_rank
+
+    ! How many trial MC steps to run
+    integer, intent(in)  :: n_steps
+
+    ! Lattice type to test
     character(len=*)  :: lattice
 
     ! Mode, whether to generate data or test data
     character(len=*)  :: mode
 
-    ! Rank of this processor
-    integer, intent(in) :: my_rank
-
-    ! Derived type describing simulation setup
-    type(run_params) :: setup
+    ! Whether or not we pass the test
+    logical :: passed
 
     ! Integers used in calculations
-    integer :: i, accept, n_steps, ierr
+    integer :: i, accept, ierr
 
     ! Integers to count any disagreements
     integer :: energy_disagreements, asro_disagreements
 
-    ! Array for loading configuration arrays and cross-checking
-    integer(array_int), allocatable, dimension(:,:,:,:) :: test_config
-
     ! Temperature and temperature steps
     real(real64) :: beta, temp, sim_temp
+
+    ! Array for loading configuration arrays and cross-checking
+    integer(array_int), allocatable, dimension(:,:,:,:) :: test_config
 
     ! Arrays for checking energies of trajectories
     real(real64), dimension(:), allocatable :: trajectory_energy,      &
@@ -77,6 +83,10 @@ module tests
 
     ! Arrays for checking energies of trajectories
     real(real64), dimension(:,:,:,:), allocatable :: trajectory_asro, trajectory_asro_test
+
+    ! Start by assuming we have passed
+    ! Will switch to .False. if a test fails
+    passed=.True.
 
     ! Allocate the config array
     if (allocated(config)) deallocate(config)
@@ -100,6 +110,7 @@ module tests
     ! otherwise
     call initialise_prng(setup%static_seed)
 
+    ! Print to the screen that we have successfully initialised the lattice
     print*, ' '
     call print_centered_message('Initialising lattice', '-', .True.)
 
@@ -109,6 +120,12 @@ module tests
     ! Get the coordination shells of the lattice
     call lattice_shells(setup, shells, config)
 
+    !------------------------------!
+    ! Lattice initialisation check !
+    !------------------------------!
+
+    ! Now either read in the reference data (if in 'test' mode) or generate
+    ! this data, if in 'generate' mode.
     if (trim(mode) .eq. 'test') then
       call ncdf_config_reader('99_ref/'//lattice//'_start_config.nc', test_config, setup)
     else if (trim(mode) .eq. 'generate') then
@@ -116,68 +133,98 @@ module tests
       test_config=config
     end if
 
-    allocate(trajectory_energy(n_steps))
-    allocate(indices(n_steps))
-    allocate(trajectory_asro(setup%n_species, setup%n_species, setup%wc_range, n_steps))
-
+    ! Print to the screen if we do
     call print_centered_message('Checking initial random '//lattice//' configurations', '-', .True.)
 
+    ! Print to the screen whether or not we agree
     if (.not.(configs_equal(config, test_config))) then
-      stop 'Initial random '//lattice//' configuration generated different from reference'
+      print*, 'WARNING: Initial random '//lattice//' configuration generated different from reference'
+      passed=.False.
     else
       print*, 'Initial random '//lattice//' configurations (fixed seed) are identical!', new_line('a')
     end if
 
+    !---------------------------!
+    ! Metropolis-Hastings sweep !
+    !---------------------------!
+
+    ! Now start a Metropolis-Hastings sweep
     call print_centered_message('Starting trial Metropolis-Hastings sweep', '-', .True.)
 
-    ! Choose a simulation temperature
+    ! And allocate some memory for storing output data
+    allocate(trajectory_energy(n_steps))
+    allocate(indices(n_steps))
+    allocate(trajectory_asro(setup%n_species, setup%n_species, setup%wc_range, n_steps))
+
+    ! Set the simulation temperature
     temp=300.0
     sim_temp = temp*k_b_in_Ry
     beta = 1.0_real64/sim_temp
 
+    ! Do some Monte Carlo moves, storing energies
     print*, 'Will run ', n_steps, ' trial Metropolis-Hastings moves', new_line('a')
-
     do i=1, n_steps
-      ! Do some Monte Carlo moves, storing energies
-
       accept = monte_carlo_step_lattice(setup, config, beta)
-
       trajectory_energy(i) = setup%full_energy(config)
       trajectory_asro(:,:,:,i) = radial_densities(setup, config, setup%wc_range, shells)
       indices(i) = real(i, kind=real64)
     end do
-
     call print_centered_message('Completed trial Metropolis-Hastings sweep', '-', .True.)
 
-    ! Check the energy trajectories
+    !------------------------------!
+    ! Energy/ASRO trajectory check !
+    !------------------------------!
+
+    ! Now either read in the reference data (if in 'test' mode) or generate
+    ! this data, if in 'generate' mode.
     if (trim(mode) .eq. 'test') then
-      call ncdf_radial_density_reader('99_ref/'//lattice//'_data.nc', trajectory_asro_test, trajectory_energy_test, setup, n_steps)
+      call ncdf_radial_density_reader('99_ref/'//lattice//'_data.nc',  &
+                                      trajectory_asro_test,            &
+                                      trajectory_energy_test,          &
+                                      setup,                           &
+                                      n_steps)
     else if (trim(mode) .eq. 'generate') then
-      call ncdf_radial_density_writer('99_ref/'//lattice//'_data.nc', trajectory_asro, shells, indices, trajectory_energy, setup)
+      call ncdf_radial_density_writer('99_ref/'//lattice//'_data.nc',  &
+                                      trajectory_asro,                 &
+                                      shells,                          &
+                                      indices,                         &
+                                      trajectory_energy,               &
+                                      setup)
+
       trajectory_energy_test = trajectory_energy
       trajectory_asro_test = trajectory_asro
     end if
 
     call print_centered_message('Checking '//lattice//' energy trajectory', '-', .True.)
-
-    energy_disagreements = array_equal_1D(trajectory_energy, trajectory_energy_test)
-
+    energy_disagreements = array_equal_1D(trajectory_energy,           &
+                                          trajectory_energy_test)
     if (energy_disagreements .gt. 0) then
-      print*, 'Warning, there are ', energy_disagreements, ' outside tolerance in calculated '//lattice//' energies', new_line('a')
+      print*, 'WARNING: There are ', energy_disagreements,             &
+            ' outside tolerance in calculated '//lattice//' energies', &
+            new_line('a')
+      passed = .False.
     else
-      print*, 'Energy trajectory for '//lattice//' lattice agrees with reference', new_line('a')
+      print*, 'Energy trajectory for '//lattice//' lattice agrees with reference', &
+               new_line('a')
     end if
 
     call print_centered_message('Checking '//lattice//' ASRO trajectory', '-', .True.)
-
     asro_disagreements = array_equal_4D(trajectory_asro, trajectory_asro_test)
-
     if (asro_disagreements .gt. 0) then
-      print*, 'Warning, there are ', asro_disagreements, ' outside tolerance in calculated '//lattice//' asro', new_line('a')
+      print*, 'WARNING: there are ', asro_disagreements,               &
+              ' outside tolerance in calculated '//lattice//' asro',   &
+              new_line('a')
+      passed=.False.
     else
       print*, 'ASRO trajectory for '//lattice//' lattice agrees with reference', new_line('a')
     end if
 
+    !---------------------------!
+    ! Final configuration check !
+    !---------------------------!
+
+    ! Now either read in the reference data (if in 'test' mode) or generate
+    ! this data, if in 'generate' mode.
     if (trim(mode) .eq. 'test') then
       call ncdf_config_reader('99_ref/'//lattice//'_end_config.nc', test_config, setup)
     else if (trim(mode) .eq. 'generate') then
@@ -188,12 +235,16 @@ module tests
     call print_centered_message('Checking final '//lattice//' configurations', '-', .True.)
 
     if (.not.(configs_equal(config, test_config))) then
-      stop 'Final '//lattice//' configurations are different'
+      print*, 'WARNING: Final '//lattice//' configurations are different'
+      passed = .False.
     else
       print*, 'Final '//lattice//' configurations are identical!', new_line('a')
     end if
 
-    ! Clean up
+    !----------------------------------!
+    ! Clean up at the end of the tests !
+    !----------------------------------!
+
     call clean_up_interaction()
     if(allocated(config)) deallocate(config)
     if(allocated(test_config)) deallocate(test_config)
@@ -204,7 +255,7 @@ module tests
     if(allocated(trajectory_energy_test)) deallocate(trajectory_energy_test)
     if(allocated(trajectory_asro_test)) deallocate(trajectory_asro_test)
 
-  end subroutine test_suite
+  end function test_suite
 
   !> @brief   Function for comparing two 4D arrays
   !>

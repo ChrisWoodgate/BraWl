@@ -79,6 +79,7 @@ endif
 # Command to use for linking and executable
 LD=$(FC)
 EXE=brawl.run
+TESTEXE=tests.run
 
 MODFILES=mt19937ar.c kinds.f90 shared_data.f90 io.f90 comms.F90 netcdf_io.f90 \
          write_xyz.f90 metropolis_output.f90 command_line.f90 c_functions.f90 \
@@ -96,14 +97,14 @@ brawl: $(OBJFILES) main.o
 	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/main.o $(LDFLAGS)
 
 tests: $(OBJFILES) tests.o test.o
-	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/tests.o obj/test.o $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(TESTEXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/tests.o obj/test.o $(LDFLAGS)
 
 example: $(OBJFILES) howto_examples.o example.o
 	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/howto_examples.o obj/example.o  $(LDFLAGS)
 
 # Purge build files and executable
 clean :
-	@rm -rf $(OBJDIR) $(BINDIR) $(EXE)
+	@rm -rf $(OBJDIR) $(BINDIR) $(EXE) $(TESTEXE)
 
 # Rules for building object files
 %.o: %.f90
