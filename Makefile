@@ -24,8 +24,19 @@ endif
 # mpiifort (Intel)
 ifeq ($(strip $(compiler)),mpiifort)
   FC = mpiifort
-  FFLAGS = -O3 -fpp -DUSE_MPI
+  FFLAGS = -O3 -fpp -DUSE_MPI -lmpi
   FFLAGS += -module $(OBJDIR)
+  LDFLAGS=-lmkl
+  CC = icc
+  CFLAGS = -O3
+endif
+
+# ifort (Intel)
+ifeq ($(strip $(compiler)),ifort)
+  FC = ifort
+  FFLAGS = -O3 -fpp
+  FFLAGS += -module $(OBJDIR)
+  LDFLAGS=-lmkl
   CC = icc
   CFLAGS = -O3
 endif

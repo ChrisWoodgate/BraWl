@@ -200,15 +200,17 @@ module metropolis
       end if
 
       if ((metropolis%burn_in) .or. ((metropolis%burn_in_start).and.(j==1))) then
-          write(6,'(a,f7.2,a)',advance='yes') &
-          " Burn-in complete at temperature ", temp, " on process 0."
-          write(6,'(a,i7,a)',advance='yes') &
-          " Attempted", int(metropolis%n_burn_in_steps), " trial Monte Carlo moves,"
-          write(6,'(a,i7,a)',advance='yes') &
-          " of which ", int(acceptance), " were accepted,"
-          write(6,'(a,f7.2,a,/)',advance='yes') &
-          " corresponding to an acceptance rate of ", &
-          100.0*acceptance/float(metropolis%n_burn_in_steps), " %"
+          if (my_rank ==0) then
+            write(6,'(a,f7.2,a)',advance='yes') &
+            " Burn-in complete at temperature ", temp, " on process 0."
+            write(6,'(a,i7,a)',advance='yes') &
+            " Attempted", int(metropolis%n_burn_in_steps), " trial Monte Carlo moves,"
+            write(6,'(a,i7,a)',advance='yes') &
+            " of which ", int(acceptance), " were accepted,"
+            write(6,'(a,f7.2,a,/)',advance='yes') &
+            " corresponding to an acceptance rate of ", &
+            100.0*acceptance/float(metropolis%n_burn_in_steps), " %"
+          end if
       end if
 
       if (metropolis%write_trajectory_xyz) then
@@ -270,6 +272,9 @@ module metropolis
       if (metropolis%write_trajectory_xyz) then
         call xyz_writer(trim(xyz_trajectory_file), config, setup, .True.)
       end if
+
+      ! Set acceptance rate back to zero for main MC loop
+      acceptance = 0.0_real64
 
       !-----------------------!
       ! Main Monte Carlo loop !

@@ -14,6 +14,9 @@ module tmmc
   use kinds
   use shared_data
   use derived_types
+  use write_netcdf
+  use comms
+  use analytics
   use c_functions
   use random_site
   use metropolis
