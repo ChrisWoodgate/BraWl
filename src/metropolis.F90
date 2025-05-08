@@ -279,8 +279,6 @@ module metropolis
       n_sweeps = metropolis%n_mc_steps/metropolis%n_sample_steps
       n_sweep_steps = metropolis%n_mc_steps/n_sweeps
 
-      print*, n_sweeps, n_sweep_steps
-
       ! Set acceptance rate back to zero for main MC loop
       acceptance = 0.0_real64
 
