@@ -158,7 +158,7 @@ module io
     parameters%n_species = 4
     parameters%interaction_file = 'V_ijs.txt'
     parameters%wc_range = 2
-    parameters%static_seed = .true.
+    parameters%static_seed = .false.
 
     ! See if the relevant file exists
     inquire(file=trim(filename), exist=exists)

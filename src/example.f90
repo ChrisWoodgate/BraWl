@@ -17,7 +17,6 @@ program example
   use nested_sampling
   use tmmc
   use wang_landau
-  use energy_spectrum
   use io
   use kinds
   use c_functions
@@ -31,6 +30,9 @@ program example
 
   ! Runtime parameters type
   type(run_params) :: setup
+
+  ! Nested Sampling parameters type
+  type(metropolis_params) :: metropolis
 
   ! Nested Sampling parameters type
   type(ns_params) :: ns_setup
@@ -56,8 +58,13 @@ program example
   ! Read in atom-atom interaction
   call read_exchange(setup, my_rank)
 
+  ! Read the Metropolis control file
+  call parse_metropolis_inputs(metropolis, my_rank)
+
   ! Initialise PNRG
-  call initialise_pnrg(setup%seedtime)
+  ! static_seed is true if we would like to use a fixed seed and false
+  ! otherwise
+  call initialise_prng(setup%static_seed)
 
   ! Initialise some function pointers
   call initialise_function_pointers(setup)
@@ -66,18 +73,19 @@ program example
   call make_data_directories(my_rank)
 
   ! Initialise some global arrays
-  call initialise_global_arrays(setup)
+  call initialise_global_metropolis_arrays(setup, metropolis)
 
   ! Initialise some local arrays
   call initialise_local_arrays(setup)
+  call initialise_local_metropolis_arrays(setup, metropolis)
 
   !-----------------------------------------!
   ! Main examples routine in howto_examples !
   !-----------------------------------------!
-  call examples(setup, my_rank)
+  call examples(setup, metropolis, my_rank)
 
   ! Clean up
-  call global_clean_up()
+  call global_metropolis_clean_up()
 
   ! Clean up
   call clean_up_interaction()

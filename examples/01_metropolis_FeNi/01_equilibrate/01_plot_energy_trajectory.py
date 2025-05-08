@@ -37,16 +37,16 @@ asro_1 = asro_data[:,6]/12.0
 asro_2 = asro_data[:,10]/6.0
 
 # Plot the data
-fig, ax = plt.subplots(2, 1, figsize=(4,5), sharex=True)
+fig, ax = plt.subplots(2, 1, figsize=(5,5), sharex=True)
 
 ax[0].plot(sweeps, energies, color='black')
-ax[0].set_ylabel('Simulation energy (meV/atom)')
+ax[0].set_ylabel('Internal energy, $E$ (meV/atom)')
 ax[0].ticklabel_format(axis='x', style='sci', scilimits=(10, 1e9))
 
 ax[1].plot(sweeps, asro_1, label='Fe-Ni 1st nearest-neighbours')
 ax[1].plot(sweeps, asro_2, label='Fe-Ni 2nd nearest-neighbours')
-ax[1].set_xlabel('# of Monte Carlo sweeps')
-ax[1].set_ylabel('Pair Probabilities')
+ax[1].set_xlabel('# of Metropolis-Hastings sweeps')
+ax[1].set_ylabel(r"Pair Probabilities, $P^{\gamma \gamma'}_n$")
 ax[1].legend(fontsize='small')
 
 fig.suptitle('Equilibration of FeNi at $T=300$ K')
