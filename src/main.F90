@@ -92,15 +92,23 @@ program main
     ! Run Metropolis with Kawasaki dynamics
     call metropolis_simulated_annealing(setup, metropolis_setup, my_rank)
 
+  !----------------------!
+  ! Wang-Landau sampling !
+  !----------------------!
   else if (setup%mode == 302) then
 
+#ifdef USE_MPI
+
     ! Make the relevant directories
-    if(my_rank == 0) call execute_command_line('mkdir -p configs')
-    if(my_rank == 0) call execute_command_line('mkdir -p energies')
     if(my_rank == 0) call execute_command_line('mkdir -p asro')
 
-    ! Draw decorrelated samples
-    call metropolis_decorrelated_samples(setup, metropolis_setup, my_rank)
+    ! Read the Wang-Landau input file
+    call read_wl_file("wl_input.inp", wl_setup, my_rank)
+
+    ! Run Wang Landau sampling
+    call wl_main(setup, wl_setup)
+
+#endif
 
   !---------------------------!
   ! Nested sampling algorithm !
@@ -133,24 +141,6 @@ program main
     ! Note: this is currently under development. The program will exit
     !       if you try to use this routine.
     call tmmc_main(setup, tmmc_setup, my_rank)
-
-#endif
-
-  !----------------------!
-  ! Wang-Landau sampling !
-  !----------------------!
-  else if (setup%mode == 305) then
-
-#ifdef USE_MPI
-
-    ! Make the relevant directories
-    if(my_rank == 0) call execute_command_line('mkdir -p asro')
-
-    ! Read the Wang-Landau input file
-    call read_wl_file("wl_input.inp", wl_setup, my_rank)
-
-    ! Run Wang Landau sampling
-    call wl_main(setup, wl_setup)
 
 #endif
 
