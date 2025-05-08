@@ -370,9 +370,9 @@ module wang_landau
     real(real64), allocatable, intent(in) :: bin_edges(:), wl_logdos(:), wl_hist(:)
     if (my_rank == 0) then
       ! Write output files
-      call ncdf_writer_1d("wl_dos_bins.dat", ierr, bin_edges)
-      call ncdf_writer_1d("wl_dos.dat", ierr, wl_logdos)
-      call ncdf_writer_1d("wl_hist.dat", ierr, wl_hist)
+      call ncdf_writer_1d("data/wl_dos_bins.dat", ierr, bin_edges)
+      call ncdf_writer_1d("data/wl_dos.dat", ierr, wl_logdos)
+      call ncdf_writer_1d("data/wl_hist.dat", ierr, wl_hist)
     end if
   end subroutine save_wl_data
 
@@ -395,10 +395,10 @@ module wang_landau
       lb_avg_time(iter, :) = rank_time_buffer(:,1)
       lb_max_time(iter, :) = rank_time_buffer(:,3)
       window_time(iter) = MAXVAL(rank_time_buffer(:,3))
-      call ncdf_writer_2d("wl_lb_bins.dat", ierr, lb_bins)
-      call ncdf_writer_2d("wl_lb_avg_time.dat", ierr, lb_avg_time)
-      call ncdf_writer_2d("wl_lb_max_time.dat", ierr, lb_max_time)
-      call ncdf_writer_1d("wl_window_time.dat", ierr, window_time)
+      call ncdf_writer_2d("load_balance/wl_lb_bins.dat", ierr, lb_bins)
+      call ncdf_writer_2d("load_balance/wl_lb_avg_time.dat", ierr, lb_avg_time)
+      call ncdf_writer_2d("load_balance/wl_lb_max_time.dat", ierr, lb_max_time)
+      call ncdf_writer_1d("load_balance/wl_window_time.dat", ierr, window_time)
     end if
   end subroutine save_load_balance_data
 
