@@ -29,6 +29,3 @@ wc_range = 3
 
 # Swap just nearest-neighbours (if 'true') or any pair of lattice sites (if 'false')
 nbr_swap = .false.
-
-# Static or time-based random seed?
-static_seed=T
