@@ -55,7 +55,7 @@ module metropolis
     type(metropolis_params) :: metropolis
 
     ! Integers used in calculations
-    integer :: i,j,k, accept, ierr, n_sweeps, n_sweep_steps
+    integer :: i,j,k, accept, ierr, n_sweeps, n_sweep_steps, step_n
     integer :: n_save_energy, n_save_asro, n_save_alro, n_save_trajectory
 
     ! Temperature and temperature steps
@@ -279,6 +279,8 @@ module metropolis
       n_sweeps = metropolis%n_mc_steps/metropolis%n_sample_steps
       n_sweep_steps = metropolis%n_mc_steps/n_sweeps
 
+      print*, n_sweeps, n_sweep_steps
+
       ! Set acceptance rate back to zero for main MC loop
       acceptance = 0.0_real64
 
@@ -293,6 +295,8 @@ module metropolis
           acceptance = acceptance + accept
         end do
 
+        step_n = i*n_sweep_steps
+
         ! Storing of data to do with energies
         if (metropolis%calculate_energies) then
           ! Current energy
@@ -306,8 +310,8 @@ module metropolis
 
           ! Write (or append) trajectory energy to file
           if (metropolis%write_trajectory_energy) then
-            if (mod(i, metropolis%n_sample_steps_trajectory) .eq. 0) then
-              call energy_trajectory_writer(energy_trajectory_file, i, current_energy)
+            if (mod(step_n, metropolis%n_sample_steps_trajectory) .eq. 0) then
+              call energy_trajectory_writer(energy_trajectory_file, step_n, current_energy)
             end if
           end if
         end if
@@ -315,22 +319,22 @@ module metropolis
         ! Storing of data to do with ASRO
         if (metropolis%calculate_asro) then
 
-          if (mod(i, metropolis%n_sample_steps_asro) .eq. 0) then
+          if (mod(step_n, metropolis%n_sample_steps_asro) .eq. 0) then
             asro = radial_densities(setup, config, setup%wc_range, shells)
             ! Add radial densities for averaging
             r_densities = r_densities + asro
           end if
 
           if (metropolis%write_trajectory_asro) then
-            if (mod(i, metropolis%n_sample_steps_trajectory) .eq. 0) then
-              call asro_trajectory_writer(asro_trajectory_file, i, asro)
+            if (mod(step_n, metropolis%n_sample_steps_trajectory) .eq. 0) then
+              call asro_trajectory_writer(asro_trajectory_file, step_n, asro)
             end if
           end if
         end if
 
         ! Storing data to do with ALRO
         if (metropolis%calculate_alro) then
-          if (mod(i, metropolis%n_sample_steps_alro) .eq. 0) then
+          if (mod(step_n, metropolis%n_sample_steps_alro) .eq. 0) then
             ! Add radial densities for averaging
             call store_state(order, config, setup)
           end if
@@ -338,7 +342,7 @@ module metropolis
 
         ! Write (or append) trajectory configuration to .xyz file
         if (metropolis%write_trajectory_xyz) then
-          if (mod(i, metropolis%n_sample_steps_trajectory) .eq. 0) then
+          if (mod(step_n, metropolis%n_sample_steps_trajectory) .eq. 0) then
             ! Write xyz trajectory file
             call xyz_writer(trim(xyz_trajectory_file), config, setup, .True.)
           end if
