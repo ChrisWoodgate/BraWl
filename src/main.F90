@@ -101,6 +101,8 @@ program main
 
     ! Make the relevant directories
     if(my_rank == 0) call execute_command_line('mkdir -p asro')
+    if(my_rank == 0) call execute_command_line('mkdir -p data')
+    if(my_rank == 0) call execute_command_line('mkdir -p load_balance')
 
     ! Read the Wang-Landau input file
     call read_wl_file("wl_input.inp", wl_setup, my_rank)
