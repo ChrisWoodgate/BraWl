@@ -46,23 +46,23 @@ colors = {
 custom_cmap = ListedColormap(colors.values())
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=custom_cmap.colors)
 
-filename = "wl_dos_bins.dat"
+filename = "data/wl_dos_bins.dat"
 bin_edges = nc.Dataset(filename)
 bin_edges = np.array(bin_edges["grid data"][:], dtype=np.float64)
 
-filename = "wl_dos.dat"
+filename = "data/wl_dos.dat"
 wl_logdos = nc.Dataset(filename)
 wl_logdos = np.array(wl_logdos["grid data"][:], dtype=np.float64)
 plt.plot(wl_logdos)
 
-filename = "radial_densities/rho_of_E.dat"  
+filename = "asro/rho_of_E.dat"  
 rho_of_E = nc.Dataset(filename)
 
 rho = rho_of_E.variables['rho data'][:]
 U_data = rho_of_E.variables['U data'][:]
 
 elements = ""  # Initialize an empty string to store species data
-with open("input.inp", 'r') as file:
+with open("brawl.inp", 'r') as file:
     for line in file:
         if 'species_name' in line:  # Check if the line contains the species_name variable
             parts = line.split("=")  # Split the line by '=' and get everything after it
@@ -74,7 +74,7 @@ concentrations = 1.0/n_species*np.ones(n_species)
 
 wl_logdos = wl_logdos - np.max(wl_logdos)
 
-filename = "wl_hist.dat"
+filename = "data/wl_hist.dat"
 wl_hist = nc.Dataset(filename)
 wl_hist = np.array(wl_hist["grid data"][:], dtype=np.float64)
 
@@ -119,7 +119,7 @@ for i in range(len(elements)):
 
 fig_height = 4; fig_width=fig_height*1.68
 
-cv_fig, [hist_ax, cv_ax1] = plt.subplots(2, 1, figsize=(fig_width*1.1,fig_height*2.75), constrained_layout=True)
+cv_fig, [hist_ax, cv_ax1] = plt.subplots(2, 1, figsize=(fig_width*1.2,fig_height*2.4), constrained_layout=True)
 cv_ax1_asro = cv_ax1.twinx()
 
 # Initialise arrays 
@@ -234,12 +234,12 @@ hist_ax.tick_params(direction="in")
 cv_ax1.tick_params(direction="in")
 
 label_size_offset = 3
+hist_ax.set_title("Wang-Landau sampling on AlTiCrMo", fontsize=font_size+label_size_offset)
 hist_ax.set_xlabel(r'Internal Energy $E$ (meV/atom)', fontsize=font_size+label_size_offset)
 hist_ax.set_ylabel(r'Probability Density P($E$) (meV$^{-1}$)', fontsize=font_size+label_size_offset)
 cv_ax1.set_ylabel(r'$C_v$ ($k_B$/atom)', fontsize=font_size+label_size_offset)
 cv_ax1.set_xlabel(r'Temperature (K)', fontsize=font_size+label_size_offset)
 cv_ax1_asro.set_ylabel(r'$\alpha^{pq}_1$', fontsize=font_size+label_size_offset)
-cv_ax1_asro.set_xticklabels([])
 cv_ax1.grid(True, axis='x')
 
 asro_max = 0
@@ -306,7 +306,7 @@ print("Hist y-limit", prob_max*1.01)
 print("SHC y-limit", cv_ax1.get_ylim()[1])
 print("ASRO y-limit", asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
 custom_h = 0.03
-custom_l = -2.6
+custom_l = -1.04
 custom_u = 1.04
 custom_c = 1
 
