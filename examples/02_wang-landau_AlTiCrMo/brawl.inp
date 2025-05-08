@@ -10,4 +10,3 @@ interaction_range = 6
 wc_range = 3
 species_names =Al Ti Cr Mo
 species_concentrations = 0.25 0.25 0.25 0.25
-static_seed=.True.
