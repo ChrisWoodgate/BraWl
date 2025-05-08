@@ -5,9 +5,9 @@ Atom-atom interactions are taken from:
 `???`
 
 A Wang-Landau sampling run needs the following input files:
- - The file 'input.inp' contains all relevant parameters for the simulation, while 'AlTiCrMo.vij' contains the atom-atom interaction parameters.
- - The file 'wl_input.inp' contains the relevant Wang-Landau parameters.
+ - The file `brawl.inp` contains all relevant parameters for the simulation, while `AlTiCrMo.vij` contains the atom-atom interaction parameters.
+ - The file `wl_input.inp` contains the relevant Wang-Landau parameters.
 
-Run 'mpirun -n 8 ../../brawl.run' to launch the simulation. Once it has finished, analyse the results with wl_vis.py
+Run `mpirun -n 8 ../../brawl.run` to launch the simulation. Once it has finished, analyse the results with `wl_vis.py`.
 
 The simulation should take around 30 minutes.
