@@ -10,4 +10,4 @@ A Wang-Landau sampling run needs the following input files:
 
 Run 'mpirun -n 8 ../../brawl.run' to launch the simulation. Once it has finished, analyse the results with wl_vis.py
 
-The simulation should take around 30 minutes.
+The simulation should take around 45 minutes.
