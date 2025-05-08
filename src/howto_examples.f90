@@ -16,6 +16,7 @@ module howto_examples
   use shared_data
   use io
   use comms
+  use display
   use c_functions
   use bw_hamiltonian
   use random_site
@@ -23,6 +24,7 @@ module howto_examples
   use netcdf_io
   use write_xyz
   use metropolis_output
+  use derived_types
   use metropolis
   
   implicit none
@@ -38,14 +40,17 @@ module howto_examples
   !> @param  my_rank Rank of current MPI process
   !>
   !> @return None
-  subroutine examples(setup, my_rank)
+  subroutine examples(setup, metropolis, my_rank)
 
     ! Rank of this processor
     integer, intent(in) :: my_rank
 
     ! Arrays for storing data
     type(run_params) :: setup
-  
+
+    ! Arrays for storing data
+    type(metropolis_params) :: metropolis
+
     ! Integers used in calculations
     integer :: i,j, div_steps, accept, n_save
     
@@ -71,7 +76,7 @@ module howto_examples
 
     ! Are we swapping just nearest-neighbours or 
     ! allowing any pair of lattice sites?
-    if (setup%nbr_swap) then
+    if (metropolis%nbr_swap) then
       setup%mc_step => monte_carlo_step_nbr
     else
       setup%mc_step => monte_carlo_step_lattice
@@ -106,7 +111,7 @@ module howto_examples
     j = 1
 
     ! Work out the temperature and corresponding beta
-    temp = setup%T + real(j-1, real64)*setup%delta_T
+    temp = metropolis%T + real(j-1, real64)*metropolis%delta_T
     sim_temp = temp*k_b_in_Ry
     beta = 1.0_real64/sim_temp
 
@@ -141,13 +146,13 @@ module howto_examples
     !------------------------------------!
     ! 4. Run some kind of equillibration !
     !------------------------------------!
-    n_save=floor(real(setup%mc_steps)/real(setup%sample_steps))
+    n_save=floor(real(metropolis%n_mc_steps)/real(metropolis%n_sample_steps))
 
     acceptance = 0.0_real64
     step_E = 0.0_real64
     step_Esq = 0.0_real64
 
-    do i=1, setup%mc_steps
+    do i=1, metropolis%n_mc_steps
     
       ! Make one MC move
       accept = setup%mc_step(config, beta)
@@ -155,7 +160,7 @@ module howto_examples
       acceptance = acceptance + accept
 
       ! Write percentage progress to screen
-      if (mod(i, setup%sample_steps) .eq. 0) then
+      if (mod(i, metropolis%n_sample_steps) .eq. 0) then
         current_energy = setup%full_energy(config)
         step_E   = step_E + current_energy
         step_Esq = step_Esq + current_energy**2
@@ -170,7 +175,7 @@ module howto_examples
     C = (step_Esq/n_save - (step_E/n_save)**2)/(sim_temp*temp)/setup%n_atoms
 
     ! Acceptance rate at this temperature
-    acceptance_of_T(j) = acceptance/real(setup%mc_steps)
+    acceptance_of_T(j) = acceptance/real(metropolis%n_mc_steps)
   
     ! Store the specific heat capacity at this temperature
     C_of_T(j) = C

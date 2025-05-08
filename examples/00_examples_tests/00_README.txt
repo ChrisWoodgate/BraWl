@@ -1,9 +1,11 @@
-Example 0: Examples and tests.
+# Example 0: Examples and tests
 
-This example demonstrates how to run the 'examples' main program, which calls routines kept in howto_examples.f90:
+*N.B.* _This is intended for developers of the code to understand core functionality. If you are simply an end-user, you can skip this example._
 
-To build the 'examples' main, use the option 'make example'
+This example demonstrates how to run the `examples` main program, which calls routines kept in `src/howto_examples.f90`.
 
-The file 'input.txt' contains all relevant parameters for the simulation, while 'epis.txt' contains the atom-atom interaction parameters.
+To build the `examples` main, use the option `make compiler=<compiler> example`
 
-Run 'mpirun -n 1 /path/to/BraWL/brawl.run' to launch the simulation. There will be plenty of graphical output.
+The file `brawl.inp` contains all relevant parameters for setting up the simulation, while 'epis.vij' contains the atom-atom interaction parameters. Then `metropolis.inp` contains some details of parameters relating to Metropolis-Hastings Monte Carlo which will be demonstrated.
+
+Then run `mpirun -n 1 /path/to/BraWL/example.run` (in parallel) or `/path/to/brawl/example.run` (in serial) from this directory to launch the simulation. There will be graphical output to explain what happens. 🙂

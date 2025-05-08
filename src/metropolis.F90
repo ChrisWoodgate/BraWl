@@ -29,6 +29,7 @@ module metropolis
 
   public :: metropolis_simulated_annealing,                            &
             metropolis_decorrelated_samples,                           &
+            monte_carlo_step_nbr,                                      &
             monte_carlo_step_lattice
 
   contains

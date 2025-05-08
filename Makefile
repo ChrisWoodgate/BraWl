@@ -80,6 +80,7 @@ endif
 LD=$(FC)
 EXE=brawl.run
 TESTEXE=tests.run
+EXEXE=example.run
 
 MODFILES=mt19937ar.c kinds.f90 shared_data.f90 io.f90 comms.F90 netcdf_io.f90 \
          write_xyz.f90 metropolis_output.f90 command_line.f90 c_functions.f90 \
@@ -100,11 +101,11 @@ tests: $(OBJFILES) tests.o test.o
 	$(FC) $(FFLAGS) -o $(TESTEXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/tests.o obj/test.o $(LDFLAGS)
 
 example: $(OBJFILES) howto_examples.o example.o
-	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/howto_examples.o obj/example.o  $(LDFLAGS)
+	$(FC) $(FFLAGS) -o $(EXEXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/howto_examples.o obj/example.o  $(LDFLAGS)
 
 # Purge build files and executable
 clean :
-	@rm -rf $(OBJDIR) $(BINDIR) $(EXE) $(TESTEXE)
+	@rm -rf $(OBJDIR) $(BINDIR) $(EXE) $(TESTEXE) $(EXEXE)
 
 # Rules for building object files
 %.o: %.f90
