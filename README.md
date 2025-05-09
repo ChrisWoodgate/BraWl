@@ -1,8 +1,10 @@
 # BraWl
 
-A code for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian, implementing a range of conventional and enhanced sampling techniques, including Metropolis-Hastings Monte Carlo, Nested Sampling, and Wang-Landau sampling. The code will be periodically updated so it is best to check the GitHub repository for the latest version.
+`BraWl` — a package for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian. The package implements a range of conventional and enhanced sampling techniques, including Metropolis-Hastings Monte Carlo, Nested Sampling, and Wang-Landau sampling.
 
 Copyright (C) The Authors 2019-2025. Released under the GNU Lesser General Public License, version 3.
+
+---
 
 ## Background
 
@@ -58,7 +60,7 @@ Matplotlib/3.10.1
 Cycler/0.12.1
 netCDF/1.7.2
 ```
-The Python modules can be installed using `pip install -r requirements.txt`, executed in the main directory. It is recommended to install these within a virtual environment which can be created within BraWl using `python -m venv venv` and the activated using `source venv/bin/activate`. (Compatibility of the plotting scripts with later/earlier versions of the listed packages is anticipated, but not guaranteed.)
+The Python modules can be installed using `pip install -r requirements.txt`, executed in the main directory. It is recommended to install these within a virtual environment which can be created within `BraWl` using `python -m venv venv` and the activated using `source venv/bin/activate`. (Compatibility of the plotting scripts with later/earlier versions of the listed packages is anticipated, but not guaranteed.)
 
 ## Compilation
 At the moment the code has been tested with GCC and OpenMPI, versions as specified above. Put the code in a directory like `~/codes/BraWl` and navigate to that directory.
@@ -119,7 +121,6 @@ To save the output of the test run, pipe it to a file, _e.g._
 ```
 The output of this routine will tell you which tests (if any failed).
 
-
 ## Documentation
 The in addition to this README and the provided examples, the code also has (searchable) documentation which is auto-generated using [Doxygen](https://www.doxygen.nl), which lets users 'host' a web interface to the documentation locally on their machine. To view this documentation: 
 1. Obtain [Doxygen](https://www.doxygen.nl), which is typically available through a package manager.
@@ -129,8 +130,8 @@ The in addition to this README and the provided examples, the code also has (sea
 This documentation contains information about all modules, functions, subroutines, and derived types, so is particularly useful if you are looking to develop a new feature.
 
 ## Citations
-ANY publications/presentations/further work resulting from the use of this software should cite the original publication for which it was developed:
-* C. D. Woodgate, J. B. Staunton, [Phys. Rev. B **105**, 115124 (2023)](https://doi.org/10.1103/PhysRevB.105.115124)
+If you use `BraWl` in your research, please cite our preprint:
+* H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393).
 
 ## List of publications
 A (hopefully fairly complete) list of publications obtained using this code is:
@@ -144,6 +145,7 @@ A (hopefully fairly complete) list of publications obtained using this code is:
 8. C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
 9. C. D. Woodgate, L. H. Lewis, J. B. Staunton, [npj Comput. Mater. **10**, 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y).
 10. C. D. Woodgate, H. J. Naguszewski, D. Redka, J. Minar, D. Quigley, J. B. Staunton, [arXiv:2503.13235](https://arxiv.org/abs/2503.13235).
+11. H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393).
 
 ## Authors
 - Hubert J. Naguszewski
