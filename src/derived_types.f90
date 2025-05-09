@@ -302,6 +302,12 @@ module derived_types
   !> @param  energy_max Energy range maximum
   !> @param  T Temperature to use for dynamics
   !> @param  radial_samples Number of radial density samples to draw per bin
+  !> @param  performance Performance analysis mode 
+  !>         0 - non-uniform windows | dynamic window sizes | replica exchange
+  !>         1 - non-uniform windows | replica exchange
+  !>         2 - non-uniform windows | dynamic window sizes
+  !>         3 - replica exchange
+  !>         4 - none
   type wl_params
 
     ! Number of  sweeps (each sweep is n_atoms mc steps)
@@ -324,6 +330,8 @@ module derived_types
     real :: energy_max
     ! Radial density samples per bin
     integer :: radial_samples
+    ! Performance analysis
+    integer :: performance
 
   end type wl_params
 

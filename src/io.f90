@@ -944,7 +944,7 @@ module io
 
     integer :: my_rank
     character(len=*), intent(in) :: filename
-    logical, dimension(10) :: check
+    logical, dimension(11) :: check
     type(wl_params) :: parameters
     character(len=100) :: buffer, label
     integer :: line, pos, ios
@@ -1041,6 +1041,12 @@ module io
             print*, '# Read radial_samples = ', parameters%radial_samples
           end if
           check(10) = .true.
+        case ('performance')
+          read(buffer, *, iostat=ios) parameters%performance
+          if (my_rank == 0) then
+            print*, '# Read performance = ', parameters%performance
+          end if
+          check(11) = .true.
 
         case default
           if (my_rank == 0) then

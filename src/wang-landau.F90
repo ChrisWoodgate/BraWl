@@ -248,7 +248,9 @@ module wang_landau
         call save_wl_data(bin_edges, wl_logdos, wl_hist)
         call save_load_balance_data(window_indices, rank_time_buffer)
         
+        if (ANY([0,2] == wl_setup_internal%performance)) then
         call mpi_window_optimise(iter)
+        end if
 
         call compute_mean_energy(wl_logdos)
 
@@ -256,9 +258,11 @@ module wang_landau
 
         call zero_subtract_logdos(wl_logdos)
         call comms_wait()
+        if (ANY([0,2] == wl_setup_internal%performance)) then
         if (my_rank == 0) then
           call print_centered_message("Load Balancing Complete!", "-")
           write (*, *)
+        end if
         end if
         start = mpi_wtime()
       end if
@@ -1120,6 +1124,8 @@ module wang_landau
     integer :: bins_max_indices(wl_setup_internal%num_windows)
     logical :: mk(wl_setup_internal%num_windows)
 
+    if (ANY([0,1,2] == wl_setup_internal%performance)) then
+    print*, "Optimize"
     ! Perform window size adjustment then broadcast
     if (wl_setup_internal%num_windows > 1) then
       if (my_rank == 0) then
@@ -1177,6 +1183,7 @@ module wang_landau
       mpi_start_idx = window_indices(mpi_index, 1)
       mpi_end_idx = window_indices(mpi_index, 2)
       mpi_bins = mpi_end_idx - mpi_start_idx + 1
+    end if
     end if
   end subroutine mpi_window_optimise
 
@@ -1259,7 +1266,9 @@ module wang_landau
   integer :: overlap_loc, request
   integer :: overlap_mpi(mpi_processes, 2), overlap_mpi_buffer(mpi_processes, 2)
   real(real64) :: e_swapped, e_unswapped
-  
+
+  if (ANY([0,1,3] == wl_setup_internal%performance)) then
+  print*, "Replica Exchange"
   ! Perform binning and initialize overlap_mpi
   e_unswapped = setup_internal%full_energy(config)
   ibin = bin_index(e_unswapped, bin_edges, wl_setup_internal%bins)
@@ -1343,8 +1352,8 @@ module wang_landau
         end if
       end if
     end do
-   end do
-
+  end do
+  end if
  end subroutine replica_exchange
   
   !> @brief   Routine that shuffles rows in integer array
