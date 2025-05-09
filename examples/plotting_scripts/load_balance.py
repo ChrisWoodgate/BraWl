@@ -17,7 +17,7 @@ plt.rc('font', family='serif')
 #plt.rc('text', usetex=True)
 
 def flip(items, ncol):
-    return itertools.chain(*[items[i::ncol] for i in range(ncol)])
+    return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
 
 colors = {
     "steel_blue": "#1F77B4",
@@ -50,15 +50,15 @@ print("Available directories:")
 print(subfolders)
 directory = input("Input directory to pull data from: ")
 
-filename = "{}/wl_lb_bins.dat".format(directory)
+filename = "load_balance/wl_lb_bins.dat".format(directory)
 wl_lb_bins = nc.Dataset(filename)
 wl_lb_bins = np.array(wl_lb_bins["grid data"][:], dtype=np.float64).T
 
-filename = "{}/wl_lb_avg_time.dat".format(directory)
+filename = "load_balance/wl_lb_avg_time.dat".format(directory)
 wl_lb_avg_time = nc.Dataset(filename)
 wl_lb_avg_time = np.array(wl_lb_avg_time["grid data"][:], dtype=np.float64).T
 
-filename = "{}/wl_window_time.dat".format(directory)
+filename = "load_balance/wl_window_time.dat".format(directory)
 wl_window_time = nc.Dataset(filename)
 wl_window_time = np.array(wl_window_time["grid data"][:], dtype=np.float64)
 
@@ -67,7 +67,7 @@ try:
 except:
   iter = np.shape(wl_lb_bins)[0]
 
-filename = "{}//wl_lb_max_time.dat".format(directory)
+filename = "load_balance/wl_lb_max_time.dat".format(directory)
 wl_lb_max_time = nc.Dataset(filename)
 wl_lb_max_time = np.array(wl_lb_max_time["grid data"][:], dtype=np.float64).T
 
@@ -88,7 +88,7 @@ plt.xticks(x_axis)
 handles, labels = plt.gca().get_legend_handles_labels()
 plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=columns)
 plt.tight_layout()
-plt.savefig('figures/load_balance_1.svg', bbox_inches='tight')
+plt.savefig('load_balance/load_balance_1.pdf', bbox_inches='tight')
 plt.close()
 
 time_adjusted = np.zeros(np.shape(wl_lb_avg_time))
@@ -106,7 +106,7 @@ plt.xticks(x_axis)
 handles, labels = plt.gca().get_legend_handles_labels()
 plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=columns)
 plt.tight_layout()
-plt.savefig('figures/load_balance_2.svg', bbox_inches='tight')
+plt.savefig('load_balance/load_balance_2.pdf', bbox_inches='tight')
 plt.close()
 
 time_std = np.zeros([iter])
@@ -118,5 +118,5 @@ plt.xlabel("W-L Iteration")
 plt.plot(x_axis, time_std)
 plt.xticks(x_axis)
 plt.tight_layout()
-plt.savefig('figures/load_balance_3.svg', bbox_inches='tight')
+plt.savefig('load_balance/load_balance_3.pdf', bbox_inches='tight')
 plt.close()
