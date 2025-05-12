@@ -47,6 +47,8 @@
 !examples/*/*/*.inp
 !examples/*/*.vij
 !examples/*/*/*.vij
+!performance/*.inp
+!performance/*.vij
 
 # Don't ignore any text files in the examples directories
 !examples/*/*.txt
