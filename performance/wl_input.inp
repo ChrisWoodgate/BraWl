@@ -1,0 +1,11 @@
+mc_sweeps=100
+bins=512
+num_windows=4
+bin_overlap=64
+tolerance=1e-6
+flatness=0.90
+wl_f=0.05
+energy_min=-96
+energy_max=0.0
+radial_samples=8
+performance=4
