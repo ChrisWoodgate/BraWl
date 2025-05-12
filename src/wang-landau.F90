@@ -1125,7 +1125,7 @@ module wang_landau
     logical :: mk(wl_setup_internal%num_windows)
 
     if (ANY([0,1,2] == wl_setup_internal%performance)) then
-    print*, "Optimize"
+    !print*, "Optimize"
     ! Perform window size adjustment then broadcast
     if (wl_setup_internal%num_windows > 1) then
       if (my_rank == 0) then
@@ -1268,7 +1268,7 @@ module wang_landau
   real(real64) :: e_swapped, e_unswapped
 
   if (ANY([0,1,3] == wl_setup_internal%performance)) then
-  print*, "Replica Exchange"
+  !print*, "Replica Exchange"
   ! Perform binning and initialize overlap_mpi
   e_unswapped = setup_internal%full_energy(config)
   ibin = bin_index(e_unswapped, bin_edges, wl_setup_internal%bins)
