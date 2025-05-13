@@ -117,22 +117,22 @@ Finally, it should be stressed that the computational cost of these models often
 An alternative, physically intuitive model for the internal energy of an alloy is the Bragg-Williams model `[@braggeffect1934, @braggeffect1935]`, which assumes that the internal energy of an alloy takes a simple, pairwise form.
 The Bragg-Williams Hamiltonian has the form
 \begin{equation}
-    H(\{\xi_{i\gamma}\}) = \frac{1}{2}\sum_{i \gamma; j\gamma^\prime} V_{i\gamma; j\gamma^\prime} \xi_{i \gamma} \xi_{j \gamma^\prime},
+    H(\{\xi_{i\gamma}\}) = \frac{1}{2}\sum_{i \gamma; j\gamma^{\prime}} V_{i\gamma; j\gamma^{\prime}} \xi_{i \gamma} \xi_{j \gamma^{\prime}},
     \label{eq:b-w1}
 \end{equation}
-where $`V_{i\gamma; j\gamma^\prime}`$ denotes the effective pair interaction (EPI) between an atom of chemical species $`\gamma`$ on lattice site $`i`$ and an atom of chemical species $`\gamma^\prime`$ on lattice site $`j`$.
+where $`V_{i\gamma; j\gamma^{\prime}}`$ denotes the effective pair interaction (EPI) between an atom of chemical species $`\gamma`$ on lattice site $`i`$ and an atom of chemical species $`\gamma^{\prime}`$ on lattice site $`j`$.
 (The factor of $`\frac{1}{2}`$ eliminates double-counting in the summation.)
 For a system of finite size, it is assumed that periodic boundary conditions are applied in all coordinate directions.
 We note that the form of this Hamiltonian is very similar to that of the Lenz-Ising model, an elementary model in magnetism `[@brushhistory1967]`. 
 
 Generally, the assumption is made that that the EPIs are spatially homogeneous and isotropic, and Eq. \autoref{eq:b-w1} is therefore rewritten as
 \begin{equation}
-    H(\{\xi_{i\gamma}\}) = \frac{1}{2}\sum_{i \gamma} \xi_{i \gamma} \left( \sum_{n} \sum_{j \in n(i)} \sum_{\gamma^\prime} V^{(n)}_{\gamma \gamma^\prime} \xi_{j \gamma^\prime} \right),
+    H(\{\xi_{i\gamma}\}) = \frac{1}{2}\sum_{i \gamma} \xi_{i \gamma} \left( \sum_{n} \sum_{j \in n(i)} \sum_{\gamma^{\prime}} V^{(n)}_{\gamma \gamma^{\prime}} \xi_{j \gamma^{\prime}} \right),
     \label{eq:b-w3}
 \end{equation}
 where the sum over $`i`$ remains a sum over lattice sites, but the sum over $`n`$ denotes a sum over the coordination shells (nearest-neighbours, next-nearest-neighbours, _etc._) of the lattice.
 The notation $`n(i)`$ is then used to denote the set of lattice sites which are $`n`$th nearest-neighbours to site $`i`$.
-Then $`V^{(n)}_{\gamma \gamma^\prime}`$ denotes the effective pair interaction between chemical species $`\gamma`$ and $`\gamma^\prime`$ on coordination shell $`n`$.
+Then $`V^{(n)}_{\gamma \gamma^{\prime}}`$ denotes the effective pair interaction between chemical species $`\gamma`$ and $`\gamma^{\prime}`$ on coordination shell $`n`$.
 It is reasonable to assume that, for most alloys, the strength of EPIs will tail off quickly with decreasing distance, and the sum over $`n`$ can be taken over the first few coordination shells of the underlying lattice type being considered.
 (This is, of course, equivalent to imposing some radial 'cutoff' on an interatomic potential.)
 
@@ -276,11 +276,11 @@ where $`k_B`$ is the usual Boltzmann constant, $`E`$ is the simulation energy, a
 
 To assess local atom-atom correlations in a simulation, `BraWl` can calculate the Warren-Cowley atomic short-range order parameters `[@cowleyapproximate1950; @cowleyshort-range1965]`, adapted to the multicomponent setting, defined as
 \begin{equation}
-    \alpha^{\gamma \gamma^\prime}_n=1-\frac{P^{\gamma \gamma^\prime}_n}{c_{\gamma^\prime}}
+    \alpha^{\gamma \gamma^{\prime}}_n=1-\frac{P^{\gamma \gamma^{\prime}}_n}{c_{\gamma^{\prime}}}
 \end{equation}
-where $`n`$ refers to the $`n`$th coordination shell, $`P_n^{\gamma \gamma^\prime}`$ is the conditional probability of an atom of type $`q`$ neighbouring an atom of type $`p`$ on shell $`n`$, and $`c_q`$ is the total concentration of atom type $`q`$. When $`\alpha_n^{\gamma \gamma^\prime} > 0`$, $`p`$-$`q`$ pairs are disfavoured on shell $`n`$ and, when $`\alpha_n^{\gamma \gamma^\prime} < 0`$ they are favoured. The value $`\alpha_n^{\gamma \gamma^\prime} = 0`$ corresponds to the ideal, maximally disordered solid solution.
+where $`n`$ refers to the $`n`$th coordination shell, $`P_n^{\gamma \gamma^{\prime}}`$ is the conditional probability of an atom of type $`q`$ neighbouring an atom of type $`p`$ on shell $`n`$, and $`c_q`$ is the total concentration of atom type $`q`$. When $`\alpha_n^{\gamma \gamma^{\prime}} > 0`$, $`p`$-$`q`$ pairs are disfavoured on shell $`n`$ and, when $`\alpha_n^{\gamma \gamma^{\prime}} < 0`$ they are favoured. The value $`\alpha_n^{\gamma \gamma^{\prime}} = 0`$ corresponds to the ideal, maximally disordered solid solution.
 
-For maximal flexibility, `BraWl` outputs the conditional probabilities, $`P_n^{\gamma \gamma^\prime}`$, and the user can then choose whether or not to rescale and obtain the Warren-Cowley ASRO parameters as a post-processing step. The `BraWl` package can calculate these parameters averaged across a single configuration, or averaged at a particular temperature using one of the sampling algorithms implemented in the code.
+For maximal flexibility, `BraWl` outputs the conditional probabilities, $`P_n^{\gamma \gamma^{\prime}}`$, and the user can then choose whether or not to rescale and obtain the Warren-Cowley ASRO parameters as a post-processing step. The `BraWl` package can calculate these parameters averaged across a single configuration, or averaged at a particular temperature using one of the sampling algorithms implemented in the code.
 
 ## Atomic long-range order (ALRO) parameters
 
