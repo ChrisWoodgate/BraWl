@@ -22,13 +22,13 @@ authors:
     orcid: 0000-0003-4876-5558
     affiliation: 3
 affiliations:
- - name: Department of Physics, University of Warwick, Coventry, CV4 7AL, UK
+ - name: Department of Physics, University of Warwick, UK
    index: 1
    ror: 01a77tt86
- - name: Department of Chemistry, University of Warwick, Coventry, CV4 7AL, UK
+ - name: Department of Chemistry, University of Warwick, UK
    index: 2
    ror: 01a77tt86
- - name: H.H. Wills Physics Laboratory, University of Bristol, Royal Fort, Bristol, BS8 1TL, United Kingdom
+ - name: School of Physics, University of Bristol, UK
    index: 3
    ror: 0524sp257
 date: 13 May 2025
