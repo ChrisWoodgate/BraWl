@@ -11,7 +11,7 @@ authors:
   - name: Hubert J. Naguszewski
     orcid: 0009-0006-1670-5437
     affiliation: 1
-  - name: Livia B. Partay
+  - name: Livia B. Pártay
     orcid: 0000-0003-3249-3586
     affiliation: 2
   - name: David Quigley
