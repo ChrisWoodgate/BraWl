@@ -48,6 +48,7 @@ ax[1].plot(sweeps, asro_2, label='Fe-Ni 2nd nearest-neighbours')
 ax[1].set_xlabel('# of Metropolis-Hastings sweeps')
 ax[1].set_ylabel(r"Pair Probabilities, $P^{\gamma \gamma'}_n$")
 ax[1].legend(fontsize='small')
+ax[1].set_ylim(0.0, 1.0)
 
 fig.suptitle('Equilibration of FeNi at $T=300$ K')
 plt.tight_layout()
