@@ -289,16 +289,16 @@ This capability was first demonstrated on simulations of Fe-Ga alloys [@marchant
 
 # Example Applications
 
-BraWL has been used, with success, to study the phase behaviour of a range of binary and multicomponent alloys, for example the binary Fe-Ga system (Galfenol) [@marchantab2021], the Fe-Ni system [@woodgateint2024], the Cantor-Wu medium- and high-entropy alloys [@woodgatecompositional2022; woodgateinterplay2023], the refractory high-entropy alloys [@woodgateshortrange2023; woodgatecompetition2024], the Al$_x$CrFeCoNi system [@woodgatestructure2024], and the AlTiVNb and AlTiCrMo refractory high-entropy superalloys [@woodgateemergent2025].
+BraWL has been used, with success, to study the phase behaviour of a range of binary and multicomponent alloys, for example the binary Fe-Ga system (Galfenol) [@marchantab2021], the Fe-Ni system [@woodgateint2024], the Cantor-Wu medium- and high-entropy alloys [@woodgatecompositional2022; @woodgateinterplay2023], the refractory high-entropy alloys [@woodgateshortrange2023; @woodgatecompetition2024], the Al$_x$CrFeCoNi system [@woodgatestructure2024], and the AlTiVNb and AlTiCrMo refractory high-entropy superalloys [@woodgateemergent2025].
 The package has also been used to generate atomic configurations for training datasets for machine-learned interatomic potentials, for example for the prototypical austenitic stainless steel, Fe$_7$Cr$_2$Ni [@shenoycollinearspin2024].
-
-![Evolution of the simulation internal energy (top panel) and conditional pair probabilities (bottom panel) for an Fe$_{0.5}$Ni$_{0.5}$ alloy as a function of the number of Metropolis-Hastings sweeps at a simulation temperature of $T=300$ K. One 'sweep' is one trial move per atom in the system. Beyond approximately 100 sweeps, the system can be seen to have reached equilibrium, with L1$_0$ order established.\label{fig:feniequilibration}](feniequilibration.pdf){ width=50% }
 
 As an example of the Metropolis-Hastings Monte Carlo algorithm, we consider its application to the binary FeNi alloy, first discussed by @woodgateint2024.
 \autoref{fig:feniequilibration} shows the internal energy and conditional pair probabilities (quantifying ASRO) of a simulation cell containing 256 atoms as a function of the number of Metropolis-Hastings 'sweeps', where a sweep refers to performing a number of trial Metropolis-Hastings moves equal to the number of atoms in the simulation cell.
 The simulation is performed at 300 K, below the alloy's L1$_0$ disorder-order transition temperature.
 The L1$_0$ phase is a structure where $2/3$ of the nearest neighbours of Fe (Ni) atoms are Ni (Fe) atoms, and where none of the next-nearest neighbours of Fe (Ni) atoms are Ni (Fe) atoms.
 It can be seen that this ordering is swiftly established as the number of Monte Carlo sweeps increases, albeit with some remaining thermal noise.
+
+![Evolution of the simulation internal energy (top panel) and conditional pair probabilities (bottom panel) for an Fe$_{0.5}$Ni$_{0.5}$ alloy as a function of the number of Metropolis-Hastings sweeps at a simulation temperature of $T=300$ K. One 'sweep' is one trial move per atom in the system. Beyond approximately 100 sweeps, the system can be seen to have reached equilibrium, with L1$_0$ order established.\label{fig:feniequilibration}](feniequilibration.pdf){ width=50% }
 
 ![Plots of energy probability distributions, Warren-Cowley ASRO parameters ($\alpha_n^{pq}$) and simulation heat capacity ($C$) as a function of temperature for AlTiCrMo obtained using lattice-based Monte Carlo simulations employing Wang-Landau sampling. Here, show $\alpha_n^{pq}$ only for $n = 1$. The zero of the energy scale for the energy histograms is set to be equal to the average internal energy of the alloy obtained at a simulation temperature of 3000 K.\label{fig:wlAlTiCrMo}](wlAlTiCrMo.pdf){ width=50% }
 
