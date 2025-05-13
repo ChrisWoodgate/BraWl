@@ -66,7 +66,7 @@ The physical constraint that each lattice site is occupied by one (and only one)
 (Naturally, vacancies can be treated in this framework by considering them as an additional chemical species present at a very low concentration.)
 If we consider an ensemble of alloy configurations, we can then define the site-wise concentrations, $\left\{ c_{i\gamma}\right\}$, as the average value of the site occupation numbers across the ensemble, $c_{i\gamma} = \langle \xi_{i\gamma} \rangle$, where $\langle \cdot \rangle$ denotes the average taken over the ensemble.
 
-![Illustrations of potential states of a substitutional alloy in thermal equilibrium. A solid solution (a) is a state where lattice sites are occupied at random by elements of different chemical species. An ordered intermetallic compound (b) has an identifiable regular, repeating motif of atoms. A system may also undergo phase decomposition (c), where pairs of elements phase segregate from one another. In the multicomponent setting (d) there can be many possible competing phases.\label{fig:alloy_phase_cartoon}](brawlalloyillustrations.pdf)
+![Illustrations of potential states of a substitutional alloy in thermal equilibrium. A solid solution (a) is a state where lattice sites are occupied at random by elements of different chemical species. An ordered intermetallic compound (b) has an identifiable regular, repeating motif of atoms. A system may also undergo phase decomposition (c), where pairs of elements phase segregate from one another. In the multicomponent setting (d) there can be many possible competing phases.\label{fig:alloyphasecartoon}](brawlalloyillustrations.pdf)
 
 In the context of substitutional alloys, the word _phase_ refers to a physically homogeneous area of the material with uniform chemical composition and physical properties.
 At the atomic level, this means that, on the average, the site-wise concentrations in a particular spatial region are homogeneous and describe some repeating motif of atoms arranged on a lattice.
@@ -142,7 +142,7 @@ Similarly to the CE method, it is naturally possible to fit EPIs for a given all
 However, most frequently, such EPIs are obtained using the Korringa--Kohn--Rostoker (KKR) formulation of density functional theory [@korringacalculation1947; @kohnsolution1954; @ebertcalculating2011], where the coherent potential approximation (CPA) can be used to describe the average electronic structure and consequent internal energy of the disordered alloy [@sovencoherentpotential1967; @gyorffycoherentpotential1972; @stockscomplete1978].
 There are then a variety of suitable techniques available for assessing the energetic cost of applied, inhomogeneous chemical perturbations to the CPA reference medium which naturally lead to extraction of EPIs.
 Such techniques include both the generalised perturbation method (GPM) [@ducastellegeneralized1976; @rubanatomic2004], as well as techniques using the language of concentration waves to describe the atomic-scale chemical fluctuations [@khachaturyanordering1978; @gyorffyconcentration1983].
-Approaches based on concentration waves have been derived for alloys both in the binary [@stauntoncompositional1994; @johnsonfirst-principles1994] and multicomponent [@singhatomic2015; @khanstatistical2016; @woodgatemodelling2024] settings.
+Approaches based on concentration waves have been derived for alloys both in the binary [@stauntoncompositional1994; @johnsonfirstprinciples1994] and multicomponent [@singhatomic2015; @khanstatistical2016; @woodgatemodelling2024] settings.
 Once the EPIs for a given alloy composition are obtained, the phase stability of a particular alloy can be examined using sampling techniques applied to the Bragg-Williams model.
 This is the purpose of `BraWl` as presented in this work.
 
@@ -274,7 +274,7 @@ where $k_B$ is the usual Boltzmann constant, $E$ is the simulation energy, and $
 
 ## Atomic short-range order (ASRO) parameters
 
-To assess local atom-atom correlations in a simulation, `BraWl` can calculate the Warren-Cowley atomic short-range order parameters [@cowleyapproximate1950; @cowleyshort-range1965], adapted to the multicomponent setting, defined as
+To assess local atom-atom correlations in a simulation, `BraWl` can calculate the Warren-Cowley atomic short-range order parameters [@cowleyapproximate1950; @cowleyshortrange1965], adapted to the multicomponent setting, defined as
 \begin{equation}
     \alpha^{\gamma \gamma^{\prime}}_n=1-\frac{P^{\gamma \gamma^{\prime}}_n}{c_{\gamma^{\prime}}}
 \end{equation}
