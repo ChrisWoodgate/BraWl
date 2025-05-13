@@ -249,7 +249,7 @@ Thus, to ensure that new configurations are different from the starting structur
 
 In this work, since the lattice sites are fixed and the Hamiltonian is discretised, it is possible to create multiple different configurations with numerically the same energy value.
 However, as the NS algorithm must be able to select the unique highest energy configuration during the iterative sampling process, we have to avoid such degeneracy.
-Thus, the energy of each configuration is perturbed by a positive, uniform random number of value less than $`10^{-8}`$ Ry, making each energy value numerically distinct without effecting the uniform distribution of samples or any thermodynamic properties.
+Thus, the energy of each configuration is perturbed by a positive, uniform random number of value less than $10^{-8}$ Ry, making each energy value numerically distinct without effecting the uniform distribution of samples or any thermodynamic properties.
 
 # Physical quantities of interest
 
