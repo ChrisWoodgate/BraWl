@@ -67,3 +67,6 @@ tests/
 # Ignore locally Doxygen-generated files
 docs/html/
 docs/latex/
+
+# Don't ignore the paper directory's PDF files
+!paper/*
