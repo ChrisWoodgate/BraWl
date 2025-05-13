@@ -120,7 +120,7 @@ The Bragg-Williams Hamiltonian has the form
     H(\{\xi_{i\gamma}\}) = \frac{1}{2}\sum_{i \gamma; j\gamma^{\prime}} V_{i\gamma; j\gamma^{\prime}} \xi_{i \gamma} \xi_{j \gamma^{\prime}},
     \label{eq:b-w1}
 \end{equation}
-where $`V_{i\gamma; j\gamma^{\prime}}`$ denotes the effective pair interaction (EPI) between an atom of chemical species $`\gamma`$ on lattice site $`i`$ and an atom of chemical species $`\gamma^{\prime}`$ on lattice site $`j`$.
+where $`V_{i\gamma; j\gamma^{\prime}}`$ denotes the effective pair interaction (EPI) between an atom of chemical species $`\gamma`$ on lattice site $`i`$ and an atom of chemical species $\gamma^{\prime}$ on lattice site $`j`$.
 (The factor of $`\frac{1}{2}`$ eliminates double-counting in the summation.)
 For a system of finite size, it is assumed that periodic boundary conditions are applied in all coordinate directions.
 We note that the form of this Hamiltonian is very similar to that of the Lenz-Ising model, an elementary model in magnetism `[@brushhistory1967]`. 
