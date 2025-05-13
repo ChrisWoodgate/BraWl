@@ -75,7 +75,7 @@ Naturally, an intermetallic phase can also admit substitutional disorder on one 
 In thermal equilibrium, it is possible for more than one phase to be present in an alloy, with the maximum permitted number of phases present determined, in general, by the Gibbs phase rule.
 An alloy which decomposes into multiple coexisting phases in thermal equilibrium is said to undergo 'phase segregation' or 'phase decomposition'.
 (Sometimes this process can also be referred to as one or more phases 'precipitating' out of the solid solution.)
-Some illustrations of potential alloy phases for a toy, 2D alloy in both binary and multicomponent settings, are provided in Fig. \autoref{fig:alloyphasecartoon}
+Some illustrations of potential alloy phases for a toy, 2D alloy in both binary and multicomponent settings, are provided in \autoref{fig:alloyphasecartoon}
 
 
 For a system with fixed underlying lattice, in the high temperature limit, entropy dictates that atoms should have no lattice site preference.
@@ -125,7 +125,7 @@ where $V_{i\gamma; j\gamma^{\prime}}$ denotes the effective pair interaction (EP
 For a system of finite size, it is assumed that periodic boundary conditions are applied in all coordinate directions.
 We note that the form of this Hamiltonian is very similar to that of the Lenz-Ising model, an elementary model in magnetism [@brushhistory1967]. 
 
-Generally, the assumption is made that that the EPIs are spatially homogeneous and isotropic, and Eq. \autoref{eq:b-w1} is therefore rewritten as
+Generally, the assumption is made that that the EPIs are spatially homogeneous and isotropic, and \autoref{eq:b-w1} is therefore rewritten as
 \begin{equation}
     H(\{\xi_{i\gamma}\}) = \frac{1}{2}\sum_{i \gamma} \xi_{i \gamma} \left( \sum_{n} \sum_{j \in n(i)} \sum_{\gamma^{\prime}} V^{(n)}_{\gamma \gamma^{\prime}} \xi_{j \gamma^{\prime}} \right),
     \label{eq:b-w3}
@@ -138,7 +138,7 @@ It is reasonable to assume that, for most alloys, the strength of EPIs will tail
 
 
 EPIs for the Bragg-Williams Hamiltonian can be obtained using a variety of methods, generally those based on density functional theory.
-Similarly to the CE method, it is naturally possible to fit EPIs for a given alloy composition to a set of DFT total energy evaluations on alloy supercells with success [@liumachinenodate; @zhangrobust2020; @liumonte2021].
+Similarly to the CE method, it is naturally possible to fit EPIs for a given alloy composition to a set of DFT total energy evaluations on alloy supercells with success [@liumachine2019; @zhangrobust2020; @liumonte2021].
 However, most frequently, such EPIs are obtained using the Korringa--Kohn--Rostoker (KKR) formulation of density functional theory [@korringacalculation1947; @kohnsolution1954; @ebertcalculating2011], where the coherent potential approximation (CPA) can be used to describe the average electronic structure and consequent internal energy of the disordered alloy [@sovencoherentpotential1967; @gyorffycoherentpotential1972; @stockscomplete1978].
 There are then a variety of suitable techniques available for assessing the energetic cost of applied, inhomogeneous chemical perturbations to the CPA reference medium which naturally lead to extraction of EPIs.
 Such techniques include both the generalised perturbation method (GPM) [@ducastellegeneralized1976; @rubanatomic2004], as well as techniques using the language of concentration waves to describe the atomic-scale chemical fluctuations [@khachaturyanordering1978; @gyorffyconcentration1983].
@@ -180,7 +180,7 @@ These atom swaps can be performed according to Kawasaki dynamics [@kawasakidiffu
 Given enough trial moves, the system will reach equilibrium for a fixed simulation temperature.
 Once at equilibrium, decorrelated samples can be drawn to obtain thermodynamic averages of various quantities.
 Within `BraWl`, this functionality can be used to determine a range of quantities of interest, including atomic short- and long-range order parameters, as well as the simulation heat capacity.
-(Definitions of these quantities are provided in Sec. \autoref{sec:physicalquantities}.)
+(Definitions of these quantities are provided later in this article.)
 These quantities can be plotted as a function of temperature by considering simulations performed across a range of temperatures.
 It is also possible to perform 'simulated annealing' where, starting at high temperature the system is equilibrated at a given temperature and statistics drawn, before the simulation temperature is decreased and the cycle repeated until a desired target temperature is reached.
 It also allows for determining the lowest available energy state of the alloy being studied to parametrise a Wang-Landau sampling, discussed below.
@@ -258,9 +258,9 @@ The relevant quantities are as follows.
 
 ## Internal energy
 
-For a given lattice type, system size, alloy composition, and set of atom-atom effective pair interactions, `BraWl` can evaluate the total energy associated with the alloy configuration (Eq. \autoref{eq:b-w1}).
+For a given lattice type, system size, alloy composition, and set of atom-atom effective pair interactions, `BraWl` can evaluate the total energy associated with the alloy configuration (\autoref{eq:b-w1}).
 At the time of writing, for speed, common lattice types (fcc, bcc, simple cubic, _etc._) are hard-coded, with the intention that the range of implemented lattice types will be expanded over time as necessary.
-Where only the relative _change_ of energy induced by swapping/substituting atoms is considered, `BraWl` takes advantage of the mathematical form of the Bragg-Williams Hamiltonian to only evaluate the relevant terms in the summation in Eq. \autoref{eq:b-w1} which are changed as a result of the swap/substitution.
+Where only the relative _change_ of energy induced by swapping/substituting atoms is considered, `BraWl` takes advantage of the mathematical form of the Bragg-Williams Hamiltonian to only evaluate the relevant terms in the summation in \autoref{eq:b-w1} which are changed as a result of the swap/substitution.
 This substantially reduces the cost of evaluation of change in simulation energy induced by a particular atomic swap.
 
 ## Heat capacity
@@ -289,27 +289,27 @@ This capability was first demonstrated on simulations of Fe-Ga alloys [@marchant
 
 # Example Applications
 
-BraWL has been used, with success, to study the phase behaviour of a range of binary and multicomponent alloys, for example the binary Fe-Ga system (Galfenol) [@marchantab2021], the Fe-Ni system [@woodgateintegrated2024], the Cantor-Wu medium- and high-entropy alloys [@woodgatecompositional2022; woodgateinterplay2023], the refractory high-entropy alloys [@woodgateshortrange2023; woodgatecompetition2024], the Al$_x$CrFeCoNi system [@woodgatestructure2024], and the AlTiVNb and AlTiCrMo refractory high-entropy superalloys [@woodgateemergentnodate].
+BraWL has been used, with success, to study the phase behaviour of a range of binary and multicomponent alloys, for example the binary Fe-Ga system (Galfenol) [@marchantab2021], the Fe-Ni system [@woodgateintegrated2024], the Cantor-Wu medium- and high-entropy alloys [@woodgatecompositional2022; woodgateinterplay2023], the refractory high-entropy alloys [@woodgateshortrange2023; woodgatecompetition2024], the Al$_x$CrFeCoNi system [@woodgatestructure2024], and the AlTiVNb and AlTiCrMo refractory high-entropy superalloys [@woodgateemergent2025].
 The package has also been used to generate atomic configurations for training datasets for machine-learned interatomic potentials, for example for the prototypical austenitic stainless steel, Fe$_7$Cr$_2$Ni [@shenoycollinearspin2024].
 
 ![Evolution of the simulation internal energy (top panel) and conditional pair probabilities (bottom panel) for an Fe$_{0.5}$Ni$_{0.5}$ alloy as a function of the number of Metropolis-Hastings sweeps at a simulation temperature of $T=300$ K. One 'sweep' is one trial move per atom in the system. Beyond approximately 100 sweeps, the system can be seen to have reached equilibrium, with L1$_0$ order established.\label{fig:feniequilibration}](feniequilibration.pdf){ width=40% }
 
 As an example of the Metropolis-Hastings Monte Carlo algorithm, we consider its application to the binary FeNi alloy, first discussed by @woodgateintegrated2024.
-Fig. \autoref{fig:feniequilibration} shows the internal energy and conditional pair probabilities (quantifying ASRO) of a simulation cell containing 256 atoms as a function of the number of Metropolis-Hastings 'sweeps', where a sweep refers to performing a number of trial Metropolis-Hastings moves equal to the number of atoms in the simulation cell.
+\autoref{fig:feniequilibration} shows the internal energy and conditional pair probabilities (quantifying ASRO) of a simulation cell containing 256 atoms as a function of the number of Metropolis-Hastings 'sweeps', where a sweep refers to performing a number of trial Metropolis-Hastings moves equal to the number of atoms in the simulation cell.
 The simulation is performed at 300 K, below the alloy's L1$_0$ disorder-order transition temperature.
 The L1$_0$ phase is a structure where $2/3$ of the nearest neighbours of Fe (Ni) atoms are Ni (Fe) atoms, and where none of the next-nearest neighbours of Fe (Ni) atoms are Ni (Fe) atoms.
 It can be seen that this ordering is swiftly established as the number of Monte Carlo sweeps increases, albeit with some remaining thermal noise.
 
 ![Plots of energy probability distributions, Warren-Cowley ASRO parameters ($\alpha_n^{pq}$) and simulation heat capacity ($C$) as a function of temperature for AlTiCrMo obtained using lattice-based Monte Carlo simulations employing Wang-Landau sampling. Here, show $\alpha_n^{pq}$ only for $n = 1$. The zero of the energy scale for the energy histograms is set to be equal to the average internal energy of the alloy obtained at a simulation temperature of 3000 K.\label{fig:wlAlTiCrMo}](wlAlTiCrMo.pdf){ width=40% }
 
-As an example of Wang-Landau sampling, we consider its application to the AlTiCrMo refractory high-entropy superalloy, first discussed by @woodgateemergentnodate, for which results are shown in Fig. \autoref{fig:wlAlTiCrMo}.
+As an example of Wang-Landau sampling, we consider its application to the AlTiCrMo refractory high-entropy superalloy, first discussed by @woodgateemergent2025, for which results are shown in \autoref{fig:wlAlTiCrMo}.
 The top panel shows calculated energy probability distributions (histograms) at various temperatures, while the bottom panel shows the simulation heat capacity and evolution of the Warren-Cowley ASRO parameters as a function of temperature.
 The high-temperature peak in the heat capacity data is associated with the experimentally observed B2 crystallographic ordering.
 
 ![Internal energy, $E$, and isochoric heat capacity, $C_V$, obtained using the Nested Sampling algorithm applied to the equiatomic, fcc, AlCrFeCoNi high-entropy alloy. The simulation cell contained 108 atoms. Upon cooling, the initial peak in the heat capacity is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases.\label{fig:nsalcrfeconi}](nsalcrfeconi.pdf){ width=40% }
 
 Finally, as an example of application of the Nested Sampling algorithm, we consider its application to the AlCrFeCoNi high-entropy alloy, first discussed in @woodgatestructure2024.
-Fig. \autoref{fig:nsalcrfeconi} plots the internal energy, $E$, and isochoric heat capacity, $C_V$, obtained for the equiatomic, fcc, AlCrFeCoNi system.
+\autoref{fig:nsalcrfeconi} plots the internal energy, $E$, and isochoric heat capacity, $C_V$, obtained for the equiatomic, fcc, AlCrFeCoNi system.
 The simulation cell contained 108 atoms.
 The initial peak in the heat capacity encountered upon cooling from high temperature is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases, which is understood to be consistent with experimental data for this system.
 
