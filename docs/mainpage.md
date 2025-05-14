@@ -4,7 +4,7 @@ The Fortran package **BraWl** (named after the Bragg-Williams model)  facilitate
 
 It provides a lightweight, fast and flexible foundation for a range of simulations relating to alloy thermodynamics and phase diagrams.
 
-For an overview of the capabilities of the package, you can check out our recent preprint: [Link to paper/preprint once uploaded](https://example.com).
+For an overview of the capabilities of the package, you can check out our recent preprint: H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393).
 
 ---
 
