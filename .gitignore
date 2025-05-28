@@ -69,3 +69,7 @@ tests/
 # Ignore locally Doxygen-generated files
 docs/html/
 docs/latex/
+
+# Ignore slurm scripts
+performance/batch/*.sh
+!performance/batch/batch_submit.sh
