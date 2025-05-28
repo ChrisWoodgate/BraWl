@@ -51,9 +51,9 @@ print("Available directories:")
 print(subfolders)
 elements = input("Input elements to pull data from: ")
 
-windows = np.array([1, 2, 3, 4, 5, 6, 7, 8])
-walkers = np.array([1, 2, 4, 8])
-repeats = 4
+windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+walkers = 16
+repeats = 2
 directories = np.empty_like(windows, dtype='<U32')
 sums = np.zeros([len(windows), repeats])
 
@@ -63,7 +63,7 @@ for i in range(len(windows)):
 for i in range(len(windows)):
     total_sum = 0
     for j in range(1,repeats+1):
-        filename = "{}_{:02d}_{}/wl_lb_max_time.dat".format(elements, windows[i], j)
+        filename = "{}_{:02d}_{}/load_balance/wl_lb_max_time.dat".format(elements, windows[i], j)
         wl_lb_max_time = nc.Dataset(filename)
         wl_lb_max_time = np.array(wl_lb_max_time["grid data"][:], dtype=np.float64).T
 
@@ -79,18 +79,18 @@ plt.errorbar(windows, sums_mean, yerr=sums_error, capsize=3, ecolor = "red")
 plt.xticks(windows, labels=windows)
 plt.xlabel("Windows")
 plt.ylabel("Time Taken (mins)")
-plt.savefig('../figures/{}_time.pdf'.format(''.join(elements)), bbox_inches='tight')
-plt.show()
+plt.savefig('{}_time.pdf'.format(''.join(elements)), bbox_inches='tight')
+plt.close()
 
-windows *= 1
+windows *= walkers
 
-sums = np.mean(sums[0])/sums
+sums = np.mean(sums[0])/sums*walkers
 sums_mean = np.mean(sums, axis=1)
 sums_error = np.std(sums, axis=1)
 
 def linear(x, m):
     x0 = x[0]
-    return m*x + (1-m*x0)
+    return m*x + (walkers-m*x0)
 
 params, covariance = curve_fit(linear, windows, sums_mean)
 
@@ -100,5 +100,5 @@ plt.xticks(windows, labels=windows)
 plt.xlabel("Cores")
 plt.ylabel("Speed Up")
 plt.text(0.02, 0.98, f"Slope: {params[0]:.2f}", transform=plt.gca().transAxes, verticalalignment='top', horizontalalignment='left')
-plt.savefig('../figures/{}_speedup.pdf'.format(''.join(elements)), bbox_inches='tight')
-plt.show()
+plt.savefig('{}_speedup.pdf'.format(''.join(elements)), bbox_inches='tight')
+plt.close()
