@@ -826,9 +826,6 @@ module wang_landau
     integer, intent(inout) :: window_intervals(:,:), window_indices(:,:), mpi_bins
     integer :: i
 
-    ! Halve overlap due to implementation
-    wl_setup_internal%bin_overlap = MAX(wl_setup_internal%bin_overlap/2, 1)
-
     window_indices(1, 1) = window_intervals(1,1)
     window_indices(1,2) = INT(window_intervals(1,2) + wl_setup_internal%bin_overlap)
     do i = 2, wl_setup_internal%num_windows-1
@@ -1140,7 +1137,7 @@ module wang_landau
         bins = NINT(REAL(wl_setup_internal%bins)*diffusion_merge/SUM(diffusion_merge))
         
         ! Set all bins less than min_bins to min_bins
-        min_bins = 1
+        min_bins = INT(0.02_real64*wl_setup_internal%bins)
         do i = 1, wl_setup_internal%num_windows
           if (bins(i) < min_bins) then
               bins(i) = min_bins
@@ -1175,7 +1172,7 @@ module wang_landau
         window_intervals(wl_setup_internal%num_windows, 1) = window_intervals(wl_setup_internal%num_windows-1, 2) + 1
         window_intervals(wl_setup_internal%num_windows, 2) = wl_setup_internal%bins
       end if
-
+        
       call MPI_BCAST(window_intervals, wl_setup_internal%num_windows*2, MPI_INT, 0, MPI_COMM_WORLD, ierr)
 
       ! Populate MPI arrays and indlude MPI window overlap
@@ -1217,14 +1214,19 @@ module wang_landau
     ! Loop indices
     integer :: i, j
 
+    ! Bins
+    integer :: bins(wl_setup_internal%num_windows)
+
+    bins = window_intervals(:,2)-window_intervals(:,1)
+
     window_indices(1, 1) = window_intervals(1,1)
-    window_indices(1,2) = INT(window_intervals(1,2) + wl_setup_internal%bin_overlap)
+    window_indices(1,2) = INT(window_intervals(1,2) + wl_setup_internal%bin_overlap*bins(2))
     do i = 2, wl_setup_internal%num_windows-1
-      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - wl_setup_internal%bin_overlap), 1)
-      window_indices(i, 2) = MIN(INT(window_intervals(i,2) + wl_setup_internal%bin_overlap), wl_setup_internal%bins)
+      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - wl_setup_internal%bin_overlap*bins(i-1)), 1)
+      window_indices(i, 2) = MIN(INT(window_intervals(i,2) + wl_setup_internal%bin_overlap*bins(i+1)), wl_setup_internal%bins)
     end do
     window_indices(wl_setup_internal%num_windows, 1) = MAX(INT(window_intervals(wl_setup_internal%num_windows,1) &
-                                    - wl_setup_internal%bin_overlap), 1)
+                                    - wl_setup_internal%bin_overlap*bins(wl_setup_internal%num_windows-1)), 1)
     window_indices(wl_setup_internal%num_windows,2) = window_intervals(wl_setup_internal%num_windows,2)
 
     mpi_index = my_rank/num_walkers + 1
