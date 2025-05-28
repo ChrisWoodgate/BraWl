@@ -295,7 +295,7 @@ module derived_types
   !> @param  mc_sweeps Number of sweeps (each sweep is n_atoms mc steps)
   !> @param  bins Number of bins across energy range
   !> @param  num_windows Number of energy windows
-  !> @param  bin_overlap Number of bins in the overlap region
+  !> @param  bin_overlap Percentage overlap between windows
   !> @param  tolerance Tolerance for Wang-Landau
   !> @param  wl_f Flatness for Wang-Landau histogram
   !> @param  energy_min Energy range minimum
@@ -316,8 +316,8 @@ module derived_types
     integer :: bins
     ! Number of energy windows
     integer :: num_windows
-    ! Number of bins in the overlap region
-    integer :: bin_overlap
+    ! Percentage overlap between windows
+    real :: bin_overlap
     ! Tolerance for wang landau
     real :: tolerance
     ! Flatness for wang landau histogram
