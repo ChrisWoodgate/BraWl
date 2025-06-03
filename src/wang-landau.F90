@@ -585,7 +585,7 @@ module wang_landau
   subroutine enter_energy_window()
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, pair_swapped, pair_unswapped, delta_e, target_energy, condition
-    real(real64) :: beta, beta_end, beta_start, weight, min_e, max_e
+    real(real64) :: beta, beta_end, beta_start, weight, min_e, max_e, bias
     integer(array_int) :: site1, site2
     logical :: stop_enter_energy_window, flag
     integer :: rank, request, ierr, i_steps, i_sweeps, sweeps
@@ -598,7 +598,7 @@ module wang_landau
     target_energy = (min_e + max_e)/2.0_real64
     condition = ABS(max_e - min_e)*0.1_real64
 
-    !beta = mean_energy(minloc(abs(mean_energy(:,1) - min_e), DIM=1),2)
+    beta = mean_energy(minloc(abs(mean_energy(:,1) - min_e), DIM=1),2)
 
     ! Establish total energy before any moves
     e_unswapped = setup_internal%full_energy(config)
@@ -669,10 +669,17 @@ module wang_landau
         pair_swapped = pair_energy(setup_internal, config, rdm1, rdm2)
         e_swapped = e_unswapped - pair_unswapped + pair_swapped
 
-        delta_e = e_swapped - e_unswapped
+        ! Bias potential
+        
+        !delta_e = e_swapped - e_unswapped
+        !print*, target_energy
+        delta_e = ((e_swapped-target_energy)**2-(e_unswapped-target_energy)**2)/(2.0_real64*(0.1*ABS(max_e - min_e))**2)
+        !print*, my_rank, ((e_swapped-target_energy)**2-(e_unswapped-target_energy)**2), (2.0_real64*0.1**2_real64), &
+        !delta_e, exp(-delta_e)
+        !bias = ABS(target_energy-e_unswapped)/ABS(target_energy-e_swapped)
 
         ! Accept or reject move
-        if (genrand() .lt. exp(-delta_e*beta)) then ! to prevent getting stuck in local minimum (should adjust this later to something more scientific instead of an arbitrary number)
+        if (genrand() .lt. exp(-delta_e)) then ! to prevent getting stuck in local minimum (should adjust this later to something more scientific instead of an arbitrary number)
           e_unswapped = e_swapped
         else
           call pair_swap(config, rdm1, rdm2)
