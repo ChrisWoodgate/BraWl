@@ -585,7 +585,7 @@ module wang_landau
   subroutine enter_energy_window()
     integer, dimension(4) :: rdm1, rdm2
     real(real64) :: e_swapped, e_unswapped, pair_swapped, pair_unswapped, delta_e, target_energy, condition
-    real(real64) :: beta, beta_end, beta_start, weight, min_e, max_e, bias
+    real(real64) :: beta, beta_end, beta_start, weight, min_e, max_e
     integer(array_int) :: site1, site2
     logical :: stop_enter_energy_window, flag
     integer :: rank, request, ierr, i_steps, i_sweeps, sweeps
