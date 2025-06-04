@@ -122,7 +122,7 @@ module wang_landau
     call divide_range(window_intervals, window_rank_index)
 
     call create_window_intervals(window_intervals, window_indices, mpi_bins)
-
+ 
     call secondary_array_allocation(mpi_bins)
 
     call create_energy_bins(bin_edges)
@@ -833,14 +833,19 @@ module wang_landau
     integer, intent(inout) :: window_intervals(:,:), window_indices(:,:), mpi_bins
     integer :: i
 
+    ! Bins
+    integer :: bins(wl_setup_internal%num_windows)
+
+    bins = window_intervals(:,2)-window_intervals(:,1)
+
     window_indices(1, 1) = window_intervals(1,1)
-    window_indices(1,2) = INT(window_intervals(1,2) + wl_setup_internal%bin_overlap)
+    window_indices(1,2) = INT(window_intervals(1,2) + wl_setup_internal%bin_overlap*bins(2))
     do i = 2, wl_setup_internal%num_windows-1
-      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - wl_setup_internal%bin_overlap), 1)
-      window_indices(i, 2) = MIN(INT(window_intervals(i,2) + wl_setup_internal%bin_overlap), wl_setup_internal%bins)
+      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - wl_setup_internal%bin_overlap*bins(i-1)), 1)
+      window_indices(i, 2) = MIN(INT(window_intervals(i,2) + wl_setup_internal%bin_overlap*bins(i+1)), wl_setup_internal%bins)
     end do
     window_indices(wl_setup_internal%num_windows, 1) = MAX(INT(window_intervals(wl_setup_internal%num_windows,1) &
-                                    - wl_setup_internal%bin_overlap), 1)
+                                    - wl_setup_internal%bin_overlap*bins(wl_setup_internal%num_windows-1)), 1)
     window_indices(wl_setup_internal%num_windows,2) = window_intervals(wl_setup_internal%num_windows,2)
 
     num_walkers = mpi_processes/wl_setup_internal%num_windows
