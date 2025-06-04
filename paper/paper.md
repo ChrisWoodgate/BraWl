@@ -132,12 +132,12 @@ The high-temperature peak in the heat capacity data is associated with the exper
 
 ![Plots of energy probability distributions, Warren-Cowley ASRO parameters ($\alpha_n^{pq}$) and simulation heat capacity ($C$) as a function of temperature for AlTiCrMo obtained using lattice-based Monte Carlo simulations employing Wang-Landau sampling. Here, show $\alpha_n^{pq}$ only for $n = 1$. The zero of the energy scale for the energy histograms is set to be equal to the average internal energy of the alloy obtained at a simulation temperature of 3000 K.\label{fig:wlAlTiCrMo}](wlAlTiCrMo.pdf){ width=55% }
 
+![Internal energy, $E$, and isochoric heat capacity, $C_V$, obtained using the Nested Sampling algorithm applied to the equiatomic, fcc, AlCrFeCoNi high-entropy alloy. The simulation cell contained 108 atoms. Upon cooling, the initial peak in the heat capacity is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases.\label{fig:nsalcrfeconi}](nsalcrfeconi.pdf){ width=55% }
+
 Finally, as an example of application of the Nested Sampling algorithm, we consider its application to the AlCrFeCoNi high-entropy alloy, first discussed by @woodgatestructure2024.
 \autoref{fig:nsalcrfeconi} plots the internal energy, $E$, and isochoric heat capacity, $C_V$, obtained for the equiatomic, fcc, AlCrFeCoNi system.
 The simulation cell contained 108 atoms.
 The initial peak in the heat capacity encountered upon cooling from high temperature is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases, which is understood to be consistent with experimental data for this system.
-
-![Internal energy, $E$, and isochoric heat capacity, $C_V$, obtained using the Nested Sampling algorithm applied to the equiatomic, fcc, AlCrFeCoNi high-entropy alloy. The simulation cell contained 108 atoms. Upon cooling, the initial peak in the heat capacity is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases.\label{fig:nsalcrfeconi}](nsalcrfeconi.pdf){ width=55% }
 
 # Acknowledgements
 
