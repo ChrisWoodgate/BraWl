@@ -56,7 +56,7 @@ The Fortran package `BraWl` facilitates simulation of the thermodynamics and pha
 It achieves this by providing implementation of both the Bragg-Williams Hamiltonian (a lattice based model expressing the internal energy of an alloy as a sum of atom-atom effective pair interactions) concurrently with a range of conventional and enhanced sampling techniques for exploration of the alloy configuration space.
 The result is a package which can determine phase equilibria as a function of both temperature and alloy composition, which leads to the construction of alloy phase diagrams.
 Additionally, the package can be used for extraction of representative equilibrated atomic configurations for visualisation, as well as for use in complementary modelling approaches.
-An in-depth discussion of the background, underlying theory, and technical details of the sampling algorithms implemented in the package is given in @naguszewskibrawl2025.
+An in-depth discussion of the background, underlying theory, and technical details of the sampling algorithms implemented in the package is given by @naguszewskibrawl2025.
 
 There are a range of existing packages capable of simulating alloy phase equilibria, both open- and closed-source.
 Examples of widely-used such packages include ATAT [@vandewallealloy2002], ICET [@angqvisticet2019] and CELL [@rigamonticell2024], though all of these focus primarily on implementation of a generalised cluster expansion, rather than the simpler form of the Bragg-Williams Hamiltonian.
@@ -98,14 +98,16 @@ This is the purpose of `BraWl` as presented in this work.
 `BraWl` implements a range of conventional and enhanced sampling algorithms for exploration of the alloy configuration space.
 Throughout, the package defaults to performing _swaps_ of pairs of atoms in the simulation cell, to conserve the overall concentration of each chemical species present in the simulation.
 At present, the implemented sampling algorithms are:
+
 1. **The Metropolis-Hastings Monte Carlo algorithm.** The Metropolis-Hastings algorithm allows for a system of interest to follow a chain of states which evolve to, and sample, an equilibrium ensemble [@metropolisequation1953; landauguide2014]. It is a useful method for obtaining the equilibrium state of a system at a given temperature.
 2. **Wang-Landau sampling.** Wang-Landau sampling is a flat histogram method which provides a means for high throughput calculation of phase diagrams for atomistic/lattice model systems [@wangefficient2001]. The method allows for direct computation of an estimate of the density of states in energy, $g(E)$, and hence the partition function of a system of interest. From the partition function, thermodynamic quantities at any temperature of interest can then be obtained provided one has prior knowledge of the minimum and maximum energy relevant to those temperatures.
-3. **Nested Sampling.** Nested sampling (NS) is powerful Bayesian inference technique [@skillingnested2004; @skillingnested2006] adapted to sample the potential energy surface of atomistic systems [@ashtonnested2022], giving direct access to the partition function at arbitrary temperatures for comprehensive thermodynamic analysis, without relying on advance knowledge of relevant structures or the range of energies accessible to them [@partayefficient2010; partaynested2021].
+3. **Nested Sampling.** Nested sampling (NS) is powerful Bayesian inference technique [@skillingnested2004; @skillingnested2006] adapted to sample the potential energy surface of atomistic systems [@ashtonnested2022], giving direct access to the partition function at arbitrary temperatures for comprehensive thermodynamic analysis, without relying on advance knowledge of relevant structures or the range of energies accessible to them [@partayefficient2010; @partaynested2021].
 
 # Physical quantities of interest
 
 `BraWl` can extract a range of quantities of interest from a given alloy simulation.
 The relevant quantities are: 
+
 - **Internal energy.** For a given lattice type, system size, alloy composition, and set of atom-atom effective pair interactions, `BraWl` can evaluate the total energy associated with the alloy configuration (\autoref{eq:b-w1}). At the time of writing, for speed, common lattice types (fcc, bcc, simple cubic, _etc._) are hard-coded, with the intention that the range of implemented lattice types will be expanded over time as necessary.
 - **Heat capacity.** The isochoric (fixed volume) heat capacity at a given temperature, $C_V(T)$, is a useful quantity for identifying phase transitions, as a plot of the simulation heat capacity as a function of temperature is expected to show a local peak at the temperature at which the transition occurs. Within `BraWl`, the heat capacity is calculated via $$C_V(T) = \frac{\langle E^2\rangle - \langle E\rangle^2}{k_BT^2},$$ where $k_B$ is the usual Boltzmann constant, $E$ is the simulation energy, and $\langle \cdot \rangle$ denote thermodynamic averages obtained using the relevant sampling algorithm.
 - **Atomic short-range order parameters.** To assess local atom-atom correlations in a simulation, `BraWl` can calculate the Warren-Cowley atomic short-range order parameters [@cowleyapproximate1950; @cowleyshortrange1965], adapted to the multicomponent setting, defined as $$\alpha^{\gamma \gamma'}_n=1-\frac{P^{\gamma \gamma'}_n}{c_{\gamma'}},$$ where $n$ refers to the $n$th coordination shell, $P^{\gamma \gamma'}_n$ is the conditional probability of an atom of type $q$ neighbouring an atom of type $p$ on shell $n$, and $c_q$ is the total concentration of atom type $q$. When $\alpha^{\gamma \gamma'}_n > 0$, $p$-$q$ pairs are disfavoured on shell $n$ and, when $\alpha^{\gamma \gamma'}_n < 0$ they are favoured. The value $\alpha^{\gamma \gamma'}_n = 0$ corresponds to the ideal, maximally disordered solid solution.
@@ -124,18 +126,18 @@ It can be seen that this ordering is swiftly established as the number of Monte 
 
 ![Evolution of the simulation internal energy (top panel) and conditional pair probabilities (bottom panel) for an Fe$_{0.5}$Ni$_{0.5}$ alloy as a function of the number of Metropolis-Hastings sweeps at a simulation temperature of $T=300$ K. One 'sweep' is one trial move per atom in the system. Beyond approximately 100 sweeps, the system can be seen to have reached equilibrium, with L1$_0$ order established.\label{fig:feniequilibration}](feniequilibration.pdf){ width=55% }
 
-![Plots of energy probability distributions, Warren-Cowley ASRO parameters ($\alpha_n^{pq}$) and simulation heat capacity ($C$) as a function of temperature for AlTiCrMo obtained using lattice-based Monte Carlo simulations employing Wang-Landau sampling. Here, show $\alpha_n^{pq}$ only for $n = 1$. The zero of the energy scale for the energy histograms is set to be equal to the average internal energy of the alloy obtained at a simulation temperature of 3000 K.\label{fig:wlAlTiCrMo}](wlAlTiCrMo.pdf){ width=55% }
-
 As an example of Wang-Landau sampling, we consider its application to the AlTiCrMo refractory high-entropy superalloy, first discussed by @woodgateemergent2025, for which results are shown in \autoref{fig:wlAlTiCrMo}.
 The top panel shows calculated energy probability distributions (histograms) at various temperatures, while the bottom panel shows the simulation heat capacity and evolution of the Warren-Cowley ASRO parameters as a function of temperature.
 The high-temperature peak in the heat capacity data is associated with the experimentally observed B2 crystallographic ordering.
 
-![Internal energy, $E$, and isochoric heat capacity, $C_V$, obtained using the Nested Sampling algorithm applied to the equiatomic, fcc, AlCrFeCoNi high-entropy alloy. The simulation cell contained 108 atoms. Upon cooling, the initial peak in the heat capacity is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases.\label{fig:nsalcrfeconi}](nsalcrfeconi.pdf){ width=55% }
+![Plots of energy probability distributions, Warren-Cowley ASRO parameters ($\alpha_n^{pq}$) and simulation heat capacity ($C$) as a function of temperature for AlTiCrMo obtained using lattice-based Monte Carlo simulations employing Wang-Landau sampling. Here, show $\alpha_n^{pq}$ only for $n = 1$. The zero of the energy scale for the energy histograms is set to be equal to the average internal energy of the alloy obtained at a simulation temperature of 3000 K.\label{fig:wlAlTiCrMo}](wlAlTiCrMo.pdf){ width=55% }
 
-Finally, as an example of application of the Nested Sampling algorithm, we consider its application to the AlCrFeCoNi high-entropy alloy, first discussed in @woodgatestructure2024.
+Finally, as an example of application of the Nested Sampling algorithm, we consider its application to the AlCrFeCoNi high-entropy alloy, first discussed by @woodgatestructure2024.
 \autoref{fig:nsalcrfeconi} plots the internal energy, $E$, and isochoric heat capacity, $C_V$, obtained for the equiatomic, fcc, AlCrFeCoNi system.
 The simulation cell contained 108 atoms.
 The initial peak in the heat capacity encountered upon cooling from high temperature is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases, which is understood to be consistent with experimental data for this system.
+
+![Internal energy, $E$, and isochoric heat capacity, $C_V$, obtained using the Nested Sampling algorithm applied to the equiatomic, fcc, AlCrFeCoNi high-entropy alloy. The simulation cell contained 108 atoms. Upon cooling, the initial peak in the heat capacity is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases.\label{fig:nsalcrfeconi}](nsalcrfeconi.pdf){ width=55% }
 
 # Acknowledgements
 
