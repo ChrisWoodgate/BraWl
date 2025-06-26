@@ -105,6 +105,7 @@ module wang_landau
 
     ! Check if number of MPI processes is divisible by number of windows
     call MPI_COMM_SIZE(MPI_COMM_WORLD, mpi_processes, ierr)
+    print*, "MPI processes: ", mpi_processes
     bins = wl_setup_internal%bins
     if (MOD(mpi_processes, wl_setup_internal%num_windows) /= 0) then
       if (my_rank == 0) then
@@ -248,7 +249,7 @@ module wang_landau
         call save_wl_data(bin_edges, wl_logdos, wl_hist)
         call save_load_balance_data(window_indices, rank_time_buffer)
         
-        if (ANY([0,2] == wl_setup_internal%performance)) then
+        if (ANY([0,1] == wl_setup_internal%performance)) then
         call mpi_window_optimise(iter)
         end if
 
@@ -258,7 +259,7 @@ module wang_landau
 
         call zero_subtract_logdos(wl_logdos)
         call comms_wait()
-        if (ANY([0,2] == wl_setup_internal%performance)) then
+        if (ANY([0,1] == wl_setup_internal%performance)) then
         if (my_rank == 0) then
           call print_centered_message("Load Balancing Complete!", "-")
           write (*, *)
@@ -1133,7 +1134,7 @@ module wang_landau
     integer :: bins_max_indices(wl_setup_internal%num_windows)
     logical :: mk(wl_setup_internal%num_windows)
 
-    if (ANY([0,1,2] == wl_setup_internal%performance)) then
+    if (ANY([0,1,2,3] == wl_setup_internal%performance)) then
     !print*, "Optimize"
     ! Perform window size adjustment then broadcast
     if (wl_setup_internal%num_windows > 1) then
@@ -1281,7 +1282,7 @@ module wang_landau
   integer :: overlap_mpi(mpi_processes, 2), overlap_mpi_buffer(mpi_processes, 2)
   real(real64) :: e_swapped, e_unswapped
 
-  if (ANY([0,1,3] == wl_setup_internal%performance)) then
+  if (ANY([0,2,4] == wl_setup_internal%performance)) then
   !print*, "Replica Exchange"
   ! Perform binning and initialize overlap_mpi
   e_unswapped = setup_internal%full_energy(config)

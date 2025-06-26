@@ -304,10 +304,11 @@ module derived_types
   !> @param  radial_samples Number of radial density samples to draw per bin
   !> @param  performance Performance analysis mode 
   !>         0 - non-uniform windows | dynamic window sizes | replica exchange
-  !>         1 - non-uniform windows | replica exchange
-  !>         2 - non-uniform windows | dynamic window sizes
-  !>         3 - replica exchange
-  !>         4 - none
+  !>         1 - non-uniform windows | dynamic window sizes |        x
+  !>         2 - non-uniform windows |          x           | replica exchange
+  !>         3 - non-uniform windows |          x           |        x
+  !>         4 -         x           |          x           | replica exchange
+  !>         5 -         x           |          x           |        x
   type wl_params
 
     ! Number of  sweeps (each sweep is n_atoms mc steps)
