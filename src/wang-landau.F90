@@ -103,6 +103,13 @@ module wang_landau
     setup_internal = setup
     wl_setup_internal = wl_setup
 
+    ! Selects MC atom selection critetion
+    if (wl_setup_internal%nbr_swap) then
+      wl_setup_internal%mc_select => select_sites_nbr
+    else
+      wl_setup_internal%mc_select => select_sites
+    end if
+
     ! Check if number of MPI processes is divisible by number of windows
     call MPI_COMM_SIZE(MPI_COMM_WORLD, mpi_processes, ierr)
     print*, "MPI processes: ", mpi_processes
@@ -511,8 +518,7 @@ module wang_landau
     do i = 1, wl_setup_internal%mc_sweeps*setup_internal%n_atoms
       ! Make one MC trial
       ! Generate random numbers
-      rdm1 = setup_internal%rdm_site()
-      rdm2 = setup_internal%rdm_site()
+      call wl_setup_internal%mc_select(rdm1, rdm2)
       ! Get what is on those sites
       site1 = config(rdm1(1), rdm1(2), rdm1(3), rdm1(4))
       site2 = config(rdm2(1), rdm2(2), rdm2(3), rdm2(4))
@@ -707,6 +713,7 @@ module wang_landau
   !> @date    2024 
   subroutine pre_sampling(wl_logdos, mpi_wl_hist)
     real(real64), allocatable, intent(inout) :: wl_logdos(:), mpi_wl_hist(:)
+    i_sweeps = 0
     pre_sampled = 0
     pre_sampled_buffer = 0
     pre_sampled_state = 0
@@ -715,6 +722,11 @@ module wang_landau
     end = start
     do while (SUM(pre_sampled_buffer) < wl_setup_internal%num_windows)
       call sweeps(wl_logdos, mpi_wl_hist)
+      i_sweeps = i_sweeps + 1
+      if (MOD(i_sweeps, 10) == 0) then
+        i_sweeps = 1
+        call replica_exchange(config)
+      end if
 
       if (minval(mpi_wl_hist) > REAL(setup_internal%n_atoms) .and. pre_sampled_state == 0) then
         pre_sampled(mpi_index) = 1
@@ -835,18 +847,18 @@ module wang_landau
     integer :: i
 
     ! Bins
-    integer :: bins(wl_setup_internal%num_windows)
+    integer :: bins
 
-    bins = window_intervals(:,2)-window_intervals(:,1)
-
-    window_indices(1, 1) = window_intervals(1,1)
-    window_indices(1,2) = INT(window_intervals(1,2) + wl_setup_internal%bin_overlap*bins(2))
+    window_indices(1,1) = window_intervals(1,1)
+    window_indices(1,2) = window_intervals(1,2)
     do i = 2, wl_setup_internal%num_windows-1
-      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - wl_setup_internal%bin_overlap*bins(i-1)), 1)
-      window_indices(i, 2) = MIN(INT(window_intervals(i,2) + wl_setup_internal%bin_overlap*bins(i+1)), wl_setup_internal%bins)
+      bins = window_indices(i-1,2) - window_indices(i-1, 1)
+      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - CEILING(wl_setup_internal%bin_overlap*bins)), 1)
+      window_indices(i, 2) = window_intervals(i,2)
     end do
+    bins = window_indices(wl_setup_internal%num_windows-1,2) - window_indices(wl_setup_internal%num_windows-1, 1)
     window_indices(wl_setup_internal%num_windows, 1) = MAX(INT(window_intervals(wl_setup_internal%num_windows,1) &
-                                    - wl_setup_internal%bin_overlap*bins(wl_setup_internal%num_windows-1)), 1)
+                                    - CEILING(wl_setup_internal%bin_overlap*bins)), 1)
     window_indices(wl_setup_internal%num_windows,2) = window_intervals(wl_setup_internal%num_windows,2)
 
     num_walkers = mpi_processes/wl_setup_internal%num_windows
@@ -1140,7 +1152,7 @@ module wang_landau
     if (wl_setup_internal%num_windows > 1) then
       if (my_rank == 0) then
         factor = 1.0_real64
-        scaling = 0.8_real64
+        scaling = 0.9_real64
         factor = factor*(scaling**(iter))
         diffusion = (REAL((window_intervals(:,2) - window_intervals(:,1) + 1))) &
         /(rank_time_buffer(:,1))
@@ -1193,6 +1205,11 @@ module wang_landau
       mpi_start_idx = window_indices(mpi_index, 1)
       mpi_end_idx = window_indices(mpi_index, 2)
       mpi_bins = mpi_end_idx - mpi_start_idx + 1
+      !if (my_rank == 0) then
+      !  print*, window_indices(:,1)
+      !  print*, window_indices(:,2)
+      !  print*, window_indices(:,2)-window_indices(:,1)
+      !end if
     end if
     end if
   end subroutine mpi_window_optimise
@@ -1228,18 +1245,18 @@ module wang_landau
     integer :: i, j
 
     ! Bins
-    integer :: bins(wl_setup_internal%num_windows)
+    integer :: bins
 
-    bins = window_intervals(:,2)-window_intervals(:,1)
-
-    window_indices(1, 1) = window_intervals(1,1)
-    window_indices(1,2) = INT(window_intervals(1,2) + wl_setup_internal%bin_overlap*bins(2))
+    window_indices(1,1) = window_intervals(1,1)
+    window_indices(1,2) = window_intervals(1,2)
     do i = 2, wl_setup_internal%num_windows-1
-      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - wl_setup_internal%bin_overlap*bins(i-1)), 1)
-      window_indices(i, 2) = MIN(INT(window_intervals(i,2) + wl_setup_internal%bin_overlap*bins(i+1)), wl_setup_internal%bins)
+      bins = window_indices(i-1,2) - window_indices(i-1, 1)
+      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - CEILING(wl_setup_internal%bin_overlap*bins)), 1)
+      window_indices(i, 2) = window_intervals(i,2)
     end do
+    bins = window_indices(wl_setup_internal%num_windows-1,2) - window_indices(wl_setup_internal%num_windows-1, 1)
     window_indices(wl_setup_internal%num_windows, 1) = MAX(INT(window_intervals(wl_setup_internal%num_windows,1) &
-                                    - wl_setup_internal%bin_overlap*bins(wl_setup_internal%num_windows-1)), 1)
+                                    - CEILING(wl_setup_internal%bin_overlap*bins)), 1)
     window_indices(wl_setup_internal%num_windows,2) = window_intervals(wl_setup_internal%num_windows,2)
 
     mpi_index = my_rank/num_walkers + 1
@@ -1280,6 +1297,7 @@ module wang_landau
   logical :: accept
   integer :: overlap_loc, request
   integer :: overlap_mpi(mpi_processes, 2), overlap_mpi_buffer(mpi_processes, 2)
+  logical :: lower, upper
   real(real64) :: e_swapped, e_unswapped
 
   if (ANY([0,2,4] == wl_setup_internal%performance)) then
@@ -1291,13 +1309,17 @@ module wang_landau
   accept = .False.
   overlap_mpi = 0
   overlap_exchange = -1
+  
+  lower = (ibin > window_indices(mpi_index,1)-1) .and. &
+    (ibin < window_indices(mpi_index-1,2)+1) .and. (mpi_index > 1)
 
-  if (ibin > mpi_start_idx - 1 .and. &
-  ibin < mpi_start_idx + wl_setup_internal%bin_overlap .and. mpi_index > 1) then
-    overlap_loc = mpi_index - 1
-  elseif (ibin > mpi_end_idx - wl_setup_internal%bin_overlap .and. &
-   ibin < mpi_end_idx + 1 .and. mpi_index < wl_setup_internal%num_windows) then
+  upper = (ibin > window_indices(mpi_index+1,1)-1) .and. &
+    (ibin < window_indices(mpi_index,2)+1) .and. (mpi_index < wl_setup_internal%num_windows)
+
+  if (upper) then
     overlap_loc = mpi_index
+  else  if (lower) then
+    overlap_loc = mpi_index - 1
   else
     overlap_loc = 0
   end if
@@ -1395,6 +1417,19 @@ module wang_landau
     end do
   end subroutine
 
+  subroutine select_sites_nbr(rdm1, rdm2)
+    integer, dimension(4) :: rdm1, rdm2
+
+    rdm1 = setup_internal%rdm_site()
+    rdm2 = setup_internal%rdm_nbr(rdm1)
+  end subroutine select_sites_nbr
+
+  subroutine select_sites(rdm1, rdm2)
+    integer, dimension(4) :: rdm1, rdm2
+
+    rdm1 = setup_internal%rdm_site()
+    rdm2 = setup_internal%rdm_site()
+  end subroutine select_sites
 #endif
 
 end module wang_landau
