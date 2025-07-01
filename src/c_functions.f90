@@ -27,11 +27,12 @@ module c_functions
     end function genrand
 
     ! Routine to set the seed for genrand
-    function f90_init_genrand(seedtime, my_rank) bind(C, name='f90_init_genrand')
+    function f90_init_genrand(seedtime, my_rank, job_id) bind(C, name='f90_init_genrand')
       use, intrinsic :: iso_c_binding, only : C_int
       integer(C_int) :: f90_init_genrand
       integer(C_int), value :: my_rank
       integer(C_int), value :: seedtime
+      integer(C_int), value :: job_id
     end function f90_init_genrand
   end interface
 
