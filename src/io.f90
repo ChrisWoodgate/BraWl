@@ -944,7 +944,7 @@ module io
 
     integer :: my_rank
     character(len=*), intent(in) :: filename
-    logical, dimension(11) :: check
+    logical, dimension(10) :: check
     type(wl_params) :: parameters
     character(len=100) :: buffer, label
     integer :: line, pos, ios
@@ -968,6 +968,10 @@ module io
 
       print*, '# wang landau input file name: ', filename
     end if
+
+    ! Default values
+    parameters%performance = 0
+    parameters%nbr_swap = .False.
 
     do while (ios==0)
 
@@ -1046,7 +1050,11 @@ module io
           if (my_rank == 0) then
             print*, '# Read performance = ', parameters%performance
           end if
-          check(11) = .true.
+        case ('nbr_swap')
+          read(buffer, *, iostat=ios) parameters%nbr_swap
+          if (my_rank == 0) then
+            print*, '# Read nbr_swap = ', parameters%nbr_swap
+          end if
 
         case default
           if (my_rank == 0) then

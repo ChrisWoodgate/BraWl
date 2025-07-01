@@ -309,6 +309,8 @@ module derived_types
   !>         3 - non-uniform windows |          x           |        x
   !>         4 -         x           |          x           | replica exchange
   !>         5 -         x           |          x           |        x
+  !> @param nbr_swap Logical that determines dynamics used (Kawasaki or random neighbour swaps)
+  !> @param mc_select Function pointer to Monte Carlo site selection implmentation used at runtime
   type wl_params
 
     ! Number of  sweeps (each sweep is n_atoms mc steps)
@@ -333,7 +335,10 @@ module derived_types
     integer :: radial_samples
     ! Performance analysis
     integer :: performance
-
+    ! Dynamics type
+    logical :: nbr_swap
+    ! Monte Carlo step to call. (Neighbour swap or whole lattice swap)
+    procedure(), pointer, nopass :: mc_select => null()
   end type wl_params
 
   !--------------------------------------------------------------------!
