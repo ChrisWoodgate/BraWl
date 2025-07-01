@@ -17,7 +17,7 @@ plt.rc('font', family='serif')
 plt.rc('text', usetex=True)
 
 def flip(items, ncol):
-    return itertools.chain(*[items[i::ncol] for i in range(ncol)])
+    return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
 
 def inner_mod(a,b):
     res = a%b
@@ -49,10 +49,10 @@ colors = {
 custom_cmap = ListedColormap(colors.values())
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=custom_cmap.colors)
 
-subfolders = [ f.name for f in os.scandir(os.getcwd()) if f.is_dir() ]
-print("Available directories:")
-print(subfolders)
-directory = input("Input directory to pull data from: ")
+#subfolders = [ f.name for f in os.scandir(os.getcwd()) if f.is_dir() ]
+#print("Available directories:")
+#print(subfolders)
+#directory = input("Input directory to pull data from: ")
 
 filename = "wl_dos_bins.dat"
 bin_edges = nc.Dataset(filename)
@@ -70,7 +70,7 @@ rho = rho_of_E.variables['rho data'][:]
 U_data = rho_of_E.variables['U data'][:]
 
 elements = ""  # Initialize an empty string to store species data
-with open("input.inp"), 'r') as file:
+with open("input.txt", 'r') as file:
     for line in file:
         if 'species_name' in line:  # Check if the line contains the species_name variable
             parts = line.split("=")  # Split the line by '=' and get everything after it
@@ -89,7 +89,7 @@ wl_hist = np.array(wl_hist["grid data"][:], dtype=np.float64)
 kb_ev = 8.167333262e-5
 ev_to_ry = 13.605693122
 kb_ry = kb_ev/ev_to_ry
-n_atoms = 128
+n_atoms = 1024
 ev_to_mev = 1000
 # unit conversion
 #kb_ev = kb_ry
@@ -379,7 +379,7 @@ cv_ax2.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.25))
 cv_ax2_asro.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.0275), ncol=int(len(pairs)/2))
 
 # Loop through the legend handles and change their linewidth
-for handle in hist_ax_legend.legendHandles:
+for handle in hist_ax_legend.legend_handles:
     handle.set_linewidth(3)  # Increase the line width for each legend line
 
 alternate_colors = list(colors.values())[::2]
@@ -422,7 +422,7 @@ cv_ax2_asro.set_ylim(asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
 print("Hist y-limit", prob_max*1.01)
 print("SHC y-limit", cv_ax1.get_ylim()[1])
 print("ASRO y-limit", asro_min-0.01*asro_diff, asro_max+0.01*asro_diff)
-custom_h = 0.23301609938053558
+custom_h = 0.06701609938053558
 custom_l = -2.616536458333333
 custom_u = 1.0366145833333336
 custom_c = 1.1793471814868697

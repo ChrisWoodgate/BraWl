@@ -15,6 +15,7 @@ np.set_printoptions(suppress=True)
 plt.rcParams.update({"font.size": font_size})
 plt.rc('font', family='serif')
 #plt.rc('text', usetex=True)
+plt.rcParams["figure.figsize"] = (8,4)
 
 def flip(items, ncol):
     return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
@@ -45,10 +46,10 @@ colors = {
 custom_cmap = ListedColormap(colors.values())
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=custom_cmap.colors)
 
-subfolders = [ f.name for f in os.scandir(os.getcwd()) if f.is_dir() ]
-print("Available directories:")
-print(subfolders)
-directory = input("Input directory to pull data from: ")
+#subfolders = [ f.name for f in os.scandir(os.getcwd()) if f.is_dir() ]
+#print("Available directories:")
+#print(subfolders)
+directory = ""#input("Input directory to pull data from: ")
 
 filename = "load_balance/wl_lb_bins.dat".format(directory)
 wl_lb_bins = nc.Dataset(filename)
@@ -81,12 +82,12 @@ columns = 5
 
 for i in range(window):
   plt.plot(x_axis, wl_lb_bins[0:iter,i], label=i+1)
-plt.title("Bins per Window")
+#plt.title("Bins per Window")
 plt.ylabel("Bins")
 plt.xlabel("W-L Iteration")
 plt.xticks(x_axis)
 handles, labels = plt.gca().get_legend_handles_labels()
-plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=columns)
+plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=columns)
 plt.tight_layout()
 plt.savefig('load_balance/load_balance_1.pdf', bbox_inches='tight')
 plt.close()
@@ -104,7 +105,7 @@ plt.axhline(1, linestyle='--', color='red')
 plt.axhline(1.25, linestyle='--', color='red', alpha=0.5)
 plt.xticks(x_axis)
 handles, labels = plt.gca().get_legend_handles_labels()
-plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=columns)
+plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=columns)
 plt.tight_layout()
 plt.savefig('load_balance/load_balance_2.pdf', bbox_inches='tight')
 plt.close()
