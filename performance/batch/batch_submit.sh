@@ -24,6 +24,7 @@ do
 
               # Submit the job with the modified batch file name
               sbatch "$batch_file"
+            done
           done
       done
   done
