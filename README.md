@@ -35,7 +35,7 @@ To build and run the main package with full functionality, you will require:
 - A Fortran compiler.
 - A Message Passing Interface (MPI) implementation.
 - A LAPACK/BLAS implementation, such as `OpenBLAS`.
-- The NetCDF-Fortran library. (This is _usually_ dependent on the standard NetCDF library.)
+- The NetCDF-Fortran library. (This is _usually_ dependent on the standard NetCDF library, so you may need to explicitly install this, too.)
 - GNU Make, for building the package.
 
 Optionally, to build a serial version of the code with more limited functionality (Wang-Landau sampling is currently _only_ a parallel implementation due to the nature of the algorithm), it is sufficient simply to have GNU Make, a Fortran compiler and the NetCDF-Fortran library.
@@ -63,16 +63,7 @@ netCDF/1.7.2
 The Python modules can be installed using `pip install -r requirements.txt`, executed in the main directory. It is recommended to install these within a virtual environment which can be created within `BraWl` using `python -m venv venv` and the activated using `source venv/bin/activate`. (Compatibility of the plotting scripts with later/earlier versions of the listed packages is anticipated, but not guaranteed.)
 
 ## Compilation
-At the moment the code has been tested with GCC and OpenMPI, versions as specified above. Put the code in a directory like `~/codes/BraWl` and navigate to that directory.
-
-On the Warwick SCRTP system, which uses environment modules, the relevant modules can be loaded using the commands
-```
-module purge
-module load GCC/13.2.0 OpenMPI/4.1.6 netCDF-Fortran/4.6.1
-```
-On Bristol's `bluepebble` cluster, the relevant modules are (as of 2025/03) `gcc/12.3.0 openmpi/5.0.3 netcdf-c/4.9.2 netcdf-fortran`.
-
-Once any required modules are loaded and/or dependencies installed, you should be able to build the code using
+At the moment the code has been tested with GCC and OpenMPI, versions as specified above. Put the code in a directory like `~/codes/BraWl` and navigate to that directory. Assuming the dependencies mentioned above have been installed and configured correctly, building the code should be as simple as running the commands
 ```
 make compiler=mpifort
 ```
@@ -81,6 +72,18 @@ if a parallel compilation is desired, or
 make compiler=gfortran
 ```
 if a serial compilation is desired.
+
+### System-specific instructions
+On the Warwick SCRTP system, which uses environment modules, the relevant modules (for use on the `taskfarm` and/or interactive SCRTP machines) can be loaded using the commands
+```
+module purge
+module load GCC/13.2.0 OpenMPI/4.1.6 netCDF-Fortran/4.6.1
+```
+
+On Bristol's `bluepebble` cluster, the relevant modules (as of 2025/03) can be loaded using
+```
+module add gcc/12.3.0 openmpi/5.0.3 netcdf-c/4.9.2 netcdf-fortran
+```
 
 ## Running the code
 The code can be run from any directory containing the relevant input files, simply by running
