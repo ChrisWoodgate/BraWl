@@ -50,6 +50,6 @@ def create_directories_and_copy_files(brawl_type, source_dir, num_walkers, overl
 # Example call to the function with brawl_type and source_dir
 brawl_type = [0, 1, 2, 3, 4, 5]
 source_dir = '.'
-num_walkers = [1]
-overlaps = [5, 10, 25, 50, 75]
+num_walkers = [2, 3, 4, 5, 6]
+overlaps = [50]
 create_directories_and_copy_files(brawl_type, source_dir, num_walkers, overlaps)
