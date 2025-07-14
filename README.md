@@ -1,8 +1,10 @@
 # BraWl
 
-A code for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian, implementing a range of conventional and enhanced sampling techniques, including Metropolis-Hastings Monte Carlo, Nested Sampling, and Wang-Landau sampling. The code will be periodically updated so it is best to check the GitHub repository for the latest version.
+`BraWl` — a package for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian. The package implements a range of conventional and enhanced sampling techniques, including Metropolis-Hastings Monte Carlo, Nested Sampling, and Wang-Landau sampling.
 
 Copyright (C) The Authors 2019-2025. Released under the GNU Lesser General Public License, version 3.
+
+---
 
 ## Background
 
@@ -33,7 +35,7 @@ To build and run the main package with full functionality, you will require:
 - A Fortran compiler.
 - A Message Passing Interface (MPI) implementation.
 - A LAPACK/BLAS implementation, such as `OpenBLAS`.
-- The NetCDF-Fortran library. (This is _usually_ dependent on the standard NetCDF library.)
+- The NetCDF-Fortran library. (This is _usually_ dependent on the standard NetCDF library, so you may need to explicitly install this, too.)
 - GNU Make, for building the package.
 
 Optionally, to build a serial version of the code with more limited functionality (Wang-Landau sampling is currently _only_ a parallel implementation due to the nature of the algorithm), it is sufficient simply to have GNU Make, a Fortran compiler and the NetCDF-Fortran library.
@@ -58,19 +60,10 @@ Matplotlib/3.10.1
 Cycler/0.12.1
 netCDF/1.7.2
 ```
-The Python modules can be installed using `pip install -r requirements.txt`, executed in the main directory. It is recommended to install these within a virtual environment which can be created within BraWl using `python -m venv venv` and the activated using `source venv/bin/activate`. (Compatibility of the plotting scripts with later/earlier versions of the listed packages is anticipated, but not guaranteed.)
+The Python modules can be installed using `pip install -r requirements.txt`, executed in the main directory. It is recommended to install these within a virtual environment which can be created within `BraWl` using `python -m venv venv` and the activated using `source venv/bin/activate`. (Compatibility of the plotting scripts with later/earlier versions of the listed packages is anticipated, but not guaranteed.)
 
 ## Compilation
-At the moment the code has been tested with GCC and OpenMPI, versions as specified above. Put the code in a directory like `~/codes/BraWl` and navigate to that directory.
-
-On the Warwick SCRTP system, which uses environment modules, the relevant modules can be loaded using the commands
-```
-module purge
-module load GCC/13.2.0 OpenMPI/4.1.6 netCDF-Fortran/4.6.1
-```
-On Bristol's `bluepebble` cluster, the relevant modules are (as of 2025/03) `gcc/12.3.0 openmpi/5.0.3 netcdf-c/4.9.2 netcdf-fortran`.
-
-Once any required modules are loaded and/or dependencies installed, you should be able to build the code using
+At the moment the code has been tested with GCC and OpenMPI, versions as specified above. Put the code in a directory like `~/codes/BraWl` and navigate to that directory. Assuming the dependencies mentioned above have been installed and configured correctly, building the code should be as simple as running the commands
 ```
 make compiler=mpifort
 ```
@@ -79,6 +72,18 @@ if a parallel compilation is desired, or
 make compiler=gfortran
 ```
 if a serial compilation is desired.
+
+### System-specific instructions
+On the Warwick SCRTP system, which uses environment modules, the relevant modules (for use on the `taskfarm` and/or interactive SCRTP machines) can be loaded using the commands
+```
+module purge
+module load GCC/13.2.0 OpenMPI/4.1.6 netCDF-Fortran/4.6.1
+```
+
+On Bristol's `bluepebble` cluster, the relevant modules (as of 2025/03) can be loaded using
+```
+module add gcc/12.3.0 openmpi/5.0.3 netcdf-c/4.9.2 netcdf-fortran
+```
 
 ## Running the code
 The code can be run from any directory containing the relevant input files, simply by running
@@ -97,9 +102,9 @@ mpirun -np <num_processors> /path/to/BraWl/brawl.run input=<brawl_input_name> me
 ```
 
 ## Examples
-If you navigate to the `examples` subdirectory, you should find some example input files demonstrating the code's usage which can be run inside those directories. These input files are commented to explain what the various parameters mean and do. _This examples directory is currently under development_.
+If you navigate to the `examples` subdirectory, you should find some example input files demonstrating the code's usage which can be run inside those directories. These input files are commented to explain what the various parameters mean and do.
 
-Most options specified in the input files are fairly self-explanatory. The least obvious is the `mode' option of `brawl.inp`. Because it is out intention to include 2D (and potentially 1D) options in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented (and fully tested) options are:
+Most options specified in the input files are fairly self-explanatory. Commented examples of input files can be found in the `examples` subdirectory. The least obvious is the `mode' option of `brawl.inp`. Because it is our intention to include 2D (and potentially 1D) options in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented (and fully tested) options are:
 - 01: Metropolis-Hastings Monte Carlo. Uses the Metropolis-Hastings algortithm to equilibrate a system then perform sampling. Can also be used to perform simulated annealing, _e.g._ as used in [npj Comput. Mater. **10** 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y), or to draw decorrelated samples for use in other modelling approaches, such as training machine-learned interatomic potentials, _e.g._ as used in [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
 - 02: Wang-Landau sampling. Uses Wang-Landau sampling to compute the simulation density of states in energy, which can then be used to sample thermodynamic quantities as a post-processing step. This procedure is outlined in [arXiv:2503.13235](https://arxiv.org/abs/2503.13235)
 - 03: Nested sampling. Uses the nested sampling algorithm to sample the configuration space from random initial configurations, allowing to calculate the partition function at an arbitrary temperature during the post-processing step. This procedure is outlined in [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
@@ -119,7 +124,6 @@ To save the output of the test run, pipe it to a file, _e.g._
 ```
 The output of this routine will tell you which tests (if any failed).
 
-
 ## Documentation
 The in addition to this README and the provided examples, the code also has (searchable) documentation which is auto-generated using [Doxygen](https://www.doxygen.nl), which lets users 'host' a web interface to the documentation locally on their machine. To view this documentation: 
 1. Obtain [Doxygen](https://www.doxygen.nl), which is typically available through a package manager.
@@ -129,8 +133,8 @@ The in addition to this README and the provided examples, the code also has (sea
 This documentation contains information about all modules, functions, subroutines, and derived types, so is particularly useful if you are looking to develop a new feature.
 
 ## Citations
-ANY publications/presentations/further work resulting from the use of this software should cite the original publication for which it was developed:
-* C. D. Woodgate, J. B. Staunton, [Phys. Rev. B **105**, 115124 (2023)](https://doi.org/10.1103/PhysRevB.105.115124)
+If you use `BraWl` in your research, please cite our preprint:
+* H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393).
 
 ## List of publications
 A (hopefully fairly complete) list of publications obtained using this code is:
@@ -144,6 +148,7 @@ A (hopefully fairly complete) list of publications obtained using this code is:
 8. C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
 9. C. D. Woodgate, L. H. Lewis, J. B. Staunton, [npj Comput. Mater. **10**, 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y).
 10. C. D. Woodgate, H. J. Naguszewski, D. Redka, J. Minar, D. Quigley, J. B. Staunton, [arXiv:2503.13235](https://arxiv.org/abs/2503.13235).
+11. H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393).
 
 ## Authors
 - Hubert J. Naguszewski
