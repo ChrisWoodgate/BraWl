@@ -54,16 +54,16 @@ mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=custom_cmap.colors)
 #print(subfolders)
 #directory = input("Input directory to pull data from: ")
 
-filename = "wl_dos_bins.dat"
+filename = "data/wl_dos_bins.dat"
 bin_edges = nc.Dataset(filename)
 bin_edges = np.array(bin_edges["grid data"][:], dtype=np.float64)
 
-filename = "wl_dos.dat"
+filename = "data/wl_dos.dat"
 wl_logdos = nc.Dataset(filename)
 wl_logdos = np.array(wl_logdos["grid data"][:], dtype=np.float64)
 plt.plot(wl_logdos)
 
-filename = "radial_densities/rho_of_E.dat"
+filename = "asro/rho_of_E.dat"
 rho_of_E = nc.Dataset(filename)
 
 rho = rho_of_E.variables['rho data'][:]
