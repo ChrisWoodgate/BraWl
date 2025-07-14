@@ -8,14 +8,14 @@ from matplotlib.colors import ListedColormap
 import matplotlib.colors as mcolors
 import itertools
 
-font_size = 12
+font_size = 32
 np.set_printoptions(suppress=True)
 #plt.rcParams.update({"text.usetex": True,
 #                     "font.size": font_size})
 plt.rcParams.update({"font.size": font_size})
 plt.rc('font', family='serif')
 #plt.rc('text', usetex=True)
-plt.rcParams["figure.figsize"] = (8,4)
+plt.rcParams["figure.figsize"] = (12*1.75,8*1.75)
 
 def flip(items, ncol):
     return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
@@ -63,6 +63,12 @@ filename = "load_balance/wl_window_time.dat".format(directory)
 wl_window_time = nc.Dataset(filename)
 wl_window_time = np.array(wl_window_time["grid data"][:], dtype=np.float64)
 
+filename = "load_balance/wl_lb_mc_steps.dat".format(directory)
+wl_lb_mc_steps = nc.Dataset(filename)
+wl_lb_mc_steps = np.array(wl_lb_mc_steps["grid data"][:], dtype=np.int64)
+
+print(wl_lb_mc_steps, sum(wl_lb_mc_steps))
+
 try:
   iter = np.where(wl_lb_bins[:,0] == -1)[0][0]
 except:
@@ -78,16 +84,16 @@ window = np.shape(wl_lb_bins)[1]
 
 x_axis = np.arange(1,iter+1,1).astype(np.int32)
 
-columns = 5
+columns = 8
 
 for i in range(window):
   plt.plot(x_axis, wl_lb_bins[0:iter,i], label=i+1)
 #plt.title("Bins per Window")
-plt.ylabel("Bins")
-plt.xlabel("W-L Iteration")
+plt.ylabel("# of Bins per Domain")
+plt.xlabel("Wang-Landau Iteration")
 plt.xticks(x_axis)
 handles, labels = plt.gca().get_legend_handles_labels()
-plt.legend(flip(handles, columns), flip(labels, columns), loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=columns)
+plt.legend(flip(handles, columns), flip(labels, columns), title="Domain", loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=columns)
 plt.tight_layout()
 plt.savefig('load_balance/load_balance_1.pdf', bbox_inches='tight')
 plt.close()
