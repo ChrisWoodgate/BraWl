@@ -70,13 +70,14 @@ INCDIR=include
 ifeq ($(SYSTEM),Darwin)
          FFLAGS += $(shell nf-config --fflags)
          LDFLAGS += $(shell nf-config --flibs) \
+					$(shell nc-config --libs)
                     -lnetcdf -lnetcdff
 else
          FFLAGS +=$(shell nf-config --fflags)
-         LDFLAGS += $(shell nf-config --flibs) 
+         LDFLAGS += $(shell nf-config --flibs) \
+					$(shell nc-config --libs)
 endif
 
-# COmment
 # Command to use for linking and executable
 LD=$(FC)
 EXE=brawl.run
