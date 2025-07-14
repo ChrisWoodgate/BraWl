@@ -63,6 +63,7 @@ walkers = np.array([1, 2, 3, 4, 5, 6])
 overlaps = np.array([50])
 
 sums = np.zeros([len(methods), len(walkers), len(windows), len(overlaps), repeats])
+mc_steps = np.zeros([len(methods), len(walkers), len(windows), len(overlaps), repeats])
 one_sums = np.zeros([len(methods), len(walkers), repeats])
 for method_id, method in enumerate(methods):
   for walker in range(len(walkers)):
@@ -76,6 +77,11 @@ for method_id, method in enumerate(methods):
           row_sums = np.max(wl_lb_max_time, axis=1)
           sums[method_id, walker, window, overlap, k-1] = np.sum(row_sums)
 
+          filename = "{}_{:02d}_{:02d}_{:02d}_{}/load_balance/wl_lb_mc_steps.dat".format(method, walkers[walker], windows[window], overlaps[overlap], k)
+          wl_lb_mc_steps = nc.Dataset(filename)
+          wl_lb_mc_steps = np.array(wl_lb_mc_steps["grid data"][:], dtype=np.int64)
+          mc_steps[method_id, walker, window, overlap, k-1] = np.sum(wl_lb_mc_steps)
+
 # REMOVE THIS LATER
 sums[0, 5, 8, 0, 0] = 250
 
@@ -84,6 +90,9 @@ one_sums = sums[:, :, 0, :, :]
 sums_mean = np.mean(sums, axis=4)
 sums_min = np.min(sums, axis=4)
 sums_err = np.std(sums, axis=4)/np.sqrt(repeats)
+
+mc_steps_mean = np.mean(mc_steps, axis=4)
+mc_steps_err = np.std(mc_steps, axis=4)/np.sqrt(repeats)
 
 one_sums_err = np.zeros([len(walkers),len(overlaps)])
 one_sums_mean = np.zeros([len(walkers),len(overlaps)])
@@ -95,6 +104,9 @@ for walker in range(len(walkers)):
 
     sums_mean[:, walker, 0, overlap] = one_sums_mean[walker, overlap]
     sums_err[:, walker, 0, overlap] = one_sums_err[walker, overlap]
+
+    mc_steps_mean[:, walker, 0, overlap] = np.mean(mc_steps[:, walker, 0, overlap, :])
+    mc_steps_err[:, walker, 0, overlap] = np.std(mc_steps[:, walker, 0, overlap, :])/np.sqrt(len(methods)*repeats)
 
 efficiency = np.empty_like(sums_mean)
 efficiency_err = np.empty_like(sums_err)
@@ -142,6 +154,19 @@ for overlap in range(len(overlaps)):
   plt.legend(loc="upper left", title="Methods")
   plt.tight_layout()
   plt.savefig('{:02d}_method_speedup.pdf'.format(overlaps[overlap]), bbox_inches='tight')
+  plt.close()
+
+# MC Steps
+for overlap in range(len(overlaps)):
+  for method in range(len(methods)):
+
+  plt.errorbar(windows, mc_steps[method, 0, :, overlap], yerr=mc_steps[method, 0, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(methods_label[method]))
+  plt.xticks(windows, labels=windows)
+  plt.xlabel("Cores")
+  plt.ylabel("Relative MC Steps")
+  plt.title("Relative MC Steps")
+  plt.tight_layout()
+  plt.savefig('{:02d}_{:02d}_mc_steps.pdf'.format(methods[method], overlaps[overlap]), bbox_inches='tight')
   plt.close()
 
 # Speed Up
