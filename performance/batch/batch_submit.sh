@@ -8,6 +8,9 @@ walkers=(01 02 03 04 05 06)
 overlaps=(05 10 25 50 75)
 
 walkers=(01)
+overlaps=(50)
+brawl_type=(0)
+
 # Loop over each value in the cores array
 for brawl in "${brawl_type[@]}"
 do

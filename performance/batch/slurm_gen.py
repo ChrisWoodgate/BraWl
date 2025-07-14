@@ -5,8 +5,8 @@ cores_per_node = 48
 
 windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
 brawl_type = [0, 1, 2, 3, 4, 5]
-walkers = [1]
-overlaps = [5, 10, 25, 50, 75]
+walkers = [1, 2, 3, 4, 5, 6]
+overlaps = [50]
 
 base_script_content = '''#!/bin/bash
 
@@ -16,7 +16,7 @@ base_script_content = '''#!/bin/bash
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=3850
 #SBATCH --partition=firedrake
-#SBATCH --time=12:00:00
+#SBATCH --time=2:00:00
 
 module purge
 module load GCC/13.2.0 OpenMPI/4.1.6 netCDF-Fortran/4.6.1 OpenBLAS/0.3.24
