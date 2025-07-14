@@ -63,12 +63,6 @@ filename = "load_balance/wl_window_time.dat".format(directory)
 wl_window_time = nc.Dataset(filename)
 wl_window_time = np.array(wl_window_time["grid data"][:], dtype=np.float64)
 
-filename = "load_balance/wl_lb_mc_steps.dat".format(directory)
-wl_lb_mc_steps = nc.Dataset(filename)
-wl_lb_mc_steps = np.array(wl_lb_mc_steps["grid data"][:], dtype=np.int64)
-
-print(wl_lb_mc_steps, sum(wl_lb_mc_steps))
-
 try:
   iter = np.where(wl_lb_bins[:,0] == -1)[0][0]
 except:
@@ -77,8 +71,6 @@ except:
 filename = "load_balance/wl_lb_max_time.dat".format(directory)
 wl_lb_max_time = nc.Dataset(filename)
 wl_lb_max_time = np.array(wl_lb_max_time["grid data"][:], dtype=np.float64).T
-
-print(np.sum(np.max(wl_lb_max_time, axis=1))/60)
 
 window = np.shape(wl_lb_bins)[1]
 
