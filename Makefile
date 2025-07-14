@@ -76,6 +76,7 @@ else
          LDFLAGS += $(shell nf-config --flibs) 
 endif
 
+# COmment
 # Command to use for linking and executable
 LD=$(FC)
 EXE=brawl.run
