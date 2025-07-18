@@ -15,7 +15,7 @@ np.set_printoptions(suppress=True)
 #plt.rcParams.update({"text.usetex": True,
 #                     "font.size": font_size})
 plt.rcParams.update({"font.size": font_size})
-plt.rcParams["figure.figsize"] = (12,8)
+plt.rcParams["figure.figsize"] = (16,8)
 #plt.rc('text', usetex=True)
 
 def flip(items, ncol):
@@ -52,15 +52,14 @@ methods_label = np.array(["NU-LB-R", "NU-LB", "NU-R", "NU", "R", "Domains"])
 windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
 walkers = np.array([1, 2, 3, 4, 5, 6])
 overlaps = np.array([5, 10, 25, 50, 75])
-repeats = 3
+repeats = 5
 bins=512
 
-walkers = np.array([1])
 #methods = np.array([3, 4, 5])
-methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Balance", "Non-Uniform + Replica","Non-Uniform", "Replica", "Domains"])
-methods = np.array([0,1])
-walkers = np.array([1, 2, 3, 4, 5, 6])
-overlaps = np.array([50])
+#methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Balance", "Non-Uniform + Replica","Non-Uniform", "Replica", "Domains"])
+#methods = np.array([0,1])
+walkers = np.array([1])
+#overlaps = np.array([50])
 
 sums = np.zeros([len(methods), len(walkers), len(windows), len(overlaps), repeats])
 mc_steps = np.zeros([len(methods), len(walkers), len(windows), len(overlaps), repeats])
@@ -83,7 +82,7 @@ for method_id, method in enumerate(methods):
           mc_steps[method_id, walker, window, overlap, k-1] = np.sum(wl_lb_mc_steps)
 
 # REMOVE THIS LATER
-sums[0, 5, 8, 0, 0] = 250
+#sums[0, 5, 8, 0, 0] = 250
 
 one_sums = sums[:, :, 0, :, :]
 
@@ -107,6 +106,15 @@ for walker in range(len(walkers)):
 
     mc_steps_mean[:, walker, 0, overlap] = np.mean(mc_steps[:, walker, 0, overlap, :])
     mc_steps_err[:, walker, 0, overlap] = np.std(mc_steps[:, walker, 0, overlap, :])/np.sqrt(len(methods)*repeats)
+
+mc_steps_err = mc_steps_err/mc_steps_mean
+
+for method in range(len(methods)):
+  for walker in range(len(walkers)):
+    for overlap in range(len(overlaps)):
+      mc_steps_mean[method, walker, :, overlap] = mc_steps_mean[method, walker, :, overlap]/mc_steps_mean[method, walker, 0, overlap]
+
+mc_steps_err = mc_steps_err*mc_steps_mean
 
 efficiency = np.empty_like(sums_mean)
 efficiency_err = np.empty_like(sums_err)
@@ -159,15 +167,16 @@ for overlap in range(len(overlaps)):
 # MC Steps
 for overlap in range(len(overlaps)):
   for method in range(len(methods)):
-
-  plt.errorbar(windows, mc_steps[method, 0, :, overlap], yerr=mc_steps[method, 0, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(methods_label[method]))
-  plt.xticks(windows, labels=windows)
-  plt.xlabel("Cores")
-  plt.ylabel("Relative MC Steps")
-  plt.title("Relative MC Steps")
-  plt.tight_layout()
-  plt.savefig('{:02d}_{:02d}_mc_steps.pdf'.format(methods[method], overlaps[overlap]), bbox_inches='tight')
-  plt.close()
+    plt.axhline(y=1, linestyle='-')
+    plt.errorbar(windows, mc_steps_mean[method, 0, :, overlap], yerr=mc_steps_err[method, 0, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(methods_label[method]))
+    plt.xticks(windows, labels=windows)
+    plt.xlabel("Cores")
+    plt.ylabel("Relative MC Steps")
+    plt.title("Relative MC Steps")
+    plt.tight_layout()
+    plt.gca().set_box_aspect(1)
+    plt.savefig('{}_{:02d}_mc_steps.pdf'.format(methods[method], overlaps[overlap]), bbox_inches='tight')
+    plt.close()
 
 # Speed Up
 for method in range(len(methods)):
