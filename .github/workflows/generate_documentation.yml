@@ -6,7 +6,6 @@ jobs:
     steps:
       - name: "Doxygen"
         run: |
-          pwd
           ls
           sudo apt-get install -y doxygen
           doxygen docs/doxyfile
