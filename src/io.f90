@@ -89,7 +89,7 @@ module io
       write(6,'(72("-"))')
       ! Start the clock
       call cpu_time(t_stop)
-      write(6,'(20x,"Execution time",1x,f9.1 " seconds")') t_stop-t_start
+      write(6,'(20x,"Execution time",1x,f9.1,1x," seconds")') t_stop-t_start
     endif
 
     write(6,'(72("="),/)' )
