@@ -1,0 +1,12 @@
+name: documentation-generation
+on: [push]
+jobs:
+  doxygen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mattnotmitt/doxygen-action@1.12.0
+        with:
+          working-directory: './'
+          doxyfile-path: 'docs/'
+          enable-latex: true
+      - run: doxygen docs/doxyfile
