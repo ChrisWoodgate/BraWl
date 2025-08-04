@@ -4,8 +4,9 @@ jobs:
   doxygen:
     runs-on: ubuntu-latest
     steps:
+      - run: ls
+      - run: pwd
       - name: "Doxygen"
         run: |
-          ls -ls
           sudo apt-get install -y doxygen
           doxygen docs/doxyfile
