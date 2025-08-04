@@ -1,0 +1,11 @@
+name: documentation-generation
+on: [push]
+jobs:
+  doxygen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: generate-documentation
+        uses: mattnotmitt/doxygen-action@1.12.0
+        with:
+          doxyfile-path: 'docs/doxyfile'
