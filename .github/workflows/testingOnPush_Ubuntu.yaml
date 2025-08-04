@@ -40,6 +40,18 @@ jobs:
           cd tests
           ../tests.run
     
-      #- name: Run parallel compilation with mpifort
-      #  run: |
-      #    make compiler=mpifort
+      - name: Run parallel compilation with mpifort
+        run: |
+          make compiler=mpifort
+
+      - name: Run tests with mpifort with 1 process
+        run: |
+          make compiler=mpifort tests
+          cd tests
+          mpirun -np 1 ../tests.run
+
+      - name: Run tests with mpifort with 4 processes
+        run: |
+          make compiler=mpifort tests
+          cd tests
+          mpirun -np 4 ../tests.run
