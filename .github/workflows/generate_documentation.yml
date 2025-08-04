@@ -6,6 +6,6 @@ jobs:
     steps:
       - name: "Doxygen"
         run: |
-          ls $GITHUB_WORKSPACE
+          ls -ls
           sudo apt-get install -y doxygen
           doxygen docs/doxyfile
