@@ -70,8 +70,8 @@ INCDIR=include
 ifeq ($(SYSTEM),Darwin)
          FFLAGS += $(shell nf-config --fflags)
          LDFLAGS += $(shell nf-config --flibs) \
-					$(shell nc-config --libs)
-                    -lnetcdf -lnetcdff
+					$(shell nc-config --libs) \
+					-lnetcdf -lnetcdff
 else
          FFLAGS +=$(shell nf-config --fflags)
          LDFLAGS += $(shell nf-config --flibs) \
