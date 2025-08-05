@@ -35,7 +35,7 @@ module wang_landau
   integer :: mpi_bins, mpi_start_idx, mpi_end_idx, mpi_index, mpi_start_idx_buffer
   integer :: mpi_end_idx_buffer, i_sweeps
   real(real64) :: scale_factor, scale_count, wl_logdos_min, bin_overlap, beta_diff, beta_original, beta_merge
-  real(real64), allocatable :: mpi_bin_edges(:), mpi_wl_hist(:), wl_logdos_buffer(:), wl_logdos_combine(:)
+  real(real64), allocatable :: mpi_bin_edges(:), mpi_wl_hist(:), wl_logdos_buffer(:), wl_logdos_combine(:), window_overlap(:,:)
   real(real64), allocatable :: rank_time(:), rank_time_buffer(:,:)
  
   ! Window variables
@@ -259,7 +259,7 @@ module wang_landau
         call save_rho_E(rho_saved, radial_record)
 
         call save_wl_data(bin_edges, wl_logdos, wl_hist)
-        call save_load_balance_data(window_indices, rank_time_buffer, lb_mc_steps)
+        call save_load_balance_data(window_indices, rank_time_buffer, lb_mc_steps, window_overlap)
         
         if (ANY([0,1] == wl_setup_internal%performance)) then
         call mpi_window_optimise(iter)
@@ -404,9 +404,9 @@ module wang_landau
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine save_load_balance_data(window_indices, rank_time_buffer, lb_mc_steps)
+  subroutine save_load_balance_data(window_indices, rank_time_buffer, lb_mc_steps, window_overlap)
     integer, intent(in) :: window_indices(:, :)
-    real(real64), intent(in) :: rank_time_buffer(:, :), lb_mc_steps(:)
+    real(real64), allocatable, intent(in) :: rank_time_buffer(:, :), lb_mc_steps(:), window_overlap(:,:)
     call MPI_REDUCE(lb_mc_steps, lb_mc_steps_buffer, num_iter, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     if (my_rank == 0) then
       lb_bins(iter, :) = REAL(window_indices(:, 2) - window_indices(:, 1) + 1)
@@ -416,6 +416,7 @@ module wang_landau
       call ncdf_writer_2d("load_balance/wl_lb_bins.dat", ierr, lb_bins)
       call ncdf_writer_2d("load_balance/wl_lb_avg_time.dat", ierr, lb_avg_time)
       call ncdf_writer_2d("load_balance/wl_lb_max_time.dat", ierr, lb_max_time)
+      call ncdf_writer_2d("load_balance/wl_window_overlap.dat", ierr, window_overlap)
       call ncdf_writer_1d("load_balance/wl_window_time.dat", ierr, window_time)
       call ncdf_writer_1d("load_balance/wl_lb_mc_steps.dat", ierr, lb_mc_steps_buffer)
     end if
@@ -850,22 +851,8 @@ module wang_landau
   !> @date    2024 
   subroutine create_window_intervals(window_intervals, window_indices, mpi_bins)
     integer, intent(inout) :: window_intervals(:,:), window_indices(:,:), mpi_bins
-    integer :: i
 
-    ! Bins
-    integer :: bins
-
-    window_indices(1,1) = window_intervals(1,1)
-    window_indices(1,2) = window_intervals(1,2)
-    do i = 2, wl_setup_internal%num_windows-1
-      bins = window_indices(i-1,2) - window_indices(i-1, 1)
-      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - CEILING(wl_setup_internal%bin_overlap*bins)), 1)
-      window_indices(i, 2) = window_intervals(i,2)
-    end do
-    bins = window_indices(wl_setup_internal%num_windows-1,2) - window_indices(wl_setup_internal%num_windows-1, 1)
-    window_indices(wl_setup_internal%num_windows, 1) = MAX(INT(window_intervals(wl_setup_internal%num_windows,1) &
-                                    - CEILING(wl_setup_internal%bin_overlap*bins)), 1)
-    window_indices(wl_setup_internal%num_windows,2) = window_intervals(wl_setup_internal%num_windows,2)
+    call create_overlap(window_intervals, window_indices)
 
     num_walkers = mpi_processes/wl_setup_internal%num_windows
 
@@ -874,6 +861,57 @@ module wang_landau
     mpi_end_idx = window_indices(mpi_index, 2)
     mpi_bins = mpi_end_idx - mpi_start_idx + 1
   end subroutine create_window_intervals
+
+  !> @brief   Routine that determines window overlap
+  !>
+  !> @details Routine that takes the window intervals and adds the user defined overlap
+  !>          region.
+  !>          
+  !> @param   window_intervals Integer 2D array containing energy bin indices for
+  !>          each window
+  !> @param   window_indices Integer 2D array containing the energy bin indices for
+  !>          each MPI process including ovelap
+  !> 
+  !> @return  None
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2025 
+  subroutine create_overlap(window_intervals, window_indices)
+    integer, intent(inout) :: window_indices(:,:)
+    integer, intent(in) :: window_intervals(:,:)
+    integer :: bins, i, bins_i, bins_j
+
+    window_indices = window_intervals
+
+    if (wl_setup_internal%num_windows > 1) then
+    ! Unidirectional
+
+    do i = 2, wl_setup_internal%num_windows-1
+      bins = window_indices(i-1,2) - window_indices(i-1, 1)
+      window_indices(i, 1) = INT(window_intervals(i,1) - MAX(CEILING(wl_setup_internal%bin_overlap*bins), 2))
+      window_indices(i, 2) = window_intervals(i,2)
+    end do
+    bins = window_indices(wl_setup_internal%num_windows-1,2) - window_indices(wl_setup_internal%num_windows-1, 1)
+    window_indices(wl_setup_internal%num_windows, 1) = INT(window_intervals(wl_setup_internal%num_windows,1) &
+                                    - MAX(CEILING(wl_setup_internal%bin_overlap*bins), 2))
+    window_indices(wl_setup_internal%num_windows,2) = window_intervals(wl_setup_internal%num_windows,2)
+
+    ! Bidirectional
+    !bins_j = window_indices(2,2) - window_indices(2, 1)
+    !window_indices(1,2) = window_indices(1,2) + CEILING(wl_setup_internal%bin_overlap*bins_j)
+
+    !do i = 2, wl_setup_internal%num_windows-1
+    !  bins_i = window_indices(i-1,2) - window_indices(i-1, 1)
+    !  bins_j = window_indices(i+1,2) - window_indices(i+1, 1)
+    !  window_indices(i, 1) = MAX(INT(window_indices(i-1,2) - CEILING(wl_setup_internal%bin_overlap*bins_i)), 1)
+    !  window_indices(i, 2) = MAX(INT(window_indices(i,2) + CEILING(wl_setup_internal%bin_overlap*bins_j)), 1)
+    !end do
+!
+    !bins_i = window_indices(wl_setup_internal%num_windows-1,2) - window_indices(wl_setup_internal%num_windows-1, 1)
+    !window_indices(wl_setup_internal%num_windows, 1) = MAX(INT(window_indices(wl_setup_internal%num_windows-1,2) &
+    !                                - CEILING(wl_setup_internal%bin_overlap*bins_i)), 1)
+    end if
+  end subroutine create_overlap
 
   !> @brief   Routine that creates energy bins
   !>
@@ -945,6 +983,7 @@ module wang_landau
     allocate(window_indices(wl_setup_internal%num_windows, 2))
     allocate(window_intervals(wl_setup_internal%num_windows, 2))
     allocate(window_rank_index(wl_setup_internal%num_windows, 2))
+    allocate(window_overlap(num_iter, wl_setup_internal%num_windows-1))
     
     ! allocate arrays
     allocate(radial_record(wl_setup_internal%bins))
@@ -1009,6 +1048,7 @@ module wang_landau
     num_walkers = mpi_processes/wl_setup_internal%num_windows
     wl_setup_internal%radial_samples = INT(wl_setup_internal%radial_samples/num_walkers)
     wl_setup_internal%radial_samples = MAX(INT(wl_setup_internal%radial_samples*num_walkers), 1)
+    window_overlap = 0.0_real64
 
     ! Initialize
     wl_hist = 0.0_real64; wl_logdos = 0.0_real64; wl_f = wl_setup_internal%wl_f; wl_f_prev = wl_f
@@ -1109,6 +1149,7 @@ module wang_landau
         call MPI_Recv(mpi_end_idx, 1, MPI_INT, (i - 1)*num_walkers, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         scale_factor = 0.0_real64
         beta_diff = HUGE(beta_diff)
+        
         do j = 0,  window_indices(i-1, 2) - window_indices(i, 1) - 1
           beta_original = wl_logdos_combine(mpi_start_idx + j + 1) - wl_logdos_combine(mpi_start_idx + j)
           beta_merge = wl_logdos_buffer(mpi_start_idx + j + 1) - wl_logdos_buffer(mpi_start_idx + j)
@@ -1171,7 +1212,7 @@ module wang_landau
         bins = NINT(REAL(wl_setup_internal%bins)*diffusion_merge/SUM(diffusion_merge))
         
         ! Set all bins less than min_bins to min_bins
-        min_bins = INT(0.02_real64*wl_setup_internal%bins)
+        min_bins = MAX(INT(0.01_real64*wl_setup_internal%bins), 2)
         do i = 1, wl_setup_internal%num_windows
           if (bins(i) < min_bins) then
               bins(i) = min_bins
@@ -1216,6 +1257,11 @@ module wang_landau
       !  print*, window_indices(:,2)
       !  print*, window_indices(:,2)-window_indices(:,1)
       !end if
+      if (my_rank == 0 .and. iter < num_iter) then
+        do i = 1, wl_setup_internal%num_windows-1
+          window_overlap(iter+1, i) = window_indices(i,2) - window_indices(i+1,1) + 1
+        end do
+      end if
     end if
     end if
   end subroutine mpi_window_optimise
@@ -1250,20 +1296,7 @@ module wang_landau
     ! Loop indices
     integer :: i, j
 
-    ! Bins
-    integer :: bins
-
-    window_indices(1,1) = window_intervals(1,1)
-    window_indices(1,2) = window_intervals(1,2)
-    do i = 2, wl_setup_internal%num_windows-1
-      bins = window_indices(i-1,2) - window_indices(i-1, 1)
-      window_indices(i, 1) = MAX(INT(window_intervals(i,1) - CEILING(wl_setup_internal%bin_overlap*bins)), 1)
-      window_indices(i, 2) = window_intervals(i,2)
-    end do
-    bins = window_indices(wl_setup_internal%num_windows-1,2) - window_indices(wl_setup_internal%num_windows-1, 1)
-    window_indices(wl_setup_internal%num_windows, 1) = MAX(INT(window_intervals(wl_setup_internal%num_windows,1) &
-                                    - CEILING(wl_setup_internal%bin_overlap*bins)), 1)
-    window_indices(wl_setup_internal%num_windows,2) = window_intervals(wl_setup_internal%num_windows,2)
+    call create_overlap(window_intervals, window_indices)
 
     mpi_index = my_rank/num_walkers + 1
     mpi_start_idx = window_indices(mpi_index, 1)
@@ -1318,11 +1351,17 @@ module wang_landau
   overlap_mpi = 0
   overlap_exchange = -1
   
-  lower = (ibin > window_indices(mpi_index,1)-1) .and. &
-    (ibin < window_indices(mpi_index-1,2)+1) .and. (mpi_index > 1)
+  lower = .false.
+  if (mpi_index > 1) then
+    lower = (ibin < window_indices(mpi_index - 1, 2) + 1) .and. &
+    (ibin > window_indices(mpi_index, 1) - 1)
+  end if
 
-  upper = (ibin > window_indices(mpi_index+1,1)-1) .and. &
-    (ibin < window_indices(mpi_index,2)+1) .and. (mpi_index < wl_setup_internal%num_windows)
+  upper = .false.
+  if (mpi_index < wl_setup_internal%num_windows) then
+    upper = (ibin > window_indices(mpi_index + 1, 1) - 1) .and. &
+    (ibin < window_indices(mpi_index, 2) + 1)
+  end if
 
   if (upper) then
     overlap_loc = mpi_index
