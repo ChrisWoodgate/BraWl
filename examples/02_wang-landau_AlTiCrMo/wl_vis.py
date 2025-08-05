@@ -14,33 +14,33 @@ np.set_printoptions(suppress=True)
 plt.rcParams.update({"font.size": font_size})
 
 def flip(items, ncol):
-    return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
+	return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
 
 def inner_mod(a,b):
-    res = a%b
-    return res if not res else res-b if a<0 else res
+	res = a%b
+	return res if not res else res-b if a<0 else res
 
 colors = {
-    "steel_blue": "#1F77B4",
-    "light_steel_blue": "#AEC7E8",
-    "orange": "#FF7F0E",
-    "light_orange": "#FFBB78",
-    "forest_green": "#2CA02C",
-    "light_green": "#98DF8A",
-    "firebrick_red": "#D62728",
-    "soft_red": "#FF9896",
-    "lavender": "#9467BD",
-    "light_lavender": "#C5B0D5",
-    "brown": "#8C564B",
-    "tan": "#C49C94",
-    "orchid": "#E377C2",
-    "light_orchid": "#F7B6D2",
-    "gray": "#7F7F7F",
-    "light_gray": "#C7C7C7",
-    "yellow_green": "#BCBD22",
-    "light_yellow_green": "#DBDB8D",
-    "turquoise": "#17BECF",
-    "light_turquoise": "#9EDAE5"
+	"steel_blue": "#1F77B4",
+	"light_steel_blue": "#AEC7E8",
+	"orange": "#FF7F0E",
+	"light_orange": "#FFBB78",
+	"forest_green": "#2CA02C",
+	"light_green": "#98DF8A",
+	"firebrick_red": "#D62728",
+	"soft_red": "#FF9896",
+	"lavender": "#9467BD",
+	"light_lavender": "#C5B0D5",
+	"brown": "#8C564B",
+	"tan": "#C49C94",
+	"orchid": "#E377C2",
+	"light_orchid": "#F7B6D2",
+	"gray": "#7F7F7F",
+	"light_gray": "#C7C7C7",
+	"yellow_green": "#BCBD22",
+	"light_yellow_green": "#DBDB8D",
+	"turquoise": "#17BECF",
+	"light_turquoise": "#9EDAE5"
 }
 
 custom_cmap = ListedColormap(colors.values())
@@ -63,12 +63,12 @@ U_data = rho_of_E.variables['U data'][:]
 
 elements = ""  # Initialize an empty string to store species data
 with open("brawl.inp", 'r') as file:
-    for line in file:
-        if 'species_name' in line:  # Check if the line contains the species_name variable
-            parts = line.split("=")  # Split the line by '=' and get everything after it
-            if len(parts) > 1:
-                elements = parts[1].strip().split()  # Get the data after '=' and strip spaces
-            break  # Exit the loop after finding species_name
+	for line in file:
+		if 'species_name' in line:  # Check if the line contains the species_name variable
+			parts = line.split("=")  # Split the line by '=' and get everything after it
+			if len(parts) > 1:
+				elements = parts[1].strip().split()  # Get the data after '=' and strip spaces
+			break  # Exit the loop after finding species_name
 n_species = len(elements)
 concentrations = 1.0/n_species*np.ones(n_species)
 
@@ -103,19 +103,19 @@ bin_width = bin_edges[1] - bin_edges[0]
 
 wcs = np.zeros((len(U_data),n_species,n_species,2))
 for i in range(len(U_data)):
-  wcoft = np.zeros((n_species,n_species,2))
-  for j in range(len(elements)):
-      for k in range(len(elements)):
-          wcoft[j,k,0] = 1.0-1.0/8.0*rho[i,1,j,k]/concentrations[j]
-          wcoft[j,k,1] = 1.0-1.0/6.0*rho[i,2,j,k]/concentrations[j]
-  wcs[i] = wcoft
+	wcoft = np.zeros((n_species,n_species,2))
+	for j in range(len(elements)):
+		for k in range(len(elements)):
+			wcoft[j,k,0] = 1.0-1.0/8.0*rho[i,1,j,k]/concentrations[j]
+			wcoft[j,k,1] = 1.0-1.0/6.0*rho[i,2,j,k]/concentrations[j]
+	wcs[i] = wcoft
 
 pairs = np.zeros([int(len(elements)*(len(elements)+1)/2),2], dtype=np.int16)
 k = 0
 for i in range(len(elements)):
-    for j in range(i, len(elements)):
-        pairs[k] = [i, j]
-        k += 1
+	for j in range(i, len(elements)):
+		pairs[k] = [i, j]
+		k += 1
 
 fig_height = 4; fig_width=fig_height*1.68
 
@@ -133,8 +133,8 @@ beta = 1.0/(kb_ev*temperatures[-1])
 prob = np.zeros(len(bin_edges)-1)
 # Reweight histogram
 for ibin, edge in enumerate(bin_edges[:-1]):
-    bin_energy = edge + 0.5*bin_width
-    prob[ibin] = wl_logdos[ibin]-beta*bin_energy
+	bin_energy = edge + 0.5*bin_width
+	prob[ibin] = wl_logdos[ibin]-beta*bin_energy
 prob = prob-np.max(prob)/2
 prob = np.exp(prob)
 # Normalise
@@ -147,54 +147,54 @@ prob_max = 0
 # Loop over temperatures of interest
 for itemp, new_temp in enumerate(temperatures):
 
-    beta = 1.0/(kb_ev*new_temp)
+	beta = 1.0/(kb_ev*new_temp)
 
-    # Reweighted histogram
-    prob = np.zeros(len(bin_edges)-1)
-    
-    # Reweight histogram
-    for ibin, edge in enumerate(bin_edges[:-1]):
-        bin_energy = edge + 0.5*bin_width
-        prob[ibin] = wl_logdos[ibin]-beta*bin_energy
-   
-    prob = prob-np.max(prob)
-    prob = np.exp(prob)
+	# Reweighted histogram
+	prob = np.zeros(len(bin_edges)-1)
+	
+	# Reweight histogram
+	for ibin, edge in enumerate(bin_edges[:-1]):
+		bin_energy = edge + 0.5*bin_width
+		prob[ibin] = wl_logdos[ibin]-beta*bin_energy
+	
+	prob = prob-np.max(prob)
+	prob = np.exp(prob)
 
-    # Normalise
-    prob = prob/(np.sum(prob))
-    prob = np.nan_to_num(prob)
+	# Normalise
+	prob = prob/(np.sum(prob))
+	prob = np.nan_to_num(prob)
 
-    # Only plot every 5th histogram to avoid crowding the axes
-    if np.isin(temperatures_plot, int(new_temp)).any() == True:
-        strlabel = "T={} K".format(int(new_temp))
-        index_to_zero = np.where(prob < 1e-8)
-        hist_prob = copy.deepcopy(prob)
-        hist_prob[index_to_zero] = 0
-        non_zero = np.nonzero(hist_prob)
-        hist_ax.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, fill=True, alpha=0.1)
-        hist_ax.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=False, alpha=1)
-        if (bin_edges[np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy > hist_max):
-          hist_max = bin_edges[np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy
-        if (bin_edges[np.min(non_zero)]/n_atoms*ev_to_mev-zero_energy < hist_min):
-          hist_min = bin_edges[np.min(non_zero)]/n_atoms*ev_to_mev-zero_energy
-        if (np.max(prob) < 0.4 and np.max(prob) > prob_max):
-            prob_max = np.max(prob)
+	# Only plot every 5th histogram to avoid crowding the axes
+	if np.isin(temperatures_plot, int(new_temp)).any() == True:
+		strlabel = "T={} K".format(int(new_temp))
+		index_to_zero = np.where(prob < 1e-8)
+		hist_prob = copy.deepcopy(prob)
+		hist_prob[index_to_zero] = 0
+		non_zero = np.nonzero(hist_prob)
+		hist_ax.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, fill=True, alpha=0.1)
+		hist_ax.stairs(prob, bin_edges/n_atoms*ev_to_mev-zero_energy, label=strlabel, fill=False, alpha=1)
+		if (bin_edges[np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy > hist_max):
+			hist_max = bin_edges[np.max(non_zero)+1]/n_atoms*ev_to_mev-zero_energy
+		if (bin_edges[np.min(non_zero)]/n_atoms*ev_to_mev-zero_energy < hist_min):
+			hist_min = bin_edges[np.min(non_zero)]/n_atoms*ev_to_mev-zero_energy
+		if (np.max(prob) < 0.4 and np.max(prob) > prob_max):
+			prob_max = np.max(prob)
 
-    # Mean energy
-    mean_energy = np.dot(bin_edges[:-1]+0.5*bin_width, prob)
-    mean_energies[itemp] = mean_energy
+	# Mean energy
+	mean_energy = np.dot(bin_edges[:-1]+0.5*bin_width, prob)
+	mean_energies[itemp] = mean_energy
 
-    for ipair, pair in enumerate(pairs):
-      asr_order_1 = np.dot(wcs[:,pair[0],pair[1],0], prob)
-      asr_orders_1[ipair,itemp] = asr_order_1
+	for ipair, pair in enumerate(pairs):
+		asr_order_1 = np.dot(wcs[:,pair[0],pair[1],0], prob)
+		asr_orders_1[ipair,itemp] = asr_order_1
 
-    # Compute heat capacity using the histogram
-    msq_dev = np.zeros(len(bin_edges)-1)
-    for ibin, edge in enumerate(bin_edges[:-1]):
-        bin_energy = edge + 0.5*bin_width
-        msq_dev[ibin] = (bin_energy - mean_energies[itemp])**2
-        
-    heat_caps[itemp] = np.dot(msq_dev, prob)*bin_width/(kb_ev*new_temp**2)
+	# Compute heat capacity using the histogram
+	msq_dev = np.zeros(len(bin_edges)-1)
+	for ibin, edge in enumerate(bin_edges[:-1]):
+		bin_energy = edge + 0.5*bin_width
+		msq_dev[ibin] = (bin_energy - mean_energies[itemp])**2
+		
+	heat_caps[itemp] = np.dot(msq_dev, prob)*bin_width/(kb_ev*new_temp**2)
 
 heat_caps = np.gradient(mean_energies, temperatures)
 
@@ -202,13 +202,13 @@ gibbs_energies[0] = mean_energies[0]
 gibbs_energies[1] = mean_energies[0]
 for itemp in range(2,len(temperatures)):
 
-  beta_i = 1.0/(kb_ev*temperatures[itemp])
-  beta_j = 1.0/(kb_ev*temperatures[itemp-1])
+	beta_i = 1.0/(kb_ev*temperatures[itemp])
+	beta_j = 1.0/(kb_ev*temperatures[itemp-1])
 
-  gibbs_energies[itemp] = beta_j*gibbs_energies[itemp-1]/beta_i+((mean_energies[itemp-1]+mean_energies[itemp])*(beta_i-beta_j))/(2*beta_i)
+	gibbs_energies[itemp] = beta_j*gibbs_energies[itemp-1]/beta_i+((mean_energies[itemp-1]+mean_energies[itemp])*(beta_i-beta_j))/(2*beta_i)
 
 for itemp, new_temp in enumerate(temperatures):
-  entropies[itemp] = (mean_energies[itemp]-gibbs_energies[itemp])/new_temp
+	entropies[itemp] = (mean_energies[itemp]-gibbs_energies[itemp])/new_temp
 
 
 # Complete plots using data computed above
@@ -246,11 +246,11 @@ asro_max = 0
 asro_min = 0
 cv_ax1.plot(temperatures, heat_caps, '-o', markersize=4, label="Heat Capacity")
 for ipair, pair in enumerate(pairs):
-  cv_ax1_asro.plot(temperatures, asr_orders_1[ipair], label = elements[pair[0]] + '-' + elements[pair[1]])
-  if (np.max(asr_orders_1[ipair]) > asro_max):
-    asro_max = np.max(asr_orders_1[ipair])
-  if (np.min(asr_orders_1[ipair]) < asro_min):
-    asro_min = np.min(asr_orders_1[ipair])
+	cv_ax1_asro.plot(temperatures, asr_orders_1[ipair], label = elements[pair[0]] + '-' + elements[pair[1]])
+	if (np.max(asr_orders_1[ipair]) > asro_max):
+		asro_max = np.max(asr_orders_1[ipair])
+	if (np.min(asr_orders_1[ipair]) < asro_min):
+		asro_min = np.min(asr_orders_1[ipair])
 
 cv_ticks = 400
 x_ticks_subplots = np.arange(np.around(start_temp/cv_ticks, decimals=0)*cv_ticks, np.around(end_temp/cv_ticks, decimals=0)*cv_ticks+cv_ticks, cv_ticks)
@@ -267,33 +267,33 @@ cv_ax1_asro.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.0275
 
 # Loop through the legend handles and change their linewidth
 for handle in hist_ax_legend.legend_handles:
-    handle.set_linewidth(3)  # Increase the line width for each legend line
+	handle.set_linewidth(3)  # Increase the line width for each legend line
 
 alternate_colors = list(colors.values())[::2]
 cv_ax1_asro.set_prop_cycle(cycler(color=alternate_colors))
 
 margin_pct = 0.05
 for ax in [hist_ax, cv_ax1, cv_ax1_asro]:
-  # Get axis limits
-  x_min, x_max = ax.get_xlim()
-  y_min, y_max = ax.get_ylim()
+	# Get axis limits
+	x_min, x_max = ax.get_xlim()
+	y_min, y_max = ax.get_ylim()
 
-  # Calculate the margin values (5% of the range)
-  x_margin = (x_max - x_min) * margin_pct
-  y_margin = (y_max - y_min) * margin_pct
+	# Calculate the margin values (5% of the range)
+	x_margin = (x_max - x_min) * margin_pct
+	y_margin = (y_max - y_min) * margin_pct
 
-  # Get the current tick positions
-  x_ticks = ax.get_xticks()
-  y_ticks = ax.get_yticks()
+	# Get the current tick positions
+	x_ticks = ax.get_xticks()
+	y_ticks = ax.get_yticks()
 
-  # Filter out ticks within the margin
-  x_ticks_filtered = [tick for tick in x_ticks if x_min + x_margin <= tick <= x_max - x_margin or tick == 0]
+	# Filter out ticks within the margin
+	x_ticks_filtered = [tick for tick in x_ticks if x_min + x_margin <= tick <= x_max - x_margin or tick == 0]
   y_ticks_filtered = [tick for tick in y_ticks if y_min + y_margin <= tick <= y_max - y_margin or tick == 0]
 
 
-  # Set the new ticks
-  #ax.set_xticks(x_ticks_filtered)
-  #ax.set_yticks(y_ticks_filtered)
+	# Set the new ticks
+	#ax.set_xticks(x_ticks_filtered)
+	#ax.set_yticks(y_ticks_filtered)
 
 asro_diff = np.abs(asro_min - asro_max)
 hist_ax.set_xlim(hist_min,hist_max)
