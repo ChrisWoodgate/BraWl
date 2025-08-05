@@ -55,8 +55,8 @@ overlaps = np.array([5, 10, 25, 50, 75])
 repeats = 5
 bins=512
 
-#methods = np.array([3, 4, 5])
-#methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Balance", "Non-Uniform + Replica","Non-Uniform", "Replica", "Domains"])
+methods = np.array([0, 2, 4])
+methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Replica", "Replica"])
 #methods = np.array([0,1])
 walkers = np.array([1])
 #overlaps = np.array([50])
@@ -166,6 +166,14 @@ for overlap in range(len(overlaps)):
 
 # MC Steps
 for overlap in range(len(overlaps)):
+  overlap = 1
+  max_y = 0
+  for method in range(len(methods)):
+  #for method in [0, 2, 4]:
+    if max_y < np.max(mc_steps_mean[method, 0, :, overlap]):
+      max_y = np.max(mc_steps_mean[method, 0, :, overlap])
+
+for overlap in range(len(overlaps)):
   for method in range(len(methods)):
     plt.axhline(y=1, linestyle='-')
     plt.errorbar(windows, mc_steps_mean[method, 0, :, overlap], yerr=mc_steps_err[method, 0, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(methods_label[method]))
@@ -175,6 +183,7 @@ for overlap in range(len(overlaps)):
     plt.title("Relative MC Steps")
     plt.tight_layout()
     plt.gca().set_box_aspect(1)
+    plt.ylim(0, max_y*1.25)
     plt.savefig('{}_{:02d}_mc_steps.pdf'.format(methods[method], overlaps[overlap]), bbox_inches='tight')
     plt.close()
 
