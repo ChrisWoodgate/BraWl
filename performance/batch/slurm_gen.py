@@ -6,7 +6,12 @@ cores_per_node = 48
 windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
 brawl_type = [0, 1, 2, 3, 4, 5]
 walkers = [1, 2, 3, 4, 5, 6]
-overlaps = [50]
+overlaps = [5, 10, 25, 50, 75]
+
+windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+brawl_type = [0, 1, 2, 3, 4, 5]
+walkers = [1]
+overlaps = [0, 10, 25, 50, 75]
 
 base_script_content = '''#!/bin/bash
 
@@ -27,10 +32,10 @@ export SLURM_JOB_ID=${{SLURM_JOB_ID}}
 srun -n {ntasks} ../../brawl.run
 '''
 for brawl in brawl_type:
-  for window in windows:
-    for walker in walkers:
+  for walker in walkers:
+    for window in windows:
       for overlap in overlaps:
-        for brawl_folder in range(1,3+1):
+        for brawl_folder in range(1,5+1):
           ntasks = walker*window
           nodes=int(np.ceil(max(ntasks/cores_per_node, 1)))
           script_content = base_script_content.format(nodes=nodes, ntasks=ntasks, ntasks_compute=int(np.ceil(ntasks/nodes)), brawl_type=brawl, walkers=walker, window=window, overlap=overlap, brawl_folder=brawl_folder)

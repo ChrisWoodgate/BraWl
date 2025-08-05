@@ -16,7 +16,7 @@ def create_directories_and_copy_files(brawl_type, source_dir, num_walkers, overl
       for window in windows:
         for walkers in num_walkers:
           for overlap in overlaps:
-            for i in range(3):
+            for i in range(5):
                 # Create the directory name following the naming convention
                 dir_name = f'{brawl}_{walkers:02d}_{window:02d}_{overlap:02d}_{i+1}'
 
@@ -50,6 +50,6 @@ def create_directories_and_copy_files(brawl_type, source_dir, num_walkers, overl
 # Example call to the function with brawl_type and source_dir
 brawl_type = [0, 1, 2, 3, 4, 5]
 source_dir = '.'
-num_walkers = [2, 3, 4, 5, 6]
-overlaps = [50]
+num_walkers = [1]
+overlaps = [0, 10, 25, 50, 75]
 create_directories_and_copy_files(brawl_type, source_dir, num_walkers, overlaps)

@@ -5,11 +5,11 @@ windows=(01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16)
 folders=(1 2 3)
 brawl_type=(0 1 2 3 4 5)
 walkers=(01 02 03 04 05 06)
-overlaps=(05 10 25 50 75)
+overlaps=(00 10 25 50 75)
 
 walkers=(01)
-overlaps=(50)
-brawl_type=(0)
+#overlaps=(50)
+#brawl_type=(0)
 
 # Loop over each value in the cores array
 for brawl in "${brawl_type[@]}"
