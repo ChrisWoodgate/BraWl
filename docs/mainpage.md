@@ -1,4 +1,4 @@
-## BraWl: Simulating the thermodynamics and phase stability of multicomponent alloys using conventional and enhanced sampling techniques
+## Simulating the thermodynamics and phase stability of multicomponent alloys using conventional and enhanced sampling techniques
 
 The Fortran package **BraWl** (named after the Bragg-Williams model)  facilitates simulation of the thermodynamics and phase stability of both binary and multicomponent alloys. It achieves this by providing implementation of both the Bragg-Williams Hamiltonian (a lattice based model expressing the internal energy of an alloy as a sum of atom-atom effective pair interactions) concurrently with a range of conventional and enhanced sampling techniques for exploration of the alloy configuration space. The result is a package which can determine phase equilibria as a function of both temperature and alloy composition, which leads to the construction of alloy phase diagrams. Additionally, the package can be used for extraction of representative equilibrated atomic configurations for visualisation, as well as for use in complementary modelling approaches. It provides a lightweight, fast and flexible foundation for a range of simulations relating to alloy thermodynamics and phase diagrams.
 
@@ -60,13 +60,26 @@ A (hopefully fairly complete) list of publications obtained using the package is
 ---
 
 ## Contributing
-Any/all contributions are welcome via pull requests. 
+
+Contributions are welcome via pull requests. 
+
+Features which are particularly welcome are:
+- Implementations of new lattice types.
+- Implementations of new/interesting sampling algorithms.
+- Interfaces with other packages, _e.g._ writing output configurations to formats specific to other materials simulation codes.
+
+Features which we do not currently plan on implementing are:
+- Anything off-lattice. (The way configurations are represented internally would make this challenging!)
+
+Additionally, as [developer documentation for the package](https://chriswoodgate.github.io/BraWl/) is auto-generated using [Doxygen](https://www.doxygen.nl), we ask that all contributions to the codebase follow the [Doxygen guide for formatting comment blocks](https://www.doxygen.nl/manual/docblocks.html#fortranblocks) and uses the relevant [Doxygen commands](https://www.doxygen.nl/manual/commands.html) to specify the details of new features/routines.
+
 
 ---
 
 ## 🪪 License
 
 This software is released under the LGPL-3.0 license. See the file LICENSE.txt for details.
+
 ---
 
 ## 🧭 Documentation Guide
