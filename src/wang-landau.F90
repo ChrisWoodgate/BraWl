@@ -888,7 +888,7 @@ module wang_landau
     ! Unidirectional
 
     do i = 2, wl_setup_internal%num_windows-1
-      bins = window_indices(i-1,2) - window_indices(i-1, 1)
+      bins = window_indices(i-1,2) - window_indices(i-1, 1) + 1
       window_indices(i, 1) = INT(window_intervals(i,1) - MAX(CEILING(wl_setup_internal%bin_overlap*bins), 2))
       window_indices(i, 2) = window_intervals(i,2)
     end do
