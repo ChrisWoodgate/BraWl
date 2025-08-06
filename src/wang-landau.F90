@@ -246,6 +246,7 @@ module wang_landau
           write (6, '(20("-"),x,a,i3,a,i3,x,20("-"))', advance='no') "Wang-Landau Iteration: ", iter, &
           "/", num_iter
           write (*, *)
+          print*, window_indices(:,2) - window_indices(:,1) + 1
           write (6, '(a,f20.18,a,f8.2,a)', advance='no') "Flatness reached f of: ", wl_f_prev, &
                   " | Radial samples: ", radial_min*100_real64, "%"
             write (*, *)
