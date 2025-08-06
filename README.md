@@ -161,7 +161,17 @@ A (hopefully fairly complete) list of publications obtained using this code is:
 - David Quigley
 
 ## Contributing
-Any/all contributions are welcome via pull requests. 
+Contributions are welcome via pull requests. 
+
+Features which are particularly welcome are:
+- Implementations of new lattice types.
+- Implementations of new/interesting sampling algorithms.
+- Interfaces with other packages, _e.g._ writing output configurations to formats specific to other materials simulation codes.
+
+Features which we do not currently plan on implementing are:
+- Anything off-lattice. (The way configurations are represented would make this challenging!)
+
+Additionally, as [developer documentation for the package](https://chriswoodgate.github.io/BraWl/) is auto-generated using [Doxygen](https://www.doxygen.nl), we ask that all contributions to the codebase follow the [Doxygen guide for formatting comment blocks](https://www.doxygen.nl/manual/docblocks.html#fortranblocks) and uses the relevant [Doxygen commands](https://www.doxygen.nl/manual/commands.html) to specify the details of new features/routines.
 
 ## License
 This software is released under the LGPL-3.0 license. See the file LICENSE.txt for details.
