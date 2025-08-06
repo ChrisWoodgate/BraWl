@@ -19,33 +19,6 @@ The GitHub repo where the source code can be found is: [github.com/ChrisWoodgate
 
 ---
 
-## 🧭 Documentation Guide
-
-- **Modules** — High-level structure of the project
-    - **Modules List** – List of modules
-    - **Module Members** – Complete list of members of *all* modules
-- **Data Types** — Derived types/classes used in the project
-- **Files** — Browse the project's file structure
-
----
-
-## 📁 Project Structure
-
-<pre>
-BraWl/
-├── src/               # Core source code
-├── include/           # Any header files
-├── examples/          # Examples of use
-├── tests/             # Test cases
-├── docs/              # Documentation (this!)
-├── README.md          # High-level overview and README
-├── Makefile           # Makefile (for building the code!)
-├── LICENSE.txt        # Copyright statement and license (LGPL-3.0)
-└── CODE_OF_CONDUCT.md # Contributor Covenant Code of Conduct
-</pre>
-
----
-
 ## 📝 Citation
 
 If you use **BraWl** in your research, please cite our preprint:
@@ -94,3 +67,30 @@ Any/all contributions are welcome via pull requests.
 ## 🪪 License
 
 This software is released under the LGPL-3.0 license. See the file LICENSE.txt for details.
+---
+
+## 🧭 Documentation Guide
+
+- **Modules** — High-level structure of the project
+    - **Modules List** – List of modules
+    - **Module Members** – Complete list of members of *all* modules
+- **Data Types** — Derived types/classes used in the project
+- **Files** — Browse the project's file structure
+
+---
+
+## 📁 Project Structure
+
+<pre>
+BraWl/
+├── src/               # Core source code
+├── include/           # Any header files
+├── examples/          # Examples of use
+├── tests/             # Test cases
+├── docs/              # Documentation (this!)
+├── README.md          # High-level overview and README
+├── Makefile           # Makefile (for building the code!)
+├── LICENSE.txt        # Copyright statement and license (LGPL-3.0)
+└── CODE_OF_CONDUCT.md # Contributor Covenant Code of Conduct
+</pre>
+
