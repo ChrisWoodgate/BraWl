@@ -247,6 +247,11 @@ module wang_landau
           "/", num_iter
           write (*, *)
           print*, window_indices(:,2) - window_indices(:,1) + 1
+          do i=1, wl_setup_internal%num_windows -1 
+            write (6, '(i4)', advance='no') window_indices(i,2) - window_indices(i+1,1) + 1
+            write (6, '(a)', advance='no') " | "
+          end do
+          write(*,*)
           write (6, '(a,f20.18,a,f8.2,a)', advance='no') "Flatness reached f of: ", wl_f_prev, &
                   " | Radial samples: ", radial_min*100_real64, "%"
             write (*, *)
