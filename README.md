@@ -1,6 +1,6 @@
 # BraWl
 
-`BraWl` — a package for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian. The package implements a range of conventional and enhanced sampling techniques, including Metropolis-Hastings Monte Carlo, Nested Sampling, and Wang-Landau sampling.
+`BraWl` — a package for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian. The package implements a range of conventional and enhanced sampling techniques, including Metropolis-Hastings Monte Carlo, Nested Sampling, and Wang-Landau sampling. This `README` contains key information and installation instructions, while developer documentation can be found at: [https://chriswoodgate.github.io/BraWl/](https://chriswoodgate.github.io/BraWl/)
 
 Copyright (C) The Authors 2019-2025. Released under the GNU Lesser General Public License, version 3.
 
@@ -124,7 +124,7 @@ The output of this routine will tell you which tests (if any failed).
 
 ## Documentation
 The in addition to this README and the provided examples, the code also has (searchable) documentation which is auto-generated using [Doxygen](https://www.doxygen.nl). This documentation contains information about all modules, functions, subroutines, and derived types, so is particularly useful if you are looking to develop a new feature. There are two options available for viewing this documentation:
-1. View the auto-generated documentation hosted online at [https://chriswoodgate.github.io/BraWl/](https://chriswoodgate.github.io/BraWl/). (Intended for end-users.)
+1. View the auto-generated documentation hosted online at [https://chriswoodgate.github.io/BraWl/](https://chriswoodgate.github.io/BraWl/). (Intended for end-users and developers looking to implement new features.)
 2. Generate and 'host' your own version of the documentation on your local machine. (Intended for developers wanting to check that their comments/documentation is being rendered as expected.)
 
 ### Local generation and 'hosting' of documentation
