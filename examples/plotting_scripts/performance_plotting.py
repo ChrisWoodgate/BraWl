@@ -51,14 +51,15 @@ methods = np.array([0, 1, 2, 3, 4, 5])
 methods_label = np.array(["NU-LB-R", "NU-LB", "NU-R", "NU", "R", "Domains"])
 windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
 walkers = np.array([1, 2, 3, 4, 5, 6])
-overlaps = np.array([5, 10, 25, 50, 75])
+overlaps = np.array([0, 10, 25, 50, 75])
 repeats = 5
 bins=512
 
-methods = np.array([0, 2, 4])
-methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Replica", "Replica"])
-#methods = np.array([0,1])
 walkers = np.array([1])
+#methods = np.array([0, 2, 4])
+#methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Replica", "Replica"])
+#methods = np.array([0,1])
+#walkers = np.array([1])
 #overlaps = np.array([50])
 
 sums = np.zeros([len(methods), len(walkers), len(windows), len(overlaps), repeats])
