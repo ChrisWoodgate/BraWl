@@ -244,7 +244,7 @@ module wang_landau
         
         if (my_rank == 0) then
           write (6, '(20("-"),x,a,i3,a,i3,x,20("-"))', advance='no') "Wang-Landau Iteration: ", iter, &
-          "/", num_iter
+          "/", num_iter 
           write (*, *)
           print*, window_indices(:,2) - window_indices(:,1) + 1
           do i=1, wl_setup_internal%num_windows -1 
@@ -1218,7 +1218,7 @@ module wang_landau
         bins = NINT(REAL(wl_setup_internal%bins)*diffusion_merge/SUM(diffusion_merge))
         
         ! Set all bins less than min_bins to min_bins
-        min_bins = MAX(INT(0.01_real64*wl_setup_internal%bins), 2)
+        min_bins = MAX(INT(0.02_real64*wl_setup_internal%bins), 2)
         do i = 1, wl_setup_internal%num_windows
           if (bins(i) < min_bins) then
               bins(i) = min_bins
