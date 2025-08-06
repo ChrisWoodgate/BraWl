@@ -47,8 +47,6 @@
 !examples/*/*/*.inp
 !examples/*/*.vij
 !examples/*/*/*.vij
-!performance/*.inp
-!performance/*.vij
 
 # Don't ignore any text files in the examples directories
 !examples/*/*.txt
@@ -71,5 +69,9 @@ docs/html/
 docs/latex/
 
 # Ignore slurm scripts
-performance/batch/*.sh
+performance/
+!performance/*.inp
+!performance/*.vij
+!performance/*.py
 !performance/batch/batch_submit.sh
+!performance/batch/slurm_gen.py
