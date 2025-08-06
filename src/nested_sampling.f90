@@ -1,12 +1,12 @@
-!> @file    nested_sampling.f90                                  
+!> @file    nested_sampling.f90
 !>
-!> @brief   Assorted routines and tools to perform Nested Sampling                                                                      !
+!> @brief   Assorted routines and tools to perform Nested Sampling
 !>
 !> @details This module contains routines necessary for the Nested Sampling
-!>          calculations.                                                           
+!>          calculations.
 !>
 !> @author  L. B. Partay
-!> @date    2024  
+!> @date    2024
 module nested_sampling
 
   use initialise
@@ -25,7 +25,7 @@ module nested_sampling
 
   contains
 
-  !> @brief   Main nested sampling routine.  
+  !> @brief   Main nested sampling routine.
   !>
   !> @details This routine performs the nested sampling calculation. Input parameters (such as
   !>          the number of walkers, random walk parameters...etc.) are read from the "ns_input.txt" 
@@ -41,7 +41,7 @@ module nested_sampling
   !> @return None
   !>
   !> @author  L. B. Partay
-  !> @date    2024  
+  !> @date    2024
   subroutine nested_sampling_main(setup, nested_sampling)
 
     ! Arrays for storing instances of the system, as nested sampling walkers
