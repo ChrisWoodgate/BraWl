@@ -1,11 +1,24 @@
 name: documentation-generation
-on: [push]
+on:
+  push:
+    branches:
+      - main
 jobs:
-  doxygen:
+  generate-documentation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: generate-documentation
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: run-doxygen
         uses: mattnotmitt/doxygen-action@1.12.0
         with:
           doxyfile-path: 'docs/doxyfile'
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docs/html'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
