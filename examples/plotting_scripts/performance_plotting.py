@@ -126,30 +126,31 @@ for overlap in range(len(overlaps)):
 selected_methods = [0, 2, 4]
 fix, axes = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
 
-max_y = 0
+
 for overlap in range(len(overlaps)):
+  max_y = 0
   for method_id in selected_methods:
     for walker in range(len(walkers)):
       if max_y < np.max(efficiency[method_id, walker, :, overlap]):
         max_y = np.max(efficiency[method_id, walker, :, overlap])
 
-for ax_id, method_id in enumerate(selected_methods):
-    ax = axes[ax_id]
-    ax.axhline(y=1, linestyle='-')
+  for ax_id, method_id in enumerate(selected_methods):
+      ax = axes[ax_id]
+      ax.axhline(y=1, linestyle='-')
 
-    for walker in range(len(walkers)):
-      plt.errorbar(windows, efficiency[method_id, walker, :, overlap], yerr=efficiency_err[method_id, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walker+1))
-    ax.set_xticks(windows, labels=windows)
-    ax.set_box_aspect(1)
-    ax.set_xlabel("Domains")
-    ax.set_ylabel("Domain Efficiency")
-    #plt.title("Method {}".format(methods_label[method_id]))
-    #plt.legend(loc="upper right", title="Walkers")
-    ax.set_ylim(0, max_y*1.25)
-    
-plt.tight_layout()
-plt.savefig('method_compare.pdf', bbox_inches='tight')
-plt.close()
+      for walker in range(len(walkers)):
+        ax.errorbar(windows, efficiency[method_id, walker, :, overlap], yerr=efficiency_err[method_id, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walker+1))
+      ax.set_xticks(windows, labels=windows)
+      ax.set_box_aspect(1)
+      ax.set_xlabel("Domains")
+      ax.set_ylabel("Domain Efficiency")
+      #plt.title("Method {}".format(methods_label[method_id]))
+      #plt.legend(loc="upper right", title="Walkers")
+      ax.set_ylim(0, max_y*1.25)
+      
+  plt.tight_layout()
+  plt.savefig('{:02d}_method_compare.pdf'.format(overlaps[overlap]), bbox_inches='tight')
+  plt.close()
 exit()
 
 # Speed Up
