@@ -124,10 +124,9 @@ for overlap in range(len(overlaps)):
       efficiency_err[method_id, walker, :, overlap] = efficiency[method_id, walker, :, overlap]*np.sqrt((one_sums_err[walker, overlap]/one_sums_mean[walker, overlap])**2+(sums_err[method_id, walker, :, overlap]/sums_mean[method_id, walker, :, overlap])**2)
 
 selected_methods = [0, 2, 4]
-fix, axes = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
-
 
 for overlap in range(len(overlaps)):
+  fix, axes = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
   max_y = 0
   for method_id in selected_methods:
     for walker in range(len(walkers)):
