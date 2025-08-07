@@ -51,15 +51,14 @@ methods = np.array([0, 1, 2, 3, 4, 5])
 methods_label = np.array(["NU-LB-R", "NU-LB", "NU-R", "NU", "R", "Domains"])
 windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
 walkers = np.array([1, 2, 3, 4, 5, 6])
-overlaps = np.array([0, 10, 25, 50, 75])
+overlaps = np.array([5, 10, 25, 50, 75])
 repeats = 5
 bins=512
 
-walkers = np.array([1])
-#methods = np.array([0, 2, 4])
-#methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Replica", "Replica"])
+methods = np.array([0, 2, 4])
+methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Replica", "Replica"])
 #methods = np.array([0,1])
-#walkers = np.array([1])
+walkers = np.array([1])
 #overlaps = np.array([50])
 
 sums = np.zeros([len(methods), len(walkers), len(windows), len(overlaps), repeats])
@@ -81,9 +80,6 @@ for method_id, method in enumerate(methods):
           wl_lb_mc_steps = nc.Dataset(filename)
           wl_lb_mc_steps = np.array(wl_lb_mc_steps["grid data"][:], dtype=np.int64)
           mc_steps[method_id, walker, window, overlap, k-1] = np.sum(wl_lb_mc_steps)
-
-# REMOVE THIS LATER
-#sums[0, 5, 8, 0, 0] = 250
 
 one_sums = sums[:, :, 0, :, :]
 
@@ -122,28 +118,39 @@ efficiency_err = np.empty_like(sums_err)
 
 # Window Efficiency
 for overlap in range(len(overlaps)):
-  max_y = 0
   for method_id, method in enumerate(methods):
     for walker in range(len(walkers)):
       efficiency[method_id, walker, :, overlap] = one_sums_mean[walker, overlap]/(sums_mean[method_id, walker, :, overlap]*windows)
       efficiency_err[method_id, walker, :, overlap] = efficiency[method_id, walker, :, overlap]*np.sqrt((one_sums_err[walker, overlap]/one_sums_mean[walker, overlap])**2+(sums_err[method_id, walker, :, overlap]/sums_mean[method_id, walker, :, overlap])**2)
+
+selected_methods = [0, 2, 4]
+fix, axes = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
+
+max_y = 0
+for overlap in range(len(overlaps)):
+  for method_id in selected_methods:
+    for walker in range(len(walkers)):
       if max_y < np.max(efficiency[method_id, walker, :, overlap]):
         max_y = np.max(efficiency[method_id, walker, :, overlap])
-  for method_id, method in enumerate(methods):
-    plt.axhline(y=1, linestyle='-')
+
+for ax_id, method_id in enumerate(selected_methods):
+    ax = axes[ax_id]
+    ax.axhline(y=1, linestyle='-')
+
     for walker in range(len(walkers)):
       plt.errorbar(windows, efficiency[method_id, walker, :, overlap], yerr=efficiency_err[method_id, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walker+1))
-    plt.xticks(windows, labels=windows)
-    plt.gca().set_box_aspect(1)
-    plt.xlabel("Domains")
-    plt.ylabel("Domain Efficiency")
-    plt.title("Method {}".format(methods_label[method_id]))
-    plt.legend(loc="upper right", title="Walkers")
-    plt.tight_layout()
-
-    plt.ylim(0, max_y*1.25)
-    plt.savefig('{}_{:02d}_window_efficiency.pdf'.format(method, overlaps[overlap]), bbox_inches='tight')
-    plt.close()
+    ax.set_xticks(windows, labels=windows)
+    ax.set_box_aspect(1)
+    ax.set_xlabel("Domains")
+    ax.set_ylabel("Domain Efficiency")
+    #plt.title("Method {}".format(methods_label[method_id]))
+    #plt.legend(loc="upper right", title="Walkers")
+    ax.set_ylim(0, max_y*1.25)
+    
+plt.tight_layout()
+plt.savefig('method_compare.pdf', bbox_inches='tight')
+plt.close()
+exit()
 
 # Speed Up
 for overlap in range(len(overlaps)):
@@ -279,35 +286,3 @@ for overlap in range(len(overlaps)):
     plt.close()
 
 exit()
-
-wl_dos_one = np.zeros([repeats, bins])
-window = 16
-print("Window = ", window)
-for method in methods:
-  for k in range(1,repeats+1):
-    filename = "{}_{:02d}_{:02d}_{}/data/wl_dos.dat".format(method, 6, window, k)
-    wl_dos = nc.Dataset(filename)
-    wl_dos_one[k-1] = np.array(wl_dos["grid data"][:], dtype=np.float64).T
-  for k in range(0,repeats):
-    wl_dos_one[k] = wl_dos_one[k] + np.mean(wl_dos_one[0] - wl_dos_one[k])
-  print(method,np.mean(np.var(wl_dos_one, axis=0)))
-
-
-#print(wl_dos_one[0]-wl_dos_one[1])
-for k in range(0,repeats):
-  wl_dos_one[k] = wl_dos_one[k] + np.mean(wl_dos_one[0] - wl_dos_one[k])
-  plt.plot(np.linspace(1,512,512), wl_dos_one[k])
-plt.savefig('xxxxx.pdf', bbox_inches='tight')
-
-
-
-#for method in range(6):
-#  for i in range(len(walkers)):
-#    for j in range(len(windows)):
-#        for k in range(1,repeats+1):
-#          filename = "{}_{:02d}_{:02d}_{}/data/wl_dos.dat".format(method, walkers[i], windows[j], k)
-#          wl_lb_max_time = nc.Dataset(filename)
-#          wl_lb_max_time = np.array(wl_lb_max_time["grid data"][:], dtype=np.float64).T
-#
-#          row_sums = np.max(wl_lb_max_time, axis=1)
-#          sums[i, j, k-1] = np.sum(row_sums)
