@@ -139,14 +139,20 @@ for overlap in range(len(overlaps)):
 
       for walker in range(len(walkers)):
         ax.errorbar(windows, efficiency[method_id, walker, :, overlap], yerr=efficiency_err[method_id, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walker+1))
-      ax.set_xticks(windows, labels=windows)
+      ax.set_xticks(windows)
+      ax.set_xticklabels(windows)
       ax.set_box_aspect(1)
       ax.set_xlabel("Domains")
-      ax.set_ylabel("Domain Efficiency")
-      #plt.title("Method {}".format(methods_label[method_id]))
-      #plt.legend(loc="upper right", title="Walkers")
+
+      if ax_id == 0:
+        ax.set_ylabel("Domain Efficiency")
+      else:
+        ax.set_yticklabels([])
+
       ax.set_ylim(0, max_y*1.25)
-      
+
+  plt.subplots_adjust(wspace=0.02)  # Reduce horizontal space between plots
+  plt.tight_layout(rect=[0, 0, 1, 0.95])
   plt.tight_layout()
   plt.savefig('{:02d}_method_compare.pdf'.format(overlaps[overlap]), bbox_inches='tight')
   plt.close()
