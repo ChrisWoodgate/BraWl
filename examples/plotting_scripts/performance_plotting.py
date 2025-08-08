@@ -9,17 +9,134 @@ from matplotlib.colors import ListedColormap
 import matplotlib.colors as mcolors
 import itertools
 from scipy.optimize import curve_fit
+import matplotlib.ticker as ticker
+import matplotlib.ticker as mticker
 
-font_size = 16
+def plot_domain_efficiency(selected_methods, replica=True):
+  if replica:
+    replica = "r"
+  else:
+    replica = "nr"
+  
+  for overlap in range(len(overlaps)):
+    fig, axes = plt.subplots(1, 3, figsize=figsize_subplots)
+    max_y = 0
+    for method_id in selected_methods:
+      for walker in range(len(walkers)):
+        if max_y < np.max(efficiency[method_id, walker, :, overlap]):
+          max_y = np.max(efficiency[method_id, walker, :, overlap])
+
+    for ax_id, method_id in enumerate(selected_methods):
+      ax = axes[ax_id]
+      ax.axhline(y=1, linestyle='-')
+
+      for walker in range(len(walkers)):
+        ax.errorbar(windows, efficiency[method_id, walker, :, overlap], yerr=efficiency_err[method_id, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walker+1))
+      ax.set_xticks(windows[::2])
+      ax.set_xlabel("Domains")
+      ax.tick_params(axis="y", direction='inout')
+      if ax_id == 0:
+        ax.set_ylabel("Domain Efficiency")
+        ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+      else:
+        ax.set_yticklabels([])
+      #plt.title("Method {}".format(methods_label[method_id]))
+      #plt.legend(loc="upper right", title="Walkers")
+      ax.set_ylim(0, max_y*1.25)
+      ax.text(0.5, -0.225, titles[ax_id], transform=ax.transAxes, ha='center', va='top')
+    
+    
+    plt.subplots_adjust(wspace=0, hspace=0)
+    plt.savefig('{:02d}_{}_domain_efficiency.pdf'.format(overlaps[overlap], replica), bbox_inches='tight')
+    plt.close()
+
+def plot_mc_step(selected_methods, replica=True):
+  if replica:
+    replica = "r"
+  else:
+    replica = "nr"
+  
+  for overlap in range(len(overlaps)):
+    fig, axes = plt.subplots(1, 3, figsize=figsize_subplots)
+    max_y = 0
+    for method_id in selected_methods:
+      for walker in range(len(walkers)):
+        if max_y < np.max(mc_steps_mean[method_id, walker, :, overlap]):
+          max_y = np.max(mc_steps_mean[method_id, walker, :, overlap])
+
+    for ax_id, method_id in enumerate(selected_methods):
+      ax = axes[ax_id]
+      ax.axhline(y=1, linestyle='-')
+
+      for walker in range(len(walkers)):
+        ax.errorbar(windows, mc_steps_mean[method_id, walker, :, overlap], yerr=mc_steps_err[method_id, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(methods_label[method_id]))
+      ax.set_xticks(windows[::2])
+      ax.set_xlabel("Cores")
+      ax.tick_params(axis="y", direction='inout')
+      if ax_id == 0:
+        ax.set_ylabel("Relative MC Steps")
+        ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+      else:
+        ax.set_yticklabels([])
+      ax.set_ylim(0, max_y*1.25)
+      ax.text(0.5, -0.225, titles[ax_id], transform=ax.transAxes, ha='center', va='top')
+    
+    
+    plt.subplots_adjust(wspace=0, hspace=0)
+    plt.savefig('{:02d}_{}_mc_steps.pdf'.format(overlaps[overlap], replica), bbox_inches='tight')
+    plt.close()
+
+def plot_walker_efficiency(selected_methods, selected_overlaps, replica=True):
+  if replica:
+    replica = "r"
+  else:
+    replica = "nr"
+  
+  for overlap in selected_overlaps:
+    fig, axes = plt.subplots(1, 3, figsize=figsize_subplots)
+    max_y = 0
+    for method_id in selected_methods:
+      for window in range(len(windows)):
+        if max_y < np.max(efficiency[method_id, :, window, overlap]):
+          max_y = np.max(efficiency[method_id, :, window, overlap])
+
+    for ax_id, method_id in enumerate(selected_methods):
+      ax = axes[ax_id]
+      ax.axhline(y=1, linestyle='-')
+
+      for window in np.array([0, 1, 3, 7, 15]):
+        ax.errorbar(walkers, efficiency[method, :, window, overlap], yerr=efficiency_err[method, :, window, overlap], capsize=3, ls='none', fmt='o', label="{}".format(window+1))
+      ax.set_xticks(walkers)
+      ax.set_xlabel("Walkers")
+      ax.tick_params(axis="y", direction='inout')
+      if ax_id == 0:
+        ax.set_ylabel("Walker Efficiency")
+        ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+      else:
+        ax.set_yticklabels([])
+      ax.set_ylim(0, max_y*1.25)
+      ax.text(0.5, -0.25, titles[ax_id], transform=ax.transAxes, ha='center', va='top')
+
+      if ax_id == 1:
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.35), ncol=5, title="Walkers")
+    
+    
+    plt.subplots_adjust(wspace=0, hspace=0)
+    plt.savefig('{:02d}_{}_walker_efficiency.pdf'.format(overlaps[overlap], replica), bbox_inches='tight')
+    plt.close()
+
+def flip(items, ncol):
+    return itertools.chain(*[items[i::ncol] for i in range(ncol)])
+
+font_size = 24
+figsize = (16,8)
+figsize_subplots = (18,6)
 np.set_printoptions(suppress=True)
 #plt.rcParams.update({"text.usetex": True,
 #                     "font.size": font_size})
 plt.rcParams.update({"font.size": font_size})
-plt.rcParams["figure.figsize"] = (16,8)
+plt.rcParams["figure.figsize"] = figsize
 #plt.rc('text', usetex=True)
-
-def flip(items, ncol):
-    return itertools.chain(*[items[i::ncol] for i in range(ncol)])
 
 colors = {
     "steel_blue": "#1F77B4",
@@ -49,11 +166,14 @@ mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=custom_cmap.colors)
 
 methods = np.array([0, 1, 2, 3, 4, 5])
 methods_label = np.array(["NU-LB-R", "NU-LB", "NU-R", "NU", "R", "Domains"])
+methods_label = np.array(["1", "2", "3", "4", "5", "6"])
 windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
 walkers = np.array([1, 2, 3, 4, 5, 6])
 overlaps = np.array([0, 10, 25, 50, 75])
 repeats = 5
 bins=512
+
+titles = ["(a)", "(b)", "(c)"]
 
 #methods = np.array([0, 2, 4])
 #methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Replica", "Replica"])
@@ -123,40 +243,9 @@ for overlap in range(len(overlaps)):
       efficiency[method_id, walker, :, overlap] = one_sums_mean[walker, overlap]/(sums_mean[method_id, walker, :, overlap]*windows)
       efficiency_err[method_id, walker, :, overlap] = efficiency[method_id, walker, :, overlap]*np.sqrt((one_sums_err[walker, overlap]/one_sums_mean[walker, overlap])**2+(sums_err[method_id, walker, :, overlap]/sums_mean[method_id, walker, :, overlap])**2)
 
-selected_methods = [0, 2, 4]
+plot_domain_efficiency([0, 2, 4], True)
 
-for overlap in range(len(overlaps)):
-  fix, axes = plt.subplots(1, 3, figsize=(18, 6), sharey=True)
-  max_y = 0
-  for method_id in selected_methods:
-    for walker in range(len(walkers)):
-      if max_y < np.max(efficiency[method_id, walker, :, overlap]):
-        max_y = np.max(efficiency[method_id, walker, :, overlap])
-
-  for ax_id, method_id in enumerate(selected_methods):
-      ax = axes[ax_id]
-      ax.axhline(y=1, linestyle='-')
-
-      for walker in range(len(walkers)):
-        ax.errorbar(windows, efficiency[method_id, walker, :, overlap], yerr=efficiency_err[method_id, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walker+1))
-      ax.set_xticks(windows)
-      ax.set_xticklabels(windows)
-      ax.set_box_aspect(1)
-      ax.set_xlabel("Domains")
-
-      if ax_id == 0:
-        ax.set_ylabel("Domain Efficiency")
-      else:
-        ax.set_yticklabels([])
-
-      ax.set_ylim(0, max_y*1.25)
-
-  plt.subplots_adjust(wspace=0.02)  # Reduce horizontal space between plots
-  plt.tight_layout(rect=[0, 0, 1, 0.95])
-  plt.tight_layout()
-  plt.savefig('{:02d}_method_compare.pdf'.format(overlaps[overlap]), bbox_inches='tight')
-  plt.close()
-exit()
+plot_domain_efficiency([1, 3, 5], False)
 
 # Speed Up
 for overlap in range(len(overlaps)):
@@ -172,36 +261,67 @@ for overlap in range(len(overlaps)):
   plt.xticks(windows, labels=windows)
   plt.xlabel("Cores")
   plt.ylabel("Speed-up")
-  plt.title("Speed-up for 1 walker per domain")
-  plt.legend(loc="upper left", title="Methods")
-  plt.tight_layout()
+  #plt.title("Speed-up for 1 walker per domain")
+  #plt.legend(loc="upper left", title="Methods")
+  plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=len(methods), title="Methods")
+  
   plt.savefig('{:02d}_method_speedup.pdf'.format(overlaps[overlap]), bbox_inches='tight')
   plt.close()
 
 # MC Steps
-for overlap in range(len(overlaps)):
-  overlap = 1
-  max_y = 0
-  for method in range(len(methods)):
-  #for method in [0, 2, 4]:
-    if max_y < np.max(mc_steps_mean[method, 0, :, overlap]):
-      max_y = np.max(mc_steps_mean[method, 0, :, overlap])
+plot_mc_step([0, 2, 4], True)
 
-for overlap in range(len(overlaps)):
-  for method in range(len(methods)):
-    plt.axhline(y=1, linestyle='-')
-    plt.errorbar(windows, mc_steps_mean[method, 0, :, overlap], yerr=mc_steps_err[method, 0, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(methods_label[method]))
-    plt.xticks(windows, labels=windows)
-    plt.xlabel("Cores")
-    plt.ylabel("Relative MC Steps")
-    plt.title("Relative MC Steps")
-    plt.tight_layout()
-    plt.gca().set_box_aspect(1)
-    plt.ylim(0, max_y*1.25)
-    plt.savefig('{}_{:02d}_mc_steps.pdf'.format(methods[method], overlaps[overlap]), bbox_inches='tight')
-    plt.close()
+plot_mc_step([1, 3, 5], False)
 
-# Speed Up
+# Load Walker Data
+
+methods = np.array([0, 2, 4])
+methods_label = np.array(["1", "3", "5"])
+windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+walkers = np.array([1, 2, 3, 4, 5, 6])
+overlaps = np.array([25])
+
+sums = np.zeros([len(methods), len(walkers), len(windows), len(overlaps), repeats])
+for method_id, method in enumerate(methods):
+  for walker in range(len(walkers)):
+    for window in range(len(windows)):
+      for overlap in range(len(overlaps)):
+        for k in range(1,repeats+1):
+          filename = "{}_{:02d}_{:02d}_{:02d}_{}/load_balance/wl_lb_max_time.dat".format(method, walkers[walker], windows[window], overlaps[overlap], k)
+          wl_lb_max_time = nc.Dataset(filename)
+          wl_lb_max_time = np.array(wl_lb_max_time["grid data"][:], dtype=np.float64).T
+
+          row_sums = np.max(wl_lb_max_time, axis=1)
+          sums[method_id, walker, window, overlap, k-1] = np.sum(row_sums)
+
+sums_mean = np.mean(sums, axis=4)
+sums_min = np.min(sums, axis=4)
+sums_err = np.std(sums, axis=4)/np.sqrt(repeats)
+
+one_sums = np.zeros([len(methods), len(windows), len(overlaps), repeats])
+one_sums = sums[:, 0, :, :, :]
+one_sums_err = np.zeros([len(windows),len(overlaps)])
+one_sums_mean = np.zeros([len(windows),len(overlaps)])
+
+for window in range(len(windows)):
+  one_sums_err[window] = np.std(one_sums[:, window, :])/np.sqrt(len(methods)*repeats)
+  one_sums_mean[window] = np.mean(one_sums[:, window, :])
+
+  sums_mean[:, 0, window] = one_sums_mean[window]
+  sums_err[:, 0, window] = one_sums_err[window]
+
+for window in range(len(windows)):
+  for overlap in range(len(overlaps)):
+    one_sums_err[window, overlap] = np.std(one_sums[:, window, overlap, :])/np.sqrt(len(methods)*repeats)
+    one_sums_mean[window, overlap] = np.mean(one_sums[:, window, overlap, :])
+
+    sums_mean[:, 0, window, overlap] = one_sums_mean[window, overlap]
+    sums_err[:, 0, window, overlap] = one_sums_err[window, overlap]
+
+efficiency = np.empty_like(sums_mean)
+efficiency_err = np.empty_like(sums_err)
+
+# Speed Up walker comparison
 for method in range(len(methods)):
   for overlap in range(len(overlaps)):
     for walker in range(len(walkers)):
@@ -210,21 +330,23 @@ for method in range(len(methods)):
 
     plt.errorbar(windows*1, efficiency[method, 0, :, overlap], yerr=efficiency_err[method, 0, :, overlap], capsize=3, ls='none', fmt='o', label="{}%".format(overlaps[overlap]))
 
+  plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
   plt.plot(windows, windows, color="#D62728")
   plt.plot(windows, np.arange(1, np.max(windows)*0.75+np.max(windows)*0.75/len(windows), np.max(windows)*0.75/len(windows)), linestyle="--", color="#FF9896")
   plt.xticks(windows, labels=windows)
   plt.xlabel("Cores")
   plt.ylabel("Speed-up")
-  plt.title("Speed-up for 1 walker per domain")
-  plt.legend(loc="upper left", title="Overlaps")
-  plt.tight_layout()
+  #plt.title("Speed-up for 1 walker per domain")
+  #plt.legend(loc="upper left", title="Overlap %")
+  plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=len(overlaps), title="Overlap %")
+  
   plt.savefig('{}_overlap_speedup.pdf'.format(methods[method]), bbox_inches='tight')
   plt.close()
 
 cores = np.linspace(1, int(np.max(windows)*np.max(walkers)), int(np.max(windows)*np.max(walkers)))
 for overlap in range(len(overlaps)):
-  max_y = 0
   for method in range(len(methods)):
+    max_y = 0
     for walker in range(len(walkers)):
       plt.errorbar(windows*(walker+1), efficiency[method, walker, :, overlap], yerr=efficiency_err[method, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walkers[walker]))
       if max_y < np.max(efficiency[method, walker, :, overlap]):
@@ -232,14 +354,16 @@ for overlap in range(len(overlaps)):
     
     plt.plot(cores, cores, color="#D62728")
     plt.plot(cores, np.arange(1, np.max(cores)*0.75+np.max(cores)*0.75/len(cores), np.max(cores)*0.75/len(cores)), linestyle="--", color="#FF9896")
+    plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
     #plt.xticks(cores, labels=cores)
     plt.ylim(0, max_y*1.25)
     plt.xlabel("Cores")
     plt.ylabel("Speed-up")
-    plt.title("Speed-up for Method {}".format(methods_label[method]))
-    plt.legend(loc="lower right", title="Walkers")
-    plt.tight_layout()
-    plt.savefig('{}_speedup.pdf'.format(methods[method]), bbox_inches='tight')
+    #plt.title("Speed-up for Method {}".format(methods_label[method]))
+    #plt.legend(loc="lower right", title="Walkers")
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=len(walkers), title="Walkers")
+    
+    plt.savefig('{:02d}_{}_walker_speedup.pdf'.format(overlaps[overlap], methods[method]), bbox_inches='tight')
     plt.close()
 
 one_sums = np.zeros([len(methods), len(windows), len(overlaps), repeats])
@@ -265,30 +389,14 @@ for window in range(len(windows)):
 efficiency = np.empty_like(sums_mean)
 efficiency_err = np.empty_like(sums_err)
 
-
-# Walker Efficiency
 for overlap in range(len(overlaps)):
-  max_y = 0
   for method in range(len(methods)):
-    plt.axhline(y=1, linestyle='-')
     for window in range(len(windows)):
       efficiency[method, :, window, overlap] = one_sums_mean[window, overlap]/(sums_mean[method, :, window, overlap]*walkers)
       efficiency_err[method, :, window, overlap] = efficiency[method, :, window, overlap]*np.sqrt((one_sums_err[window, overlap]/one_sums_mean[window, overlap])**2+(sums_err[method, :, window, overlap]/sums_mean[method, :, window, overlap])**2)
 
-    for window in np.array([0, 1, 3, 7, 15]):
-      plt.errorbar(walkers, efficiency[method, :, window, overlap], yerr=efficiency_err[method, :, window, overlap], capsize=3, ls='none', fmt='o', label="{}".format(window+1))
-      if max_y < np.max(efficiency[method, :, window, overlap]):
-        max_y = np.max(efficiency[method, :, window, overlap])
+# Walker Efficiency
 
-    plt.xticks(walkers, labels=walkers)
-    plt.xlabel("Walkers")
-    plt.ylabel("Walker Efficiency")
-    plt.title("Method {}".format(methods[method]))
-    plt.legend(loc="upper right", title="Windows")
-    plt.tight_layout()
-    plt.gca().set_box_aspect(1)
-    plt.ylim(0, max_y*1.25)
-    plt.savefig('{}_walker_efficiency.pdf'.format(methods[method]), bbox_inches='tight')
-    plt.close()
+plot_walker_efficiency([0, 1, 2], [0], replica=True)
 
 exit()
