@@ -588,7 +588,12 @@ module wang_landau
         wl_logdos(jbin) = wl_logdos(jbin) + wl_f
       else
         ! reject and reset
+        jbin = ibin
         call pair_swap(config, rdm1, rdm2)
+        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+          mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
+        end if
+        wl_logdos(jbin) = wl_logdos(jbin) + wl_f
       end if
     end do
   end subroutine sweeps
