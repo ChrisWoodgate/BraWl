@@ -288,8 +288,7 @@ for ax in [hist_ax, cv_ax1, cv_ax1_asro]:
 
 	# Filter out ticks within the margin
 	x_ticks_filtered = [tick for tick in x_ticks if x_min + x_margin <= tick <= x_max - x_margin or tick == 0]
-  y_ticks_filtered = [tick for tick in y_ticks if y_min + y_margin <= tick <= y_max - y_margin or tick == 0]
-
+	y_ticks_filtered = [tick for tick in y_ticks if y_min + y_margin <= tick <= y_max - y_margin or tick == 0]
 
 	# Set the new ticks
 	#ax.set_xticks(x_ticks_filtered)
