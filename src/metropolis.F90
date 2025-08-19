@@ -359,6 +359,19 @@ module metropolis
         C = (step_Esq/n_save_energy - (step_E/n_save_energy)**2) &
             /(sim_temp*temp)/setup%n_atoms
 
+        ! Heat capacity should always be positive, but floating point
+        ! errors in the summation means we sometimes get a negative
+        ! number, so make it zero if this is the case
+        if (C .lt. 0.0_real64) then
+          C = 0.0_real64
+        end if
+
+        ! If the simulation temperature is exactly zero, set the heat
+        ! capacity to be zero, too.
+        if (temp .le. 0.0_real64) then
+          C = 0.0_real64
+        end if
+
         ! Store the specific heat capacity at this temperature
         C_of_T(j) = C
       end if
