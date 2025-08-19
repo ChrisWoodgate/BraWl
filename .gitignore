@@ -63,6 +63,7 @@ tests/
 !tests/99_ref/bcc_start_config.nc
 !tests/99_ref/bcc_end_config.nc
 !tests/99_ref/bcc_data.nc
+!tests/99_ref/wl_dos.nc
 
 # Ignore locally Doxygen-generated files
 docs/html/
