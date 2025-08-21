@@ -18,7 +18,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install gfortran and other dependencies with Homebrew
-        run: brew install gcc make openblas netcdf netcdf-fortran open-mpi
+        run: |
+          brew reinstall gcc
+          brew install make openblas netcdf netcdf-fortran open-mpi
 
       - name: Install Python
         uses: actions/setup-python@v5
