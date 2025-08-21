@@ -161,6 +161,7 @@ A (hopefully fairly complete) list of publications obtained using this code is:
 ## Contributors
 - Heather Ratcliffe
 - David Quigley
+- Adam M. Krajewski
 
 ## Contributing
 Contributions are welcome via pull requests. 
