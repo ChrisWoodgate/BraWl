@@ -63,7 +63,7 @@ module metropolis
                     step_Esq, C, acceptance
 
     ! Name of file for grid state and xyz file at this temperature
-    character(len=72) :: grid_file, xyz_file, xyz_trajectory_file
+    character(len=80) :: grid_file, xyz_file, xyz_trajectory_file
 
     ! Name of file for writing diagnostics at the end
     character(len=72) :: energy_trajectory_file, asro_trajectory_file
@@ -99,6 +99,10 @@ module metropolis
     if ((metropolis%write_trajectory_energy).or.(metropolis%write_trajectory_asro).or.(metropolis%write_trajectory_xyz)) then
       if(my_rank == 0) call execute_command_line('mkdir -p trajectories')
     end if
+
+    ! Make sure the required directories have been made before moving
+    ! to later portions of the calculation
+    call comms_wait()
 
 #ifdef USE_MPI
 
@@ -171,9 +175,9 @@ module metropolis
       ! Store this in an array
       temperature(j) = temp
     
-      !---------!
-      ! Burn in !
-      !---------!
+      !----------------------------------------------------------------!
+      !                           Burn in                              !
+      !----------------------------------------------------------------!
       if (j==1) then
         if (metropolis%burn_in_start) then
           do i=1, metropolis%n_burn_in_steps
@@ -253,6 +257,7 @@ module metropolis
       !-----------------------------------------------------------------!
       ! Gather information about initial state of trajectory, if needed !
       !-----------------------------------------------------------------!
+
       ! Storing of data to do with energies
       if (metropolis%calculate_energies) then
         current_energy = setup%full_energy(config)
@@ -274,6 +279,31 @@ module metropolis
         call xyz_writer(trim(xyz_trajectory_file), config, setup, .True.)
       end if
 
+      !-----------------------------------------------------------------!
+      ! Gather information about initial state of simulation, if needed !
+      !-----------------------------------------------------------------!
+
+      ! Dump grids as xyz files if needed
+      if (metropolis%write_initial_config_xyz) then
+          write(xyz_file, '(A13,I4.4,A20,I4.4,F2.1,A4)') 'configs/proc_', &
+          my_rank, '_initial_config_at_T_', int(temp), temp-int(temp),'.xyz'
+
+          ! Write xyz file
+          call xyz_writer(trim(xyz_file), config, setup)
+      end if
+
+      ! Dump grids as NetCDF files if needed
+      if (metropolis%write_initial_config_nc) then
+        write(grid_file, '(A13,I4.4,A19,I4.4,F2.1,A3)') 'configs/proc_', my_rank, '_initial_config_at_T_', &
+                                             int(temp), temp-int(temp), '.nc'
+        ! Write grid to file
+        call ncdf_grid_state_writer(trim(grid_file), ierr, config, setup)
+      end if
+
+      !----------------------------------------------------------------!
+      !                    Main Monte Carlo loop                       !
+      !----------------------------------------------------------------!
+
       ! Chop the run up into sweeps during which we need no draw no data
       ! (Avoids unneccessary branching)
       n_sweeps = metropolis%n_mc_steps/metropolis%n_sample_steps
@@ -282,9 +312,6 @@ module metropolis
       ! Set acceptance rate back to zero for main MC loop
       acceptance = 0.0_real64
 
-      !-----------------------!
-      ! Main Monte Carlo loop !
-      !-----------------------!
       do i=1, n_sweeps
 
         do k=1, n_sweep_steps
@@ -388,8 +415,8 @@ module metropolis
 
       ! Dump grids as xyz files if needed
       if (metropolis%write_final_config_xyz) then
-          write(xyz_file, '(A13,I4.4,A12,I4.4,F2.1,A4)') 'configs/proc_', &
-          my_rank, '_config_at_T_', int(temp), temp-int(temp),'.xyz'
+          write(xyz_file, '(A13,I4.4,A18,I4.4,F2.1,A4)') 'configs/proc_', &
+          my_rank, '_final_config_at_T_', int(temp), temp-int(temp),'.xyz'
 
           ! Write xyz file
           call xyz_writer(trim(xyz_file), config, setup)
@@ -397,7 +424,7 @@ module metropolis
   
       ! Dump grids as NetCDF files if needed
       if (metropolis%write_final_config_nc) then
-        write(grid_file, '(A13,I4.4,A11,I4.4,F2.1,A3)') 'configs/proc_', my_rank, '_grid_at_T_', &
+        write(grid_file, '(A13,I4.4,A17,I4.4,F2.1,A3)') 'configs/proc_', my_rank, '_final_config_at_T_', &
                                              int(temp), temp-int(temp), '.nc'
         ! Write grid to file
         call ncdf_grid_state_writer(trim(grid_file), ierr, config, setup)
@@ -422,8 +449,10 @@ module metropolis
     
     end do ! Loop over temperature
 
-  
-    
+    !------------------------------------------------------------------!
+    !                          Final results                           !
+    !------------------------------------------------------------------!
+
     ! Write energy diagnostics
     if (metropolis%calculate_energies) then
       write(diagnostics_file, '(A,I4.4,A)') 'energies/proc_', my_rank, &
@@ -470,6 +499,10 @@ module metropolis
     end if
 
 #endif
+
+    !------------------------------------------------------------------!
+    !                            Clean up                              !
+    !------------------------------------------------------------------!
 
     if (allocated(r_densities)) deallocate(r_densities)
     if (allocated(asro)) deallocate(asro)
@@ -520,7 +553,7 @@ module metropolis
     real(real64) :: beta, temp, sim_temp, current_energy, acceptance
   
     ! Name of xyz file
-    character(len=42) :: xyz_file
+    character(len=50) :: xyz_file
 
     ! Read the Metropolis control file
     call parse_metropolis_inputs(metropolis, my_rank)
