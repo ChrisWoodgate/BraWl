@@ -45,7 +45,7 @@ endif
 ifeq ($(strip $(compiler)),gfortran)
   FC=gfortran
   FFLAGS = -O3 -cpp -Wall -Wextra -fimplicit-none
-  FFLAGS += -I/usr/local/include -I$(OBJDIR) -J$(OBJDIR)
+  FFLAGS += -I$(OBJDIR) -J$(OBJDIR)
   LDFLAGS=-lgcc
   CC=gcc -I$(INCDIR)
   CFLAGS=-O3
@@ -55,7 +55,7 @@ endif
 ifeq ($(strip $(compiler)),mpifort)
   FC = mpifort
   FFLAGS = -O3 -cpp -DUSE_MPI -Wall -Wextra -fimplicit-none
-  FFLAGS += -I/usr/local/include -I$(OBJDIR) -J$(OBJDIR)
+  FFLAGS += -I$(OBJDIR) -J$(OBJDIR)
   LDFLAGS=-lgcc -lopenblas
   CC=gcc -I$(INCDIR)
   CFLAGS=-O3
@@ -68,14 +68,20 @@ OBJDIR=obj
 INCDIR=include
 
 ifeq ($(SYSTEM),Darwin)
-         FFLAGS += $(shell nf-config --fflags)
-         LDFLAGS += $(shell nf-config --flibs) \
-					$(shell nc-config --libs) \
-					-lnetcdf -lnetcdff
+  FFLAGS += $(shell nf-config --fflags)
+  LDFLAGS += $(shell nf-config --flibs) $(shell nc-config --libs) -lnetcdf -lnetcdff
+  ifeq ($(strip $(compiler)),mpifort)
+    LDFLAGS += -L/opt/homebrew/Cellar/openblas/0.3.30/lib
+  endif
 else
-         FFLAGS +=$(shell nf-config --fflags)
-         LDFLAGS += $(shell nf-config --flibs) \
-					$(shell nc-config --libs)
+  ifeq ($(strip $(compiler)),gfortran)
+    FFLAGS += -I/usr/local/include
+  endif
+  ifeq ($(strip $(compiler)),mpifort)
+    FFLAGS += -I/usr/local/include
+  endif
+  FFLAGS += $(shell nf-config --fflags)
+  LDFLAGS += $(shell nf-config --flibs) $(shell nc-config --libs)
 endif
 
 # Command to use for linking and executable
