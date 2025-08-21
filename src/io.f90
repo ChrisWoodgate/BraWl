@@ -56,7 +56,7 @@ module io
     call date_and_time(date=date,time=time)
 
     write(6,'(/,72("="))')
-    write(6,'(22x,"BraWl Version 0.4.1, 15.04.25")')
+    write(6,'(22x,"BraWl Version 1.0.0, 09.05.25")')
     write(6,'(72("-"))')
 
     if (point .eq. 's') then
@@ -78,6 +78,7 @@ module io
       write(6,'(72("-"))')
       write(6, '(" Contributors: Heather Ratcliffe")')
       write(6, '("               David Quigley    ")')
+      write(6, '("               Adam M. Krajewski")')
       write(6,'(72("-"))')
       write(6,'(15x,"This run started at",1x,a," on",1x,a)')           &
                time(1:2)//":"//time(3:4)//":"//time(5:6),              &
@@ -543,7 +544,10 @@ module io
     metropolis%write_trajectory_energy = .false.
     metropolis%write_trajectory_asro = .false.
     metropolis%n_sample_steps_trajectory = 0
+    metropolis%write_initial_config_xyz = .false.
+    metropolis%write_initial_config_nc = .false.
     metropolis%write_final_config_xyz = .false.
+    metropolis%write_final_config_nc = .false.
     metropolis%read_start_config_nc = .false.
     metropolis%T_steps = 1
     metropolis%delta_T = 1
@@ -619,6 +623,10 @@ module io
           read(buffer, *, iostat=ios) metropolis%write_trajectory_energy
         case ('write_trajectory_asro')
           read(buffer, *, iostat=ios) metropolis%write_trajectory_asro
+        case ('write_initial_config_xyz')
+          read(buffer, *, iostat=ios) metropolis%write_initial_config_xyz
+        case ('write_initial_config_nc')
+          read(buffer, *, iostat=ios) metropolis%write_initial_config_nc
         case ('write_final_config_xyz')
           read(buffer, *, iostat=ios) metropolis%write_final_config_xyz
         case ('write_final_config_nc')

@@ -127,8 +127,10 @@ module derived_types
   !> @param write_trajectory_xyz Whether to output the trajectory. Default to False---can generate BIG files.
   !> @param n_sample_steps_trajectory Number of trial Monte Carlo steps between sampling trajectory. 
   !>                                  Note: must be a multiple of n_sample_steps
-  !> @param write_final_config_nc Whether to output the final config at each T in binary format
+  !> @param write_initial_config_xyz Whether to output the initial config at each T in xyz format
+  !> @param write_initial_config_nc Whether to output the initial config at each T in binary format
   !> @param write_final_config_xyz Whether to output the final config at each T in xyz format
+  !> @param write_final_config_nc Whether to output the final config at each T in binary format
   !> @param read_start_config_nc Whether to real the initial config from binary file
   !> @param start_config_file Name of file from which to read initial config
   !> @param beta Inverse temperature, internally in Ry
@@ -190,6 +192,12 @@ module derived_types
     ! Number of monte carlo steps between drawing ALRO parameters
     ! (MUST be an integer multiple of n_sample_steps)
     integer :: n_sample_steps_trajectory
+    ! Do we want to write the initial config (at each temp if annealing)
+    ! as an xyz file?
+    logical :: write_initial_config_xyz
+    ! Do we want to write the initial config (at each temp if annealing)
+    ! as a NetCDF file? (For restart later.)
+    logical :: write_initial_config_nc
     ! Do we want to write the final config (at each temp if annealing)
     ! as an xyz file?
     logical :: write_final_config_xyz
