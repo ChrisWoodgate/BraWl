@@ -388,7 +388,7 @@ module metropolis
 
       ! Dump grids as xyz files if needed
       if (metropolis%write_final_config_xyz) then
-          write(xyz_file, '(A11 I4.4 A12 I4.4 F2.1 A4)') 'configs/proc_', &
+          write(xyz_file, '(A13,I4.4,A12,I4.4,F2.1,A4)') 'configs/proc_', &
           my_rank, '_config_at_T_', int(temp), temp-int(temp),'.xyz'
 
           ! Write xyz file
@@ -397,7 +397,7 @@ module metropolis
   
       ! Dump grids as NetCDF files if needed
       if (metropolis%write_final_config_nc) then
-        write(grid_file, '(A11 I4.4 A11 I4.4 F2.1 A3)') 'configs/proc_', my_rank, '_grid_at_T_', &
+        write(grid_file, '(A13,I4.4,A11,I4.4,F2.1,A3)') 'configs/proc_', my_rank, '_grid_at_T_', &
                                              int(temp), temp-int(temp), '.nc'
         ! Write grid to file
         call ncdf_grid_state_writer(trim(grid_file), ierr, config, setup)
@@ -427,14 +427,14 @@ module metropolis
     ! Write energy diagnostics
     if (metropolis%calculate_energies) then
       write(diagnostics_file, '(A,I4.4,A)') 'energies/proc_', my_rank, &
-                                           'energy_diagnostics.dat'
+                                           '_energy_diagnostics.dat'
       call diagnostics_writer(trim(diagnostics_file), temperature, &
                               energies_of_T, C_of_T, acceptance_of_T)
     end if
 
     ! Write radial densities
     if (metropolis%calculate_asro) then
-      write(radial_file, '(A,I3.3,A)') 'asro/proc_', my_rank, '_rho_of_T.nc'
+      write(radial_file, '(A,I4.4,A)') 'asro/proc_', my_rank, '_rho_of_T.nc'
       ! Write the radial densities to file
       call ncdf_radial_density_writer(trim(radial_file), rho_of_T, &
                                       shells, temperature, energies_of_T, setup)
@@ -442,7 +442,7 @@ module metropolis
 
     ! Write radial densities
     if (metropolis%calculate_alro) then
-      write(alro_file, '(A22 I3.3 A12)') 'alro/proc_', my_rank, '_rho_of_T.nc'
+      write(alro_file, '(A22,I4.4,A12)') 'alro/proc_', my_rank, '_rho_of_T.nc'
       ! Write the radial densities to file
       call ncdf_order_writer(trim(alro_file), ierr, order_of_T, temperature, setup)
     end if
@@ -618,7 +618,7 @@ module metropolis
           ! Get the energy of this configuration
           current_energy = setup%full_energy(config)
 
-          write(xyz_file, '(A11 I3.3 A8 I4.4 A6 I4.4 F2.1 A4)') &
+          write(xyz_file, '(A,I4.4,A8,I4.4,A6,I4.4,F2.1,A4)') &
           'configs/proc_', my_rank, '_config_',                   &
           int(i/metropolis%n_sample_steps_asro), '_at_T_', int(temp),&
           temp-int(temp),'.xyz'
