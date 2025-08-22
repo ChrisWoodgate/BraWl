@@ -59,7 +59,7 @@ jobs:
   
       - name: Run WL test with mpifort with 4 processes
         run: |
-          make compiler=mpifort tests
+          make compiler=mpifort
           cd tests/04_parallel_wang-landau
           mpirun -np 4 ../../brawl.run
           python wl_test.py
