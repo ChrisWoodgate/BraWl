@@ -53,7 +53,7 @@
 !examples/*/*/*.txt
 
 # Ignore any gumpf that a user has in their tests directory
-tests/
+tests/*
 # But don't ignore the reference data for testing
 !tests/fcc.vij
 !tests/bcc.vij
