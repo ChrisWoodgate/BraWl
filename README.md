@@ -1,5 +1,9 @@
 # BraWl
 
+[![Ubuntu (x86_64)](https://github.com/ChrisWoodgate/BraWl/actions/workflows/testingOnPush_Ubuntu.yaml/badge.svg)](https://github.com/ChrisWoodgate/BraWl/actions/workflows/testingOnPush_Ubuntu.yaml)
+[![MacOS (ARM64)](https://github.com/ChrisWoodgate/BraWl/actions/workflows/testingOnPush_Apple.yaml/badge.svg)](https://github.com/ChrisWoodgate/BraWl/actions/workflows/testingOnPush_Apple.yaml)
+[![License: MIT](https://img.shields.io/badge/License-LGPLv3-yellow.svg)](https://opensource.org/license/lgpl-3-0)
+
 `BraWl` — a package for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian. The package implements a range of conventional and enhanced sampling techniques, including Metropolis-Hastings Monte Carlo, Nested Sampling, and Wang-Landau sampling. This `README` contains key information and installation instructions, while developer documentation can be found at: [https://chriswoodgate.github.io/BraWl/](https://chriswoodgate.github.io/BraWl/)
 
 Copyright (C) The Authors 2019-2025. Released under the GNU Lesser General Public License, version 3.
@@ -134,7 +138,7 @@ To generate and host your own version of the documentation, you should:
 3. Navigate to the freshly-generated `docs/html` directory and `open` index.html. (Alternatively, use your system's filemanager to open this in your web browser.)
 
 ## Citations
-If you use `BraWl` in your research, please cite our preprint:
+If you use `BraWl` in your research, please cite our preprint documenting the package and its capabilities:
 * H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393).
 
 ## List of publications
@@ -148,8 +152,7 @@ A (hopefully fairly complete) list of publications obtained using this code is:
 7. C. D. Woodgate, _"Modelling Atomic Arrangements in Multicomponent Alloys: A Perturbative, First-Principles-Based Approach"_ [Springer Series in Materials Science, Vol. 346 (Springer Nature Switzerland, Cham, 2024)](https://doi.org/10.1007/978-3-031-62021-8).
 8. C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
 9. C. D. Woodgate, L. H. Lewis, J. B. Staunton, [npj Comput. Mater. **10**, 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y).
-10. C. D. Woodgate, H. J. Naguszewski, D. Redka, J. Minar, D. Quigley, J. B. Staunton, [arXiv:2503.13235](https://arxiv.org/abs/2503.13235).
-11. H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393).
+10. C. D. Woodgate, H. J. Naguszewski, D. Redka, J. Minar, D. Quigley, J. B. Staunton, [J. Phys.: Mater. **8**, 045002 (2025)](https://doi.org/10.1088/2515-7639/adf468).
 
 ## Authors
 - Hubert J. Naguszewski
@@ -159,6 +162,7 @@ A (hopefully fairly complete) list of publications obtained using this code is:
 ## Contributors
 - Heather Ratcliffe
 - David Quigley
+- Adam M. Krajewski
 
 ## Contributing
 Contributions are welcome via pull requests. 
