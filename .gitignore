@@ -58,8 +58,8 @@ tests/
 !tests/fcc.vij
 !tests/bcc.vij
 !tests/99_ref/*
-!test/04_parallel_wang-landau/*vij
-!test/04_parallel_wang-landau/*inp
+!tests/04_parallel_wang-landau/*vij
+!tests/04_parallel_wang-landau/*inp
 
 # Ignore locally Doxygen-generated files
 docs/html/
