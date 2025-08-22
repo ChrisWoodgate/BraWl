@@ -29,3 +29,5 @@ wc_range = 3
 
 # Swap just nearest-neighbours (if 'true') or any pair of lattice sites (if 'false')
 nbr_swap = .false.
+
+static_seed = .true.
