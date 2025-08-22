@@ -60,6 +60,7 @@ tests/
 !tests/99_ref/*
 !test/04_parallel_wang-landau/*vij
 !test/04_parallel_wang-landau/*inp
+!test/04_parallel_wang-landau/*py
 
 # Ignore locally Doxygen-generated files
 docs/html/
