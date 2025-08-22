@@ -88,12 +88,13 @@ tests/04_parallel_wang-landau/*
 
 tests/99_ref/*
 !tests/99_ref/01_serial_metropolis
+!tests/99_ref/01_serial_metropolis/*
 !tests/99_ref/02_parallel_metropolis
+!tests/99_ref/02_parallel_metropolis/*
 !tests/99_ref/03_serial_nested_sampling
+!tests/99_ref/03_serial_nested_sampling/*
 !tests/99_ref/04_parallel_wang-landau
-
-tests/99_ref/04_parallel_wang-landau/*
-!tests/99_ref/04_parallel_wang-landau/wl_dos.nc
+!tests/99_ref/04_parallel_wang-landau/*
 
 # Ignore locally Doxygen-generated files
 docs/html/
