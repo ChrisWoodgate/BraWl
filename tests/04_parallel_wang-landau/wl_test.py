@@ -6,7 +6,7 @@ filename = "data/wl_dos.dat"
 logdos_run = nc.Dataset(filename)
 logdos_run = np.array(logdos_run["grid data"][:], dtype=np.float64)
 
-filename = "../99_ref/wl_dos.nc"
+filename = "../99_ref/04_parallel_wang-landau/wl_dos.nc"
 logdos_ver = nc.Dataset(filename)
 logdos_ver = np.array(logdos_ver["grid data"][:], dtype=np.float64)
 
