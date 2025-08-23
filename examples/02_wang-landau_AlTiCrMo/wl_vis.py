@@ -55,7 +55,7 @@ wl_logdos = nc.Dataset(filename)
 wl_logdos = np.array(wl_logdos["grid data"][:], dtype=np.float64)
 plt.plot(wl_logdos)
 
-filename = "asro/rho_of_E.dat"  
+filename = "asro/rho_of_E.nc"  
 rho_of_E = nc.Dataset(filename)
 
 rho = rho_of_E.variables['rho data'][:]
