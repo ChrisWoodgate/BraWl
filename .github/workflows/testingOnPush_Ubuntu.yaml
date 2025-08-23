@@ -54,7 +54,7 @@ jobs:
 
       - name: Run prallel Metropolis test
         run: |
-          cd tests/03_parallel_metropolis
+          cd tests/02_parallel_metropolis
           mpirun -np 4 ../../brawl.run
           python ../ci_test.py
 
