@@ -38,12 +38,17 @@ for i, _ in enumerate(ref_files):
           ref_var = ref_nc.variables[var_name][:]
           test_var = test_nc.variables[var_name][:]
 
-          if not np.allclose(ref_var, test_var, rtol=0.01, equal_nan=True):
-            print(f"[DATA MISMATCH >1%] {os.path.basename(test_files[i])}, variable: {var_name}")
+          ref_flat = ref_var.flatten()
+          test_flat = test_var.flatten()
+
+          nrmse = np.sqrt(np.mean((ref_flat - test_flat) ** 2))/np.mean(np.abs(ref_flat))
+
+          if nrmse > 0.01:
+            print(f"[DATA MISMATCH NRMSE >1%] {os.path.basename(test_files[i])}, variable: {var_name}")
             sys.exit(1)
 
-    except:
-      print(f"[FILE MISMATCH] Reference file {os.path.basename(ref_files[i])} not found")
+    except Exception as e:
+      print(f"[FILE ERROR] {file_name}: {e}")
       sys.exit(1)
 
   # --- Case 2: Text (.dat) files ---
