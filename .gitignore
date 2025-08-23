@@ -61,6 +61,7 @@ tests/*
 !tests/03_serial_nested_sampling
 !tests/04_parallel_wang-landau
 !tests/99_ref
+!tests/ci_test.py
 
 tests/01_serial_metropolis/*
 !tests/01_serial_metropolis/fcc_epi.vij
