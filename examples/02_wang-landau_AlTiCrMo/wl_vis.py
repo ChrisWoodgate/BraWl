@@ -46,11 +46,11 @@ colors = {
 custom_cmap = ListedColormap(colors.values())
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=custom_cmap.colors)
 
-filename = "data/wl_dos_bins.dat"
+filename = "data/wl_dos_bins.nc"
 bin_edges = nc.Dataset(filename)
 bin_edges = np.array(bin_edges["grid data"][:], dtype=np.float64)
 
-filename = "data/wl_dos.dat"
+filename = "data/wl_dos.nc"
 wl_logdos = nc.Dataset(filename)
 wl_logdos = np.array(wl_logdos["grid data"][:], dtype=np.float64)
 plt.plot(wl_logdos)
@@ -74,7 +74,7 @@ concentrations = 1.0/n_species*np.ones(n_species)
 
 wl_logdos = wl_logdos - np.max(wl_logdos)
 
-filename = "data/wl_hist.dat"
+filename = "data/wl_hist.nc"
 wl_hist = nc.Dataset(filename)
 wl_hist = np.array(wl_hist["grid data"][:], dtype=np.float64)
 
