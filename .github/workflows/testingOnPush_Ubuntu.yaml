@@ -37,13 +37,13 @@ jobs:
       
       - name: Run serial Metropolis test
         run: |
-          cd test/01_serial_metropolis
+          cd tests/01_serial_metropolis
           ../../brawl.run
           python ../ci_test.py
 
       - name: Run serial Nested Sampling test
         run: |
-          cd test/03_serial_nested_sampling
+          cd tests/03_serial_nested_sampling
           ../../brawl.run
           python ../ci_test.py
 
@@ -54,12 +54,12 @@ jobs:
 
       - name: Run prallel Metropolis test
         run: |
-          cd test/03_parallel_metropolis
+          cd tests/03_parallel_metropolis
           mpirun -np 4 ../../brawl.run
           python ../ci_test.py
 
       - name: Run parallel Wang-Landau test
         run: |
-          cd test/04_parallel_wang-landau
+          cd tests/04_parallel_wang-landau
           mpirun -np 4 ../../brawl.run
           python ../ci_test.py
