@@ -87,7 +87,6 @@ endif
 # Command to use for linking and executable
 LD=$(FC)
 EXE=brawl.run
-TESTEXE=tests.run
 EXEXE=example.run
 
 MODFILES=mt19937ar.c kinds.f90 shared_data.f90 io.f90 comms.F90 netcdf_io.f90 \
@@ -105,15 +104,12 @@ VPATH = $(SRCDIR):$(SRCDIR)/core:$(OBJDIR):$(INCDIR)
 brawl: $(OBJFILES) main.o
 	$(FC) $(FFLAGS) -o $(EXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/main.o $(LDFLAGS)
 
-tests: $(OBJFILES) tests.o test.o
-	$(FC) $(FFLAGS) -o $(TESTEXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/tests.o obj/test.o $(LDFLAGS)
-
 example: $(OBJFILES) howto_examples.o example.o
 	$(FC) $(FFLAGS) -o $(EXEXE) $(addprefix $(OBJDIR)/,$(OBJFILES)) obj/howto_examples.o obj/example.o  $(LDFLAGS)
 
 # Purge build files and executable
 clean :
-	@rm -rf $(OBJDIR) $(BINDIR) $(EXE) $(TESTEXE) $(EXEXE)
+	@rm -rf $(OBJDIR) $(BINDIR) $(EXE) $(EXEXE)
 
 # Rules for building object files
 %.o: %.f90
@@ -151,8 +147,5 @@ random_site.o: shared_data.o kinds.o c_functions.o analytics.o constants.o
 nested_sampling.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o derived_types.o
 metropolis.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o analytics.o initialise.o constants.o derived_types.o metropolis_output.o
 initialise.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o comms.o constants.o derived_types.o comms.o
-tests.o: initialise.o shared_data.o kinds.o c_functions.o netcdf_io.o\
-	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o derived_types.o
-test.o: tests.o
 main.o: initialise.o shared_data.o kinds.o c_functions.o netcdf_io.o\
 	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o derived_types.o
