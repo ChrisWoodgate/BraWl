@@ -104,7 +104,7 @@ mpirun -np <num_processors> /path/to/BraWl/brawl.run input=<brawl_input_name> me
 ```
 
 ## Examples
-If you navigate to the `examples` subdirectory, you should find some example input files demonstrating the code's usage which can be run inside those directories. These input files are commented to explain what the various parameters mean and do.
+If you navigate to the `examples` subdirectory, you should find various further subdirectories containing some example input files demonstrating the code's usage, which can be run inside those directories. These input files are commented to explain what the various parameters mean and do.
 
 Most options specified in the input files are fairly self-explanatory. Commented examples of input files can be found in the `examples` subdirectory. The least obvious is the `mode' option of `brawl.inp`. Because it is our intention to include 2D (and potentially 1D) options in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented (and fully tested) options are:
 - 01: Metropolis-Hastings Monte Carlo. Uses the Metropolis-Hastings algortithm to equilibrate a system then perform sampling. Can also be used to perform simulated annealing, _e.g._ as used in [npj Comput. Mater. **10** 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y), or to draw decorrelated samples for use in other modelling approaches, such as training machine-learned interatomic potentials, _e.g._ as used in [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
