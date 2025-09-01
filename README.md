@@ -104,7 +104,7 @@ mpirun -np <num_processors> /path/to/BraWl/brawl.run input=<brawl_input_name> me
 ```
 
 ## Examples
-If you navigate to the `examples` subdirectory, you should find some example input files demonstrating the code's usage which can be run inside those directories. These input files are commented to explain what the various parameters mean and do.
+If you navigate to the `examples` subdirectory, you should find various further subdirectories containing some example input files demonstrating the code's usage, which can be run inside those directories. These input files are commented to explain what the various parameters mean and do.
 
 Most options specified in the input files are fairly self-explanatory. Commented examples of input files can be found in the `examples` subdirectory. The least obvious is the `mode` option of `brawl.inp`. Because it is our intention to include 2D (and potentially 1D) options in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented (and fully tested) options are:
 - 01: Metropolis-Hastings Monte Carlo. Uses the Metropolis-Hastings algortithm to equilibrate a system then perform sampling. Can also be used to perform simulated annealing, _e.g._ as used in [npj Comput. Mater. **10** 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y), or to draw decorrelated samples for use in other modelling approaches, such as training machine-learned interatomic potentials, _e.g._ as used in [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
@@ -112,19 +112,7 @@ Most options specified in the input files are fairly self-explanatory. Commented
 - 03: Nested sampling. Uses the nested sampling algorithm to sample the configuration space from random initial configurations, allowing to calculate the partition function at an arbitrary temperature during the post-processing step. This procedure is outlined in [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
 
 ## Tests
-The `tests` directory contains some test inputs/outputs to verify the code's core functionality once compiled.
-
-To run the test suite, first build the code in `tests` mode by running
-```
-make compiler=<compiler> tests
-```
-This should build an executable called `tests.run` in the main code directory. Then navigate to the tests directory: `cd tests`, before running either `/path/to/brawl/tests.run` for a serial build, or `mpirun -np 1 /path/to/brawl/tests.run` for a parallel build. (The test suite runs in serial only as it currently only checks core functionality.)
-
-To save the output of the test run, pipe it to a file, _e.g._
-```
-/path/to/brawl/tests.run > tests.out
-```
-The output of this routine will tell you which tests (if any failed).
+The `tests` directory contains some test inputs/outputs to verify the code's core functionality once compiled. These tests are run automatically using GitHub Actions. You can find full details in `.github/workflows/`
 
 ## Documentation
 The in addition to this README and the provided examples, the code also has (searchable) documentation which is auto-generated using [Doxygen](https://www.doxygen.nl). This documentation contains information about all modules, functions, subroutines, and derived types, so is particularly useful if you are looking to develop a new feature. There are two options available for viewing this documentation:
