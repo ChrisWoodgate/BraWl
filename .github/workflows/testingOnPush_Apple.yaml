@@ -34,26 +34,34 @@ jobs:
 
       - name: Run serial compilation with gfortran
         run: |
+          make clean
           make compiler=gfortran
 
-#      - name: Run tests with gfortran
-#        run: |
-#          make compiler=gfortran tests     
-#          cd tests
-#          ../tests.run
- 
-#      - name: Run parallel compilation with mpifort
-#        run: |
-#          make compiler=mpifort
+      - name: Run serial Metropolis test
+        run: |
+          cd tests/01_serial_metropolis
+          ../../brawl.run
+          python ../ci_test.py
 
-#      - name: Run tests with mpifort with 1 process
-#        run: |
-#          make compiler=mpifort tests
-#          cd tests
-#          mpirun -np 1 ../tests.run
+      - name: Run serial Nested Sampling test
+        run: |
+          cd tests/03_serial_nested_sampling
+          ../../brawl.run
+          python ../ci_test.py
 
-#      - name: Run tests with mpifort with 4 processes
-#        run: |
-#          make compiler=mpifort tests
-#          cd tests
-#          mpirun -np 4 ../tests.run
+      - name: Run parallel compilation with mpifort
+        run: |
+          make clean
+          make compiler=mpifort
+
+      - name: Run parallel Metropolis test
+        run: |
+          cd tests/02_parallel_metropolis
+          mpirun -np 4 ../../brawl.run
+          python ../ci_test.py
+
+      - name: Run parallel Wang-Landau test
+        run: |
+          cd tests/04_parallel_wang-landau
+          mpirun -np 4 ../../brawl.run
+          python ../ci_test.py
