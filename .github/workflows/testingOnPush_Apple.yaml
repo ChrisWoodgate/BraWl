@@ -57,11 +57,11 @@ jobs:
       - name: Run parallel Metropolis test
         run: |
           cd tests/02_parallel_metropolis
-          mpirun -np 4 ../../brawl.run
+          mpirun --map-by :OVERSUBSCRIBE -np 4 ../../brawl.run
           python ../ci_test.py
 
       - name: Run parallel Wang-Landau test
         run: |
           cd tests/04_parallel_wang-landau
-          mpirun -np 4 ../../brawl.run
+          mpirun --map-by :OVERSUBSCRIBE -np 4 ../../brawl.run
           python ../ci_test.py
