@@ -108,7 +108,7 @@ If you navigate to the `examples` subdirectory, you should find various further 
 
 Most options specified in the input files are fairly self-explanatory. Commented examples of input files can be found in the `examples` subdirectory. The least obvious is the `mode` option of `brawl.inp`. Because it is our intention to include 2D (and potentially 1D) options in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented (and fully tested) options are:
 - 01: Metropolis-Hastings Monte Carlo. Uses the Metropolis-Hastings algortithm to equilibrate a system then perform sampling. Can also be used to perform simulated annealing, _e.g._ as used in [npj Comput. Mater. **10** 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y), or to draw decorrelated samples for use in other modelling approaches, such as training machine-learned interatomic potentials, _e.g._ as used in [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
-- 02: Wang-Landau sampling. Uses Wang-Landau sampling to compute the simulation density of states in energy, which can then be used to sample thermodynamic quantities as a post-processing step. This procedure is outlined in [arXiv:2503.13235](https://arxiv.org/abs/2503.13235)
+- 02: Wang-Landau sampling. Uses Wang-Landau sampling to compute the simulation density of states in energy, which can then be used to sample thermodynamic quantities as a post-processing step. This procedure is outlined in [J. Phys.: Mater. **8**, 045002 (2025)](https://doi.org/10.1088/2515-7639/adf468).
 - 03: Nested sampling. Uses the nested sampling algorithm to sample the configuration space from random initial configurations, allowing to calculate the partition function at an arbitrary temperature during the post-processing step. This procedure is outlined in [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
 
 ## Tests
@@ -130,7 +130,7 @@ If you use `BraWl` in your research, please cite our preprint documenting the pa
 * H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393).
 
 ## List of publications
-A (hopefully fairly complete) list of publications obtained using this code is:
+A (hopefully fairly complete) list of publications where `Brawl` was used is as follows:
 1. G. A. Marchant, C. D. Woodgate, C. E. Patrick, J. B. Staunton, [Phys. Rev. B **103**, 094414 (2021)](https://doi.org/10.1103/PhysRevB.103.094414).
 2. C. D. Woodgate, J. B. Staunton, [Phys. Rev. B **105**, 115124 (2022)](https://doi.org/10.1103/PhysRevB.105.115124).
 3. C. D. Woodgate, J. B. Staunton, [Phys. Rev. Mater. **7**, 013801 (2023)](https://doi.org/10.1103/PhysRevMaterials.7.013801).
@@ -141,6 +141,7 @@ A (hopefully fairly complete) list of publications obtained using this code is:
 8. C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
 9. C. D. Woodgate, L. H. Lewis, J. B. Staunton, [npj Comput. Mater. **10**, 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y).
 10. C. D. Woodgate, H. J. Naguszewski, D. Redka, J. Minar, D. Quigley, J. B. Staunton, [J. Phys.: Mater. **8**, 045002 (2025)](https://doi.org/10.1088/2515-7639/adf468).
+11. A. M. Fisher, C. D. Woodgate, X. Zhang, G. C. Hadjipanayis, L. H. Lewis, J. B. Staunton, [arXiv:2508.19124](https://doi.org/10.48550/arXiv.2508.19124).
 
 ## Authors
 - Hubert J. Naguszewski
