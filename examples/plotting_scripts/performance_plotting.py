@@ -33,7 +33,7 @@ def plot_domain_efficiency(selected_methods, replica=True):
       for walker in range(len(walkers)):
         ax.errorbar(windows, efficiency[method_id, walker, :, overlap], yerr=efficiency_err[method_id, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walker+1))
       ax.set_xticks(windows[::2])
-      ax.set_xlabel("Domains")
+      ax.set_xlabel(r"Domains ($h$)")
       ax.tick_params(axis="y", direction='inout')
       if ax_id == 0:
         ax.set_ylabel("Domain Efficiency")
@@ -107,7 +107,7 @@ def plot_walker_efficiency(selected_methods, selected_overlaps, replica=True):
       for window in np.array([0, 1, 3, 7, 15]):
         ax.errorbar(walkers, efficiency[method, :, window, overlap], yerr=efficiency_err[method, :, window, overlap], capsize=3, ls='none', fmt='o', label="{}".format(window+1))
       ax.set_xticks(walkers)
-      ax.set_xlabel("Walkers")
+      ax.set_xlabel(r"Walkers ($m$)")
       ax.tick_params(axis="y", direction='inout')
       if ax_id == 0:
         ax.set_ylabel("Walker Efficiency")
@@ -115,7 +115,7 @@ def plot_walker_efficiency(selected_methods, selected_overlaps, replica=True):
       else:
         ax.set_yticklabels([])
       ax.set_ylim(0, max_y*1.25)
-      ax.text(0.5, -0.25, titles[ax_id], transform=ax.transAxes, ha='center', va='top')
+      ax.text(0.5, -0.25, titles[ax_id], transform=ax.transAxes, ha='center', va='top', fontweight="bold")
 
       if ax_id == 1:
         ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.35), ncol=5, title="Sub-domains")
@@ -178,7 +178,7 @@ titles = ["(a)", "(b)", "(c)"]
 #methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Replica", "Replica"])
 #methods = np.array([0,1])
 walkers = np.array([1])
-#overlaps = np.array([50])
+#overlaps = np.array([25])
 
 sums = np.zeros([len(methods), len(walkers), len(windows), len(overlaps), repeats])
 mc_steps = np.zeros([len(methods), len(walkers), len(windows), len(overlaps), repeats])
@@ -256,7 +256,9 @@ for overlap in range(len(overlaps)):
     plt.errorbar(windows*1, efficiency[method, 0, :, overlap], yerr=efficiency_err[method, 0, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(methods_label[method]))
 
   plt.plot(windows, windows, color="#D62728")
-  plt.plot(windows, np.arange(1, np.max(windows)*0.75+np.max(windows)*0.75/len(windows), np.max(windows)*0.75/len(windows)), linestyle="--", color="#FF9896")
+  ymin, ymax = plt.ylim()
+  plt.plot(windows, windows**2, linestyle="--", color="#FF9896")
+  plt.ylim(ymin, ymax)
   plt.xticks(windows, labels=windows)
   plt.xlabel("Cores")
   plt.ylabel("Speed-up")
@@ -283,7 +285,9 @@ for method in range(len(methods)):
 
   plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
   plt.plot(windows, windows, color="#D62728")
-  plt.plot(windows, np.arange(1, np.max(windows)*0.75+np.max(windows)*0.75/len(windows), np.max(windows)*0.75/len(windows)), linestyle="--", color="#FF9896")
+  ymin, ymax = plt.ylim()
+  plt.plot(windows, windows**2, linestyle="--", color="#FF9896")
+  plt.ylim(ymin, ymax)
   plt.xticks(windows, labels=windows)
   plt.xlabel("Cores")
   plt.ylabel("Speed-up")
@@ -300,6 +304,13 @@ methods_label = np.array(["1", "3", "5"])
 windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
 walkers = np.array([1, 2, 3, 4, 5, 6])
 overlaps = np.array([25])
+
+#methods = np.array([0, 1, 2, 3, 4, 5])
+#methods_label = np.array(["1", "2", "3", "4", "5", "6"])
+
+#methods = np.array([0, 2, 4])
+#walkers = np.array([1])
+#overlaps = np.array([0, 10, 25, 50, 75])
 
 sums = np.zeros([len(methods), len(walkers), len(windows), len(overlaps), repeats])
 for method_id, method in enumerate(methods):
@@ -357,7 +368,7 @@ for overlap in range(len(overlaps)):
         max_y = np.max(efficiency[method, walker, :, overlap])
     
     plt.plot(cores, cores, color="#D62728")
-    plt.plot(cores, np.arange(1, np.max(cores)*0.75+np.max(cores)*0.75/len(cores), np.max(cores)*0.75/len(cores)), linestyle="--", color="#FF9896")
+    #plt.plot(cores, cores**2, linestyle="--", color="#FF9896")
     plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
     #plt.xticks(cores, labels=cores)
     plt.ylim(0, max_y*1.25)

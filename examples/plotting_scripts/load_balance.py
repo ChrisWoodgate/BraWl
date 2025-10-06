@@ -8,17 +8,18 @@ from matplotlib.colors import ListedColormap
 import matplotlib.colors as mcolors
 import itertools
 
-font_size = 32
+def flip(items, ncol):
+    return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
+
+font_size = 24
+figsize = (16,8)
+figsize_subplots = (18,6)
 np.set_printoptions(suppress=True)
 #plt.rcParams.update({"text.usetex": True,
 #                     "font.size": font_size})
 plt.rcParams.update({"font.size": font_size})
-plt.rc('font', family='serif')
+plt.rcParams["figure.figsize"] = figsize
 #plt.rc('text', usetex=True)
-plt.rcParams["figure.figsize"] = (12*1.75,8*1.75)
-
-def flip(items, ncol):
-    return list(itertools.chain(*[items[i::ncol] for i in range(ncol)]))
 
 colors = {
     "steel_blue": "#1F77B4",
@@ -86,7 +87,6 @@ plt.xlabel("Wang-Landau Iteration")
 plt.xticks(x_axis)
 handles, labels = plt.gca().get_legend_handles_labels()
 plt.legend(flip(handles, columns), flip(labels, columns), title="Domain", loc='upper center', bbox_to_anchor=(0.5, -0.25), ncol=columns)
-plt.tight_layout()
 plt.savefig('load_balance/load_balance_1.pdf', bbox_inches='tight')
 plt.close()
 
