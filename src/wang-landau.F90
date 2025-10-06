@@ -393,9 +393,9 @@ module wang_landau
     real(real64), allocatable, intent(in) :: bin_edges(:), wl_logdos(:), wl_hist(:)
     if (my_rank == 0) then
       ! Write output files
-      call ncdf_writer_1d("data/wl_dos_bins.dat", ierr, bin_edges)
-      call ncdf_writer_1d("data/wl_dos.dat", ierr, wl_logdos)
-      call ncdf_writer_1d("data/wl_hist.dat", ierr, wl_hist)
+      call ncdf_writer_1d("data/wl_dos_bins.nc", ierr, bin_edges)
+      call ncdf_writer_1d("data/wl_dos.nc", ierr, wl_logdos)
+      call ncdf_writer_1d("data/wl_hist.nc", ierr, wl_hist)
     end if
   end subroutine save_wl_data
 
@@ -1054,7 +1054,7 @@ module wang_landau
     rho_of_E = 0.0_real64
 
     ! Path to radial file and name of radial file
-    radial_file = "asro/rho_of_E.dat"
+    radial_file = "asro/rho_of_E.nc"
 
     num_walkers = mpi_processes/wl_setup_internal%num_windows
     wl_setup_internal%radial_samples = INT(wl_setup_internal%radial_samples/num_walkers)

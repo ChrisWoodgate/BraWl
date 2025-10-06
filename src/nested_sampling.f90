@@ -1,12 +1,12 @@
-!> @file    nested_sampling.f90                                  
+!> @file    nested_sampling.f90
 !>
-!> @brief   Assorted routines and tools to perform Nested Sampling                                                                      !
+!> @brief   Assorted routines and tools to perform Nested Sampling
 !>
 !> @details This module contains routines necessary for the Nested Sampling
-!>          calculations.                                                           
+!>          calculations.
 !>
 !> @author  L. B. Partay
-!> @date    2024  
+!> @date    2024
 module nested_sampling
 
   use initialise
@@ -25,7 +25,7 @@ module nested_sampling
 
   contains
 
-  !> @brief   Main nested sampling routine.  
+  !> @brief   Main nested sampling routine.
   !>
   !> @details This routine performs the nested sampling calculation. Input parameters (such as
   !>          the number of walkers, random walk parameters...etc.) are read from the "ns_input.txt" 
@@ -41,7 +41,7 @@ module nested_sampling
   !> @return None
   !>
   !> @author  L. B. Partay
-  !> @date    2024  
+  !> @date    2024
   subroutine nested_sampling_main(setup, nested_sampling)
 
     ! Arrays for storing instances of the system, as nested sampling walkers
@@ -91,7 +91,7 @@ module nested_sampling
        
        ! Calculate all the inital energies and print to screen
        ! Add small random number to the energy to avoid configurations to be degenerate in energy
-       call random_number(rnde)
+       rnde = genrand()
        walker_energies(i_walker)=setup%full_energy(ns_walkers(:,:,:,:,i_walker))+rnde*1e-8
        print*, ' Initial energy of walker ', i_walker, 'is: ', walker_energies(i_walker)
     
@@ -146,7 +146,7 @@ module nested_sampling
        ! Generate a new sample, starting from an existing walker and doing a set of random steps
 
        ! pick configuration for cloning
-       call random_number(rnd)
+       rnd = genrand()
        irnd=ceiling(rnd*nested_sampling%n_walkers)
        ns_walkers(:,:,:,:,i_max(1)) = ns_walkers(:,:,:,:,irnd)
        walker_energies(i_max(1)) = walker_energies(irnd)
