@@ -266,7 +266,7 @@ cv_ax1.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.25))
 cv_ax1_asro.legend(loc='upper center', bbox_to_anchor=(x_offset, y_offset-0.0275), ncol=int(len(pairs)/2))
 
 # Loop through the legend handles and change their linewidth
-for handle in hist_ax_legend.legend_handles:
+for handle in hist_ax_legend.legendHandles:
     handle.set_linewidth(3)  # Increase the line width for each legend line
 
 alternate_colors = list(colors.values())[::2]
