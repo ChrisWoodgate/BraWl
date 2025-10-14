@@ -746,7 +746,7 @@ module wang_landau
         call replica_exchange(config)
       end if
 
-      if (minval(mpi_wl_hist) > REAL(setup_internal%n_atoms) .and. pre_sampled_state == 0) then
+      if (minval(mpi_wl_hist) > 10.0_real64 .and. pre_sampled_state == 0) then
         pre_sampled(mpi_index) = 1
       end if
       call MPI_ALLREDUCE(pre_sampled, pre_sampled_buffer, wl_setup_internal%num_windows, &
