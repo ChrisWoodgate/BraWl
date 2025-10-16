@@ -57,6 +57,8 @@ module wang_landau
   real(real64), allocatable :: bin_edges(:), wl_hist(:), wl_logdos(:), bin_energy(:), mean_energy(:,:), prob(:)
   integer, allocatable :: pre_sampled(:), pre_sampled_buffer(:)
   logical :: rho_saved
+  integer(array_int), allocatable :: config_per_bin(:,:,:,:,:)
+  logical, allocatable :: config_store(:)
   
   ! Load balancing metrics
   real(real64), allocatable :: lb_bins(:,:), lb_avg_time(:,:), lb_max_time(:,:), lb_mc_steps(:), lb_mc_steps_buffer(:)
@@ -273,7 +275,8 @@ module wang_landau
 
         call compute_mean_energy(wl_logdos)
 
-        call enter_energy_window()
+        !call enter_energy_window()
+        call load_window_config()
 
         call zero_subtract_logdos(wl_logdos)
         call comms_wait()
@@ -584,6 +587,10 @@ module wang_landau
         end if
         if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
           mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
+          if (config_store(jbin)) then
+            config_store(jbin) = .False.
+            config_per_bin(jbin, :, :, :, :) = config
+          end if
         end if
         wl_logdos(jbin) = wl_logdos(jbin) + wl_f
       else
@@ -592,6 +599,10 @@ module wang_landau
         call pair_swap(config, rdm1, rdm2)
         if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
           mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
+          if (config_store(jbin)) then
+            config_store(jbin) = .False.
+            config_per_bin(jbin, :, :, :, :) = config
+          end if
         end if
         wl_logdos(jbin) = wl_logdos(jbin) + wl_f
       end if
@@ -730,7 +741,6 @@ module wang_landau
   !> @date    2024 
   subroutine pre_sampling(wl_logdos, mpi_wl_hist)
     real(real64), allocatable, intent(inout) :: wl_logdos(:), mpi_wl_hist(:)
-
     i_sweeps = 0
     pre_sampled = 0
     pre_sampled_buffer = 0
@@ -788,7 +798,10 @@ module wang_landau
       write (*, *)
     end if
 
-    call enter_energy_window()
+    call merge_configs()
+
+    !call enter_energy_window()
+    call load_window_config()
 
     call zero_subtract_logdos(wl_logdos)
   end subroutine pre_sampling
@@ -1007,6 +1020,8 @@ module wang_landau
     allocate(bin_energy(bins))
     allocate(mean_energy(300,2))
     allocate(prob(bins))
+    allocate(config_per_bin(bins, setup_internal%n_basis, 2*setup_internal%n_1, 2*setup_internal%n_2, 2*setup_internal%n_3))
+    allocate(config_store(bins))
   end subroutine primary_array_allocation
 
   !> @brief   Second set of array allocations
@@ -1071,6 +1086,8 @@ module wang_landau
     radial_mc_steps = 0
     rho_saved = .False.
     lb_mc_steps_buffer = 0.0_real64; lb_mc_steps = 0.0_real64
+    config_per_bin = 0_array_int
+    config_store = .True.
 
     mean_energy = 1.0_real64 / (k_b_in_Ry * 10.0_real64)
 
@@ -1488,6 +1505,80 @@ module wang_landau
     rdm1 = setup_internal%rdm_site()
     rdm2 = setup_internal%rdm_site()
   end subroutine select_sites
+
+  subroutine load_window_config()
+    integer :: rand_bin, min_bin, max_bin
+    real(real64) :: rand_val
+
+    min_bin = mpi_start_idx
+    max_bin = mpi_end_idx
+  
+    ! Generate random bin index
+    call random_number(rand_val)
+    rand_bin = min_bin + int(rand_val * real(max_bin - min_bin + 1, real64))
+    ! Load the selected configuration
+    config = config_per_bin(rand_bin, :, :, :, :)
+
+  end subroutine load_window_config
+  
+  subroutine merge_configs()   
+    integer :: bin
+    logical, allocatable :: all_stores(:,:)
+    real(real64) :: rand_val
+    integer, allocatable :: ranks_with_config(:)
+    integer :: pick_rank
+
+    allocate(all_stores(bins, mpi_processes))
+
+    ! Gather which bins are stored on each rank
+    call MPI_Gather(config_store, bins, MPI_LOGICAL, &
+                    all_stores, bins, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+
+    do bin = 1, bins
+        if (my_rank == 0) then
+            ! Collect all ranks that have a stored config for this bin
+            ranks_with_config = pack([(i, i=0,mpi_processes-1)], .not. all_stores(bin,:))
+
+            if (size(ranks_with_config) > 0) then
+                ! Randomly select one rank
+                call random_number(rand_val)
+                pick_rank = ranks_with_config(1 + int(rand_val * size(ranks_with_config)))
+
+                ! Broadcast which rank was selected
+                call MPI_Bcast(pick_rank, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
+
+                ! Receive from chosen rank if not 0
+                if (pick_rank /= 0) then
+                    call MPI_Recv(config_per_bin(bin,:,:,:,:), size(config_per_bin(bin,:,:,:,:)), &
+                                  MPI_INTEGER1, pick_rank, bin, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+                end if
+
+                ! Mark bin as filled
+                config_store(bin) = .False.
+            else
+                config_store(bin) = .True.
+                pick_rank = -1
+                call MPI_Bcast(pick_rank, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
+            end if
+        else
+            ! Non-zero ranks wait for selected rank broadcast
+            call MPI_Bcast(pick_rank, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
+
+            ! Only the chosen rank sends its config
+            if (pick_rank == my_rank) then
+                call MPI_Send(config_per_bin(bin,:,:,:,:), size(config_per_bin(bin,:,:,:,:)), &
+                              MPI_INTEGER1, 0, bin, MPI_COMM_WORLD, ierr)
+            end if
+        end if
+    end do
+
+    ! Broadcast the merged configurations and store flags
+    call MPI_Bcast(config_per_bin, size(config_per_bin), MPI_INTEGER1, 0, MPI_COMM_WORLD, ierr)
+    call MPI_Bcast(config_store, bins, MPI_LOGICAL, 0, MPI_COMM_WORLD, ierr)
+
+    deallocate(all_stores)
+end subroutine merge_configs
+
 #endif
 
 end module wang_landau
