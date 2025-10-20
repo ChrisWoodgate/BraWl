@@ -30,7 +30,7 @@ module wang_landau
   implicit none
  
   ! MPI variables
-  integer :: mpi_processes, ierr
+  integer :: mpi_processes, ierr, sub_comm
   real(real64) :: start, end, time_max, time_min, test_time_1, test_time_2
   integer :: mpi_bins, mpi_start_idx, mpi_end_idx, mpi_index, mpi_start_idx_buffer
   integer :: mpi_end_idx_buffer, i_sweeps
@@ -52,7 +52,7 @@ module wang_landau
   
   ! WL variables and arrays
   integer :: bins, resets, pre_sampled_state, ibin, itemp
-  real(real64) :: bin_width, energy_to_ry, wl_f, wl_f_prev, tolerance, flatness_tolerance
+  real(real64) :: bin_width, wl_f, wl_f_prev, tolerance, flatness_tolerance
   real(real64) :: target_energy, flatness, bins_buffer, bins_min, radial_min, radial_min_buffer
   real(real64), allocatable :: bin_edges(:), wl_hist(:), wl_logdos(:), bin_energy(:), mean_energy(:,:), prob(:)
   integer, allocatable :: pre_sampled(:), pre_sampled_buffer(:)
@@ -74,7 +74,7 @@ module wang_landau
    
   ! Loop integers and error handling variable
   integer :: i, j
-  integer :: iter, num_iter
+  integer :: iter, num_iter, first_bin
   
   ! Name of file for writing radial densities at the end
   character(len=37) :: radial_file
@@ -151,6 +151,9 @@ module wang_landau
     end if
     call comms_wait()
 
+    ! Sub communicator for ranks in same window
+    call MPI_Comm_split(MPI_COMM_WORLD, mpi_index, my_rank, sub_comm, ierr)
+
     !---------!
     ! Burn in !
     !---------!
@@ -207,7 +210,9 @@ module wang_landau
         end if
       end if 
       call sweeps(wl_logdos, mpi_wl_hist)
+
       lb_mc_steps(iter+1) = lb_mc_steps(iter+1) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
+
       if (MOD(i_sweeps, 10) == 0) then
         call replica_exchange(config)
       end if
@@ -248,7 +253,11 @@ module wang_landau
           write (6, '(20("-"),x,a,i3,a,i3,x,20("-"))', advance='no') "Wang-Landau Iteration: ", iter, &
           "/", num_iter 
           write (*, *)
-          print*, window_indices(:,2) - window_indices(:,1) + 1
+          do i=1, wl_setup_internal%num_windows
+            write (6, '(i4)', advance='no') window_indices(i,2) - window_indices(i,1) + 1
+            write (6, '(a)', advance='no') " | "
+          end do
+          write (*,*)
           do i=1, wl_setup_internal%num_windows -1 
             write (6, '(i4)', advance='no') window_indices(i,2) - window_indices(i+1,1) + 1
             write (6, '(a)', advance='no') " | "
@@ -607,6 +616,11 @@ module wang_landau
         wl_logdos(jbin) = wl_logdos(jbin) + wl_f
       end if
     end do
+    ! Reduce internal
+    call MPI_Allreduce(MPI_IN_PLACE, wl_logdos, size(wl_logdos), MPI_DOUBLE_PRECISION, MPI_SUM, sub_comm, ierr)
+    wl_logdos = wl_logdos/REAL(mpi_processes/wl_setup_internal%num_windows)
+    call MPI_Allreduce(MPI_IN_PLACE, mpi_wl_hist, size(mpi_wl_hist), MPI_DOUBLE_PRECISION, MPI_SUM, sub_comm, ierr)
+    mpi_wl_hist = mpi_wl_hist/REAL(mpi_processes/wl_setup_internal%num_windows)
   end subroutine sweeps
 
   !> @brief   Routine for moving processes into assigned energy window
@@ -766,12 +780,19 @@ module wang_landau
           end = mpi_wtime() - radial_time
           pre_sampled_state = 1
           mpi_wl_hist = REAL(setup_internal%n_atoms) + 1.0_real64
-          write (6, '(a,i3,a,f6.2,a)') "Rank: ", INT(my_rank), " | bins visited: ", 100.0_real64, "%"
+          first_bin = minval(pack([(i, i=1, size(mpi_wl_hist))], mpi_wl_hist > 1.0_real64)) + mpi_start_idx - 1
+          write (6, '(a,i3,a,f6.2,a,f12.5)') "Rank: ", INT(my_rank), " | bins visited: ", &
+          100.0_real64, "% | lowest bin energy: ", &
+          bin_edges(first_bin)/(setup_internal%n_atoms/(Ry_to_eV*1000))
         end if
       else
         bins_min = REAL(count(mpi_wl_hist > 1.0_real64))/REAL(mpi_bins)
-        write (6, '(a,i3,a,f6.2,a)') "Rank: ", INT(my_rank), " | bins visited: ", REAL(bins_min*100.0_real64), "%"
-      end if
+        first_bin = minval(pack([(i, i=1, size(mpi_wl_hist))], mpi_wl_hist > 1.0_real64)) + mpi_start_idx - 1
+        write (6, '(a,i3,a,f6.2,a,f12.5)') "Rank: ", INT(my_rank), " | bins visited: ", &
+        REAL(bins_min*100.0_real64), "% | lowest bin energy: ", &
+        bin_edges(first_bin)/(setup_internal%n_atoms/(Ry_to_eV*1000))
+    
+    end if
     end do
     call save_rho_E(rho_saved, radial_record)
     call zero_subtract_logdos(wl_logdos)
@@ -783,7 +804,7 @@ module wang_landau
     radial_time = 0.0_real64 ! radial time already accounted for
     call reduce_time(start, end, radial_time)
     
-    call mpi_window_optimise(0)
+    call mpi_window_optimise(1)
 
     if (my_rank == 0) then
       print*, window_indices(:,1)
