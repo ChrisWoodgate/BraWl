@@ -131,17 +131,18 @@ If you use `BraWl` in your research, please cite our preprint documenting the pa
 
 ## List of publications
 A (hopefully fairly complete) list of publications where `Brawl` was used is as follows:
-1. G. A. Marchant, C. D. Woodgate, C. E. Patrick, J. B. Staunton, [Phys. Rev. B **103**, 094414 (2021)](https://doi.org/10.1103/PhysRevB.103.094414).
-2. C. D. Woodgate, J. B. Staunton, [Phys. Rev. B **105**, 115124 (2022)](https://doi.org/10.1103/PhysRevB.105.115124).
-3. C. D. Woodgate, J. B. Staunton, [Phys. Rev. Mater. **7**, 013801 (2023)](https://doi.org/10.1103/PhysRevMaterials.7.013801).
-4. C. D. Woodgate, D. Hedlund, L. H. Lewis, J. B. Staunton, [Phys. Rev. Mater. **7**, 053801 (2023)](https://doi.org/10.1103/PhysRevMaterials.7.053801).
-5. C. D. Woodgate, J. B. Staunton, [J. Appl. Phys. **135**, 135106 (2024)](https://doi.org/10.1063/5.0200862).
-6. L. Shenoy, C. D. Woodgate, J. B. Staunton, A. P. Bartók, C. S. Becquart, C. Domain, J. R. Kermode, [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
+1. G. A. Marchant, C. D. Woodgate, C. E. Patrick, J. B. Staunton, [Physical Review B **103**, 094414 (2021)](https://doi.org/10.1103/PhysRevB.103.094414).
+2. C. D. Woodgate, J. B. Staunton, [Physical Review B **105**, 115124 (2022)](https://doi.org/10.1103/PhysRevB.105.115124).
+3. C. D. Woodgate, J. B. Staunton, [Physical Review Materials **7**, 013801 (2023)](https://doi.org/10.1103/PhysRevMaterials.7.013801).
+4. C. D. Woodgate, D. Hedlund, L. H. Lewis, J. B. Staunton, [Physical Review Materials **7**, 053801 (2023)](https://doi.org/10.1103/PhysRevMaterials.7.053801).
+5. C. D. Woodgate, J. B. Staunton, [Journal of Applied Physics **135**, 135106 (2024)](https://doi.org/10.1063/5.0200862).
+6. L. Shenoy, C. D. Woodgate, J. B. Staunton, A. P. Bartók, C. S. Becquart, C. Domain, J. R. Kermode, [Physical Review Materials **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
 7. C. D. Woodgate, _"Modelling Atomic Arrangements in Multicomponent Alloys: A Perturbative, First-Principles-Based Approach"_ [Springer Series in Materials Science, Vol. 346 (Springer Nature Switzerland, Cham, 2024)](https://doi.org/10.1007/978-3-031-62021-8).
-8. C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
-9. C. D. Woodgate, L. H. Lewis, J. B. Staunton, [npj Comput. Mater. **10**, 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y).
-10. C. D. Woodgate, H. J. Naguszewski, D. Redka, J. Minar, D. Quigley, J. B. Staunton, [J. Phys.: Mater. **8**, 045002 (2025)](https://doi.org/10.1088/2515-7639/adf468).
+8. C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [npj Computational Materials **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
+9. C. D. Woodgate, L. H. Lewis, J. B. Staunton, [npj Computational Materials **10**, 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y).
+10. C. D. Woodgate, H. J. Naguszewski, D. Redka, J. Minar, D. Quigley, J. B. Staunton, [Journal of Physics: Materials **8**, 045002 (2025)](https://doi.org/10.1088/2515-7639/adf468).
 11. A. M. Fisher, C. D. Woodgate, X. Zhang, G. C. Hadjipanayis, L. H. Lewis, J. B. Staunton, [arXiv:2508.19124](https://doi.org/10.48550/arXiv.2508.19124).
+12. H. J. Naguszewski, C. D. Woodgate, D. Quigley, [arXiv:2510.11562](https://arxiv.org/abs/2510.11562).
 
 ## Authors
 - Hubert J. Naguszewski
