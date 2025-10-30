@@ -1600,6 +1600,80 @@ module wang_landau
     deallocate(all_stores)
 end subroutine merge_configs
 
+subroutine energy_explore(wl_logdos)
+    real(real64), allocatable, intent(inout) :: wl_logdos(:)
+    integer, dimension(4) :: rdm1, rdm2
+    real(real64) :: e_swapped, e_unswapped, pair_unswapped, pair_swapped, delta_e, explore_f
+    integer :: i, ibin, jbin
+    integer(array_int) :: site1, site2
+
+    explore_f = 1
+    ! Establish total energy before any moves
+    e_unswapped = setup_internal%full_energy(config)
+    e_swapped = e_unswapped
+
+    do i = 1, wl_setup_internal%mc_sweeps*setup_internal%n_atoms
+      ! Make one MC trial
+      ! Generate random numbers
+      call wl_setup_internal%mc_select(rdm1, rdm2)
+      ! Get what is on those sites
+      site1 = config(rdm1(1), rdm1(2), rdm1(3), rdm1(4))
+      site2 = config(rdm2(1), rdm2(2), rdm2(3), rdm2(4))
+
+      e_swapped = e_unswapped
+
+      pair_unswapped = pair_energy(setup_internal, config, rdm1, rdm2)
+      pair_swapped = pair_unswapped
+
+      call pair_swap(config, rdm1, rdm2)
+      ! Calculate energy if different species
+      if (site1 /= site2) then
+        pair_swapped = pair_energy(setup_internal, config, rdm1, rdm2)
+        e_swapped = e_unswapped - pair_unswapped + pair_swapped
+      end if
+      ibin = bin_index(e_unswapped, bin_edges, wl_setup_internal%bins)
+      jbin = bin_index(e_swapped, bin_edges, wl_setup_internal%bins)
+        ! Add change in V into diff_energy
+        delta_e = e_swapped - e_unswapped
+        ! Accept or reject move
+        if (genrand() .lt. exp((wl_logdos(ibin) - wl_logdos(jbin)))) then
+          e_unswapped = e_swapped
+        else
+          call pair_swap(config, rdm1, rdm2)
+          jbin = ibin
+        end if
+        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+          if (config_store(jbin)) then
+            config_store(jbin) = .False.
+            config_per_bin(jbin, :, :, :, :) = config
+          end if
+        end if
+        wl_logdos(jbin) = wl_logdos(jbin) + explore_f
+        ! reject and reset
+        jbin = ibin
+        call pair_swap(config, rdm1, rdm2)
+        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+          if (config_store(jbin)) then
+            config_store(jbin) = .False.
+            config_per_bin(jbin, :, :, :, :) = config
+          end if
+        end if
+        wl_logdos(jbin) = wl_logdos(jbin) + explore_f
+    end do
+
+    ! Reduce global
+    call MPI_Allreduce(MPI_IN_PLACE, wl_logdos, size(wl_logdos), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
+    wl_logdos = wl_logdos/REAL(mpi_processes)
+    wl_logdos = wl_logdos - MINVAL(wl_logdos)
+
+    call merge_configs()
+
+    !config_store
+
+    !window_indices(i,2) - window_indices(i+1,1) + 1
+
+  end subroutine energy_explore
+
 #endif
 
 end module wang_landau
