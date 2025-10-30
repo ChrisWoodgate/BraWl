@@ -33,10 +33,10 @@ def plot_domain_efficiency(selected_methods, replica=True):
       for walker in range(len(walkers)):
         ax.errorbar(windows, efficiency[method_id, walker, :, overlap], yerr=efficiency_err[method_id, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walker+1))
       ax.set_xticks(windows[::2])
-      ax.set_xlabel(r"Domains ($h$)")
+      ax.set_xlabel(r"Sub-domains ($h$)")
       ax.tick_params(axis="y", direction='inout')
       if ax_id == 0:
-        ax.set_ylabel("Domain Efficiency")
+        ax.set_ylabel("Sub-domain Efficiency")
         ax.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
       else:
         ax.set_yticklabels([])
@@ -71,7 +71,7 @@ def plot_mc_step(selected_methods, replica=True):
       for walker in range(len(walkers)):
         ax.errorbar(windows, mc_steps_mean[method_id, walker, :, overlap], yerr=mc_steps_err[method_id, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(methods_label[method_id]))
       ax.set_xticks(windows[::2])
-      ax.set_xlabel("Cores")
+      ax.set_xlabel("Wang-Landau Instances")
       ax.tick_params(axis="y", direction='inout')
       if ax_id == 0:
         ax.set_ylabel("Relative MC Steps")
@@ -118,7 +118,8 @@ def plot_walker_efficiency(selected_methods, selected_overlaps, replica=True):
       ax.text(0.5, -0.25, titles[ax_id], transform=ax.transAxes, ha='center', va='top', fontweight="bold")
 
       if ax_id == 1:
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.35), ncol=5, title="Sub-domains")
+        #ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.35), ncol=5, title="Sub-domains")
+        ax.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1, title="Sub-domains")
     
     plt.subplots_adjust(wspace=0, hspace=0)
     plt.savefig('{:02d}_{}_walker_efficiency.pdf'.format(overlaps[overlap], replica), bbox_inches='tight')
@@ -173,6 +174,7 @@ repeats = 5
 bins=512
 
 titles = ["(a)", "(b)", "(c)"]
+#titles = ["Method 1", "Method 3", "Method 5"]
 
 #methods = np.array([0, 2, 4])
 #methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Replica", "Replica"])
@@ -260,11 +262,12 @@ for overlap in range(len(overlaps)):
   plt.plot(windows, windows**2, linestyle="--", color="#FF9896")
   plt.ylim(ymin, ymax)
   plt.xticks(windows, labels=windows)
-  plt.xlabel("Cores")
+  plt.xlabel("Wang-Landau Instances")
   plt.ylabel("Speed-up")
   #plt.title("Speed-up for 1 walker per domain")
   #plt.legend(loc="upper left", title="Methods")
-  plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=len(methods), title="Methods")
+  #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=len(methods), title="Methods")
+  plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1, title="Methods")
   
   plt.savefig('{:02d}_method_speedup.pdf'.format(overlaps[overlap]), bbox_inches='tight')
   plt.close()
@@ -289,11 +292,12 @@ for method in range(len(methods)):
   plt.plot(windows, windows**2, linestyle="--", color="#FF9896")
   plt.ylim(ymin, ymax)
   plt.xticks(windows, labels=windows)
-  plt.xlabel("Cores")
+  plt.xlabel("Wang-Landau Instances")
   plt.ylabel("Speed-up")
   #plt.title("Speed-up for 1 walker per domain")
   #plt.legend(loc="upper left", title="Overlap %")
-  plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=len(overlaps), title="Overlap %")
+  #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=len(overlaps), title="Overlap %")
+  plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1, title="Overlap %")
   
   plt.savefig('{}_overlap_speedup.pdf'.format(methods[method]), bbox_inches='tight')
   plt.close()
@@ -372,11 +376,12 @@ for overlap in range(len(overlaps)):
     plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
     #plt.xticks(cores, labels=cores)
     plt.ylim(0, max_y*1.25)
-    plt.xlabel("Cores")
+    plt.xlabel("Wang-Landau Instances")
     plt.ylabel("Speed-up")
     #plt.title("Speed-up for Method {}".format(methods_label[method]))
     #plt.legend(loc="lower right", title="Walkers")
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=len(walkers), title="Walkers")
+    #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=len(walkers), title="Walkers")
+    plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1, title="Walkers")
     
     plt.savefig('{:02d}_{}_walker_speedup.pdf'.format(overlaps[overlap], methods[method]), bbox_inches='tight')
     plt.close()
