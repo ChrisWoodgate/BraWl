@@ -54,7 +54,7 @@ module wang_landau
   integer :: bins, resets, pre_sampled_state, ibin, itemp
   real(real64) :: bin_width, wl_f, wl_f_prev, tolerance, flatness_tolerance
   real(real64) :: target_energy, flatness, bins_buffer, bins_min, radial_min, radial_min_buffer
-  real(real64), allocatable :: bin_edges(:), wl_hist(:), wl_logdos(:), bin_energy(:), mean_energy(:,:), prob(:)
+  real(real64), allocatable :: bin_edges(:), wl_hist(:), wl_logdos(:), bin_energy(:), mean_energy(:,:), prob(:), wl_mc_steps(:)
   integer, allocatable :: pre_sampled(:), pre_sampled_buffer(:)
   logical :: rho_saved
   integer(array_int), allocatable :: config_per_bin(:,:,:,:,:)
@@ -212,6 +212,9 @@ module wang_landau
       call sweeps(wl_logdos, mpi_wl_hist)
 
       lb_mc_steps(iter+1) = lb_mc_steps(iter+1) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
+      if (converged == 0) then
+        wl_mc_steps(mpi_index) = wl_mc_steps(mpi_index) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
+      end if
 
       if (MOD(i_sweeps, 10) == 0) then
         call replica_exchange(config)
@@ -244,6 +247,8 @@ module wang_landau
         call dos_average(wl_logdos)
         call dos_combine(wl_logdos)
 
+        call MPI_ALLREDUCE(MPI_IN_PLACE, wl_mc_steps, SIZE(wl_mc_steps), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
+
         call reduce_time(start, end, radial_time)
 
         call comms_wait()
@@ -267,8 +272,11 @@ module wang_landau
                   " | Radial samples: ", radial_min*100_real64, "%"
             write (*, *)
           do i=1, wl_setup_internal%num_windows
-            write (6, '(a,i3,a,f12.2,a,f12.2,a,f12.2,a)') "MPI Window: ", i, " | Avg. time: ", rank_time_buffer(i,1), &
-            "s | Time min: ", rank_time_buffer(i,2), "s Time max: " , rank_time_buffer(i,3), "s"
+            !write (6, '(a,i3,a,f12.2,a,f12.2,a,f12.2,a)') "MPI Window: ", i, " | Avg. time: ", rank_time_buffer(i,1), &
+            !"s | Time min: ", rank_time_buffer(i,2), "s Time max: " , rank_time_buffer(i,3), "s"
+            write (6, '(a,i3,a,i16,a,f7.2,a,a,f12.2,a)') "MPI Window: ", i, " | Total MC Steps: ", INT(wl_mc_steps(i)), &
+            " | Percent Diff. to Mean: ", 100.0_real64*(wl_mc_steps(i)/(SUM(wl_mc_steps)/SIZE(wl_mc_steps))), "%", &
+            " | Time Taken: ",  rank_time_buffer(i,3), "s"
           end do
           wl_f_prev = wl_f
         end if
@@ -281,6 +289,8 @@ module wang_landau
         if (ANY([0,1] == wl_setup_internal%performance)) then
         call mpi_window_optimise(iter)
         end if
+
+        wl_mc_steps = 0.0_real64
 
         call compute_mean_energy(wl_logdos)
 
@@ -1019,6 +1029,7 @@ module wang_landau
     allocate(diffusion_prev(wl_setup_internal%num_windows))
     allocate(pre_sampled(wl_setup_internal%num_windows))
     allocate(pre_sampled_buffer(wl_setup_internal%num_windows))
+    allocate(wl_mc_steps(wl_setup_internal%num_windows))
 
     ! Radial densities as a function of energy
     allocate(rho_of_E(setup_internal%n_species, setup_internal%n_species, setup_internal%wc_range, wl_setup_internal%bins))
@@ -1107,6 +1118,7 @@ module wang_landau
     radial_mc_steps = 0
     rho_saved = .False.
     lb_mc_steps_buffer = 0.0_real64; lb_mc_steps = 0.0_real64
+    wl_mc_steps = 0.0_real64
     config_per_bin = 0_array_int
     config_store = .True.
 
@@ -1245,48 +1257,92 @@ module wang_landau
     integer :: bins_max_indices(wl_setup_internal%num_windows)
     logical :: mk(wl_setup_internal%num_windows)
 
+    real(real64) :: weights_previous(wl_setup_internal%num_windows), weights_log(wl_setup_internal%num_windows), &
+    frac(wl_setup_internal%num_windows), wl_logdos_win(wl_setup_internal%num_windows), weights_mc(wl_setup_internal%num_windows), &
+    alpha, w_min, rem, scale, sum_free, diff, max_delta, maxln
+    integer :: idx(wl_setup_internal%num_windows), first, last
+    logical :: free_mask(wl_setup_internal%num_windows)
+
     if (ANY([0,1,2,3] == wl_setup_internal%performance)) then
     !print*, "Optimize"
     ! Perform window size adjustment then broadcast
     if (wl_setup_internal%num_windows > 1) then
       if (my_rank == 0) then
-        factor = 1.0_real64
-        scaling = 0.9_real64
-        factor = MAX(factor*(scaling**(iter)), 0.1_real64)
-        diffusion = (REAL((window_intervals(:,2) - window_intervals(:,1) + 1))) &
-        /(rank_time_buffer(:,1))
-        diffusion_merge = diffusion_prev/sum(diffusion_prev)*(1.0_real64-factor) + factor*diffusion/sum(diffusion)
-        diffusion_prev = diffusion_merge
-        
-        bins = NINT(REAL(wl_setup_internal%bins)*diffusion_merge/SUM(diffusion_merge))
-        
+        !factor = 1.0_real64
+        !scaling = 0.9_real64
+        !factor = MAX(factor*(scaling**(iter)), 0.1_real64)
+        !diffusion = (REAL((window_intervals(:,2) - window_intervals(:,1) + 1))) &
+        !/(rank_time_buffer(:,1))
+        !diffusion_merge = diffusion_prev/sum(diffusion_prev)*(1.0_real64-factor) + factor*diffusion/sum(diffusion)
+        !diffusion_prev = diffusion_merge
+        !bins = NINT(REAL(wl_setup_internal%bins)*diffusion_merge/SUM(diffusion_merge))
+
+        alpha = 0.3_real64
+        w_min = 0.01_real64
+        weights_previous = REAL((window_intervals(:,2) - window_intervals(:,1) + 1))/REAL(wl_setup_internal%bins)
+
+        do i = 1, wl_setup_internal%num_windows
+            first = window_intervals(i,1)
+            last = window_intervals(i,2)
+            weights_log(i) = SUM(wl_logdos(first:last)) / REAL(ABS(first - last + 1))
+        end do
+
+        ! normalize
+        weights_mc = 1 / wl_mc_steps
+        weights_mc = weights_mc / SUM(weights_mc)
+    
+        frac =  alpha/2*(weights_mc + weights_log) + (1.0_real64 - alpha)*weights_previous
+        frac = frac / SUM(frac)
+
+        frac = frac / SUM(frac)
+        frac = MAX(frac, w_min)
+        free_mask = (frac > w_min)
+        if (ABS(SUM(frac) - 1.0_real64) > 1.0e-12_real64) then
+            rem = 1.0_real64 - SUM(frac)
+            if (ANY(free_mask)) then
+                sum_free = 0.0_real64
+                do i = 1, SIZE(frac)
+                    if (free_mask(i)) sum_free = sum_free + frac(i)
+                end do
+                if (sum_free > 0.0_real64) then
+                    scale = rem / sum_free
+                    do i = 1, SIZE(frac)
+                        if (free_mask(i)) frac(i) = frac(i) + frac(i)*scale
+                    end do
+                end if
+            end if
+        end if
+
+        frac = frac / SUM(frac)
+        bins = NINT(REAL(wl_setup_internal%bins)*frac)
+
         ! Set all bins less than min_bins to min_bins
-        min_bins = MAX(INT(0.01_real64*wl_setup_internal%bins), 2)
+        min_bins = MAX(INT(w_min*wl_setup_internal%bins), 2)
         do i = 1, wl_setup_internal%num_windows
-          if (bins(i) < min_bins) then
-              bins(i) = min_bins
-          end if
+          if (bins(i) < min_bins) bins(i) = min_bins
         end do
 
-        mk = .True.
-        do i = 1, wl_setup_internal%num_windows
-          bins_max_indices(i) = MAXLOC(bins,dim=1,mask=mk)
-          mk(MAXLOC(bins,mk)) = .FALSE.
-        end do
-
-        i = 0
-        j = 0
-        do while(SUM(bins) /= wl_setup_internal%bins)
-          i = i + 1
-          do j = 1, MIN(i, wl_setup_internal%num_windows)
-            if (SUM(bins) > wl_setup_internal%bins .and. bins(bins_max_indices(j)) > 2) then
-              bins(bins_max_indices(j)) = bins(bins_max_indices(j)) - 1
-            end if
-            if (SUM(bins) < wl_setup_internal%bins .and. bins(bins_max_indices(j)) > 2) then
-              bins(bins_max_indices(j)) = bins(bins_max_indices(j)) + 1
-            end if
-          end do
-        end do
+        if (SUM(bins) /= wl_setup_internal%bins) then
+            ! sort indices of bins descending
+            do i = 1, SIZE(bins)
+                idx(i) = i
+            end do
+            call sort_descending(bins, idx)
+        
+            diff = wl_setup_internal%bins - SUM(bins)
+            i = 1
+            do while (diff /= 0.0_real64)
+                j = idx(mod(i-1, SIZE(bins)) + 1)
+                if (diff > 0) then
+                    bins(j) = bins(j) + 1
+                    diff = diff - 1
+                else if (diff < 0 .and. bins(j) > min_bins) then
+                    bins(j) = bins(j) - 1
+                    diff = diff + 1
+                end if
+                i = i + 1
+            end do
+        end if
 
         window_intervals(1, 2) = bins(1)
         do i=2, wl_setup_internal%num_windows
@@ -1673,6 +1729,24 @@ subroutine energy_explore(wl_logdos)
     !window_indices(i,2) - window_indices(i+1,1) + 1
 
   end subroutine energy_explore
+
+  subroutine sort_descending(a, idx)
+    implicit none
+    integer :: i, j, n, temp_idx
+    integer, intent(in) :: a(:)
+    integer, intent(out) :: idx(:)
+    n = size(a)
+    idx = [(i, i=1,n)]
+    do i = 1, n-1
+        do j = i+1, n
+            if (a(idx(i)) < a(idx(j))) then
+                temp_idx = idx(i)
+                idx(i) = idx(j)
+                idx(j) = temp_idx
+            end if
+        end do
+    end do
+end subroutine
 
 #endif
 
