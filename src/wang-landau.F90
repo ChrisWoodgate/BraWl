@@ -1251,8 +1251,8 @@ module wang_landau
     if (wl_setup_internal%num_windows > 1) then
       if (my_rank == 0) then
         factor = 1.0_real64
-        scaling = 0.8_real64
-        factor = factor*(scaling**(iter))
+        scaling = 0.9_real64
+        factor = MAX(factor*(scaling**(iter)), 0.1_real64)
         diffusion = (REAL((window_intervals(:,2) - window_intervals(:,1) + 1))) &
         /(rank_time_buffer(:,1))
         diffusion_merge = diffusion_prev/sum(diffusion_prev)*(1.0_real64-factor) + factor*diffusion/sum(diffusion)
