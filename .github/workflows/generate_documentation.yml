@@ -1,0 +1,30 @@
+name: documentation-generation
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+      
+jobs:
+  generate-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: run-doxygen
+        uses: mattnotmitt/doxygen-action@1.12.0
+        with:
+          doxyfile-path: 'docs/doxyfile'
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'docs/html'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

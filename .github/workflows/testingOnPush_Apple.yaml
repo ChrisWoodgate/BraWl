@@ -1,0 +1,67 @@
+name: MacOS (ARM64)
+
+on:
+  push:
+    paths:
+      - 'tests/**'
+      - 'src/**'
+      - 'Makefile'
+      - 'requirements.txt'
+      - '.github/workflows/testingOnPush_Apple.yaml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install gfortran and other dependencies with Homebrew
+        run: |
+          brew reinstall gcc
+          brew install make openblas netcdf netcdf-fortran open-mpi
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run serial compilation with gfortran
+        run: |
+          make clean
+          make compiler=gfortran
+
+      - name: Run serial Metropolis test
+        run: |
+          cd tests/01_serial_metropolis
+          ../../brawl.run
+          python ../ci_test.py
+
+      - name: Run serial Nested Sampling test
+        run: |
+          cd tests/03_serial_nested_sampling
+          ../../brawl.run
+          python ../ci_test.py
+
+      - name: Run parallel compilation with mpifort
+        run: |
+          make clean
+          make compiler=mpifort
+
+      - name: Run parallel Metropolis test
+        run: |
+          cd tests/02_parallel_metropolis
+          mpirun --map-by :OVERSUBSCRIBE -np 4 ../../brawl.run
+          python ../ci_test.py
+
+      - name: Run parallel Wang-Landau test
+        run: |
+          cd tests/04_parallel_wang-landau
+          mpirun --map-by :OVERSUBSCRIBE -np 4 ../../brawl.run
+          python ../ci_test.py
