@@ -52,4 +52,9 @@ brawl_type = [0, 1, 2, 3, 4, 5]
 source_dir = '.'
 num_walkers = [1]
 overlaps = [0, 10, 25, 50, 75]
+
+brawl_type = [0, 2, 4]
+num_walkers = [ 2, 3, 4, 5, 6]
+overlaps = [25]
+
 create_directories_and_copy_files(brawl_type, source_dir, num_walkers, overlaps)
