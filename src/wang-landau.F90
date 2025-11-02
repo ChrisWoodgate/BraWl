@@ -31,7 +31,7 @@ module wang_landau
  
   ! MPI variables
   integer :: mpi_processes, ierr, sub_comm
-  real(real64) :: start, end, time_max, time_min, test_time_1, test_time_2
+  real(real64) :: start, end, time_max, time_min, test_time_1, test_time_2, iter_time_start, iter_time_end
   integer :: mpi_bins, mpi_start_idx, mpi_end_idx, mpi_index, mpi_start_idx_buffer
   integer :: mpi_end_idx_buffer, i_sweeps
   real(real64) :: scale_factor, scale_count, wl_logdos_min, bin_overlap, beta_diff, beta_original, beta_merge
@@ -270,7 +270,7 @@ module wang_landau
           write(*,*)
           write (6, '(a,f20.18,a,f8.2,a)', advance='no') "Flatness reached f of: ", wl_f_prev, &
                   " | Radial samples: ", radial_min*100_real64, "%"
-            write (*, *)
+          write (*, *)
           do i=1, wl_setup_internal%num_windows
             !write (6, '(a,i3,a,f12.2,a,f12.2,a,f12.2,a)') "MPI Window: ", i, " | Avg. time: ", rank_time_buffer(i,1), &
             !"s | Time min: ", rank_time_buffer(i,2), "s Time max: " , rank_time_buffer(i,3), "s"
@@ -278,6 +278,9 @@ module wang_landau
             " | Percent Diff. to Mean: ", 100.0_real64*(wl_mc_steps(i)/(SUM(wl_mc_steps)/SIZE(wl_mc_steps))), "%", &
             " | Time Taken: ",  rank_time_buffer(i,3), "s"
           end do
+          iter_time_end = mpi_wtime()
+          write (6, '(a,f12.2,a)', advance='no') "Iteration Time: ", MAXVAL(rank_time_buffer(:,3)), "s"
+          write (*, *)
           wl_f_prev = wl_f
         end if
 
@@ -297,7 +300,7 @@ module wang_landau
         !call enter_energy_window()
         call load_window_config()
 
-        call zero_subtract_logdos(wl_logdos)
+        !call zero_subtract_logdos(wl_logdos)
         call comms_wait()
         if (ANY([0,1] == wl_setup_internal%performance)) then
         if (my_rank == 0) then
@@ -305,6 +308,7 @@ module wang_landau
           write (*, *)
         end if
         end if
+        
         start = mpi_wtime()
       end if
     end do
@@ -500,8 +504,10 @@ module wang_landau
     wl_logdos(1:window_indices(mpi_index,1)-1) = 0.0_real64
     wl_logdos(window_indices(mpi_index,2)+1:wl_setup_internal%bins) = 0.0_real64
     ! Subtract minimum value
-    wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))
-    wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
+    if (mpi_index > 1) then
+        wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))
+        wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
+    end if
   end subroutine zero_subtract_logdos
 
   !> @brief   Finds index of energy bin given energy
@@ -805,7 +811,7 @@ module wang_landau
     end if
     end do
     call save_rho_E(rho_saved, radial_record)
-    call zero_subtract_logdos(wl_logdos)
+    !call zero_subtract_logdos(wl_logdos)
     call dos_average(wl_logdos)
     call dos_combine(wl_logdos)
     
@@ -834,7 +840,7 @@ module wang_landau
     !call enter_energy_window()
     call load_window_config()
 
-    call zero_subtract_logdos(wl_logdos)
+    !call zero_subtract_logdos(wl_logdos)
   end subroutine pre_sampling
 
   !> @brief   Creates initial energy windows
@@ -1228,6 +1234,7 @@ module wang_landau
 
     if (my_rank == 0) then
       wl_logdos = wl_logdos_combine
+      wl_logdos = wl_logdos - MINVAL(wl_logdos)
     end if
     call MPI_BCAST(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
   end subroutine dos_combine
@@ -1277,7 +1284,10 @@ module wang_landau
         !diffusion_prev = diffusion_merge
         !bins = NINT(REAL(wl_setup_internal%bins)*diffusion_merge/SUM(diffusion_merge))
 
-        alpha = 0.3_real64
+        alpha = 0.4_real64
+        if (iter == 0) then
+            alpha = 1.0_real64
+        end if
         w_min = 0.01_real64
         weights_previous = REAL((window_intervals(:,2) - window_intervals(:,1) + 1))/REAL(wl_setup_internal%bins)
 
@@ -1291,7 +1301,8 @@ module wang_landau
         weights_mc = 1 / wl_mc_steps
         weights_mc = weights_mc / SUM(weights_mc)
     
-        frac =  alpha/2*(weights_mc + weights_log) + (1.0_real64 - alpha)*weights_previous
+        !frac =  alpha/2*(weights_mc + weights_log) + (1.0_real64 - alpha)*weights_previous
+        frac =  alpha*weights_log + (1.0_real64 - alpha)*weights_previous
         frac = frac / SUM(frac)
 
         frac = frac / SUM(frac)
