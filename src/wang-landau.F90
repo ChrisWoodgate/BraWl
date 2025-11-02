@@ -1288,7 +1288,7 @@ module wang_landau
         if (iter == 0) then
             alpha = 1.0_real64
         end if
-        w_min = 0.01_real64
+        w_min = 10.0_real64/REAL(wl_setup_internal%bins)
         weights_previous = REAL((window_intervals(:,2) - window_intervals(:,1) + 1))/REAL(wl_setup_internal%bins)
 
         do i = 1, wl_setup_internal%num_windows
