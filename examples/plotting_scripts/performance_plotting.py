@@ -117,8 +117,9 @@ def plot_walker_efficiency(selected_methods, selected_overlaps, replica=True):
       ax.set_ylim(0, max_y*1.25)
       ax.text(0.5, -0.25, titles[ax_id], transform=ax.transAxes, ha='center', va='top', fontweight="bold")
 
-      if ax_id == 1:
+      #if ax_id == 1:
         #ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.35), ncol=5, title="Sub-domains")
+      if ax_id == 2:
         ax.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1, title="Sub-domains")
     
     plt.subplots_adjust(wspace=0, hspace=0)
@@ -174,7 +175,7 @@ repeats = 5
 bins=512
 
 titles = ["(a)", "(b)", "(c)"]
-#titles = ["Method 1", "Method 3", "Method 5"]
+titles = ["Method 1", "Method 3", "Method 5"]
 
 #methods = np.array([0, 2, 4])
 #methods_label = np.array(["Non-Uniform + Balance + Replica", "Non-Uniform + Replica", "Replica"])
