@@ -460,7 +460,7 @@ for sweep in sweeps:
             for window in range(len(windows)):
                 for overlap in range(len(overlaps)):
                     for k in range(1, repeats + 1):
-                        if walkers[walker] == 1:
+                        if walkers[walker] == 6:
                             filename = (
                                 "sharing_{}_{:02d}_{:02d}_{:02d}_{:03d}_{}/load_balance/wl_lb_max_time.dat"
                                 .format(method, walkers[walker], windows[window],
@@ -470,7 +470,7 @@ for sweep in sweeps:
                             wl_lb_max_time = np.array(
                                 wl_lb_max_time["grid data"][:], dtype=np.float64
                             ).T
-                        elif walkers[walker] == 6:
+                        elif walkers[walker] == 1:
                             filename = (
                                 "{}_{:02d}_{:02d}_{:02d}_{}/load_balance/wl_lb_max_time.dat"
                                 .format(method, walkers[walker], windows[window],
