@@ -548,7 +548,7 @@ for sweep in sweeps:
             )
 
             plt.savefig(
-                '{:03d}_{:02d}_{}_walker_speedup.pdf'.format(overlaps[overlap], methods[method]),
+                '{:03d}_{:02d}_{}_walker_speedup.pdf'.format(sweep, overlaps[overlap], methods[method]),
                 bbox_inches='tight'
             )
             plt.close()
@@ -583,7 +583,7 @@ for sweep in sweeps:
             )
 
             plt.savefig(
-                '{:03d}_{:02d}_{}_walker_efficiency.pdf'.format(overlaps[overlap], methods[method]),
+                '{:03d}_{:02d}_{}_walker_efficiency.pdf'.format(sweep, overlaps[overlap], methods[method]),
                 bbox_inches='tight'
             )
             plt.close()
