@@ -32,7 +32,7 @@ module wang_landau
   ! MPI variables
   integer :: mpi_processes, ierr, sub_comm
   real(real64) :: start, end, time_max, time_min, test_time_1, test_time_2, iter_time_start, iter_time_end
-  integer :: mpi_bins, mpi_start_idx, mpi_end_idx, mpi_index, mpi_start_idx_buffer
+  integer :: mpi_bins, mpi_start_idx, mpi_end_idx, mpi_index, mpi_start_idx_buffer, accepted
   integer :: mpi_end_idx_buffer, i_sweeps
   real(real64) :: scale_factor, scale_count, wl_logdos_min, bin_overlap, beta_diff, beta_original, beta_merge
   real(real64), allocatable :: mpi_bin_edges(:), mpi_wl_hist(:), wl_logdos_buffer(:), wl_logdos_combine(:), window_overlap(:,:)
@@ -206,7 +206,8 @@ module wang_landau
         call comms_wait()
         if (converged == 0) then
           print*, "Unconverged rank: ", my_rank, "Flatness: ", flatness, "Explored: ", &
-          REAL(COUNT(INT(mpi_wl_hist)/=0))/REAL(SIZE(mpi_wl_hist))
+          REAL(COUNT(INT(mpi_wl_hist)/=0))/REAL(SIZE(mpi_wl_hist)), "Acceptance Ratio: ", &
+          REAL(accepted)/(REAL(wl_setup_internal%mc_sweeps*setup_internal%n_atoms))*100, "%"
         end if
       end if 
       call sweeps(wl_logdos, mpi_wl_hist)
@@ -241,8 +242,8 @@ module wang_landau
         iter = iter + 1
         !Reduce f
         wl_f = wl_f*1/2
-        wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))!wl_logdos_min
-        wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
+        !wl_logdos = wl_logdos - minval(wl_logdos, MASK=(wl_logdos > 0.0_real64))!wl_logdos_min
+        !wl_logdos = ABS(wl_logdos * merge(0, 1, wl_logdos < 0.0_real64))
         !Average DoS across walkers
         call dos_average(wl_logdos)
         call dos_combine(wl_logdos)
@@ -290,7 +291,7 @@ module wang_landau
         call save_load_balance_data(window_indices, rank_time_buffer, lb_mc_steps, window_overlap)
         
         if (ANY([0,1] == wl_setup_internal%performance)) then
-        call mpi_window_optimise(iter)
+          call mpi_window_optimise(iter)
         end if
 
         wl_mc_steps = 0.0_real64
@@ -556,6 +557,7 @@ module wang_landau
     ! Establish total energy before any moves
     e_unswapped = setup_internal%full_energy(config)
     e_swapped = e_unswapped
+    accepted = 0
 
     do i = 1, wl_setup_internal%mc_sweeps*setup_internal%n_atoms
       ! Make one MC trial
@@ -605,6 +607,7 @@ module wang_landau
         delta_e = e_swapped - e_unswapped
         ! Accept or reject move
         if (genrand() .lt. exp((wl_logdos(ibin) - wl_logdos(jbin)))) then
+          accepted = accepted + 1
           e_unswapped = e_swapped
         else
           call pair_swap(config, rdm1, rdm2)
@@ -786,7 +789,11 @@ module wang_landau
         call replica_exchange(config)
       end if
 
-      if (minval(mpi_wl_hist) > 10.0_real64 .and. pre_sampled_state == 0) then
+      if (pre_sampled(mpi_index) == 0) then
+        wl_mc_steps(mpi_index) = wl_mc_steps(mpi_index) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
+      end if
+
+      if (minval(mpi_wl_hist) > 1000.0_real64 .and. pre_sampled_state == 0) then
         pre_sampled(mpi_index) = 1
       end if
       call MPI_ALLREDUCE(pre_sampled, pre_sampled_buffer, wl_setup_internal%num_windows, &
@@ -819,9 +826,9 @@ module wang_landau
 
     radial_time = 0.0_real64 ! radial time already accounted for
     call reduce_time(start, end, radial_time)
-    
-    call mpi_window_optimise(1)
-
+    call MPI_ALLREDUCE(MPI_IN_PLACE, wl_mc_steps, SIZE(wl_mc_steps), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
+    call mpi_window_optimise(0)
+    wl_mc_steps = 0.0_real64
     if (my_rank == 0) then
       print*, window_indices(:,1)
       print*, window_indices(:,2)
@@ -1284,7 +1291,7 @@ module wang_landau
         !diffusion_prev = diffusion_merge
         !bins = NINT(REAL(wl_setup_internal%bins)*diffusion_merge/SUM(diffusion_merge))
 
-        alpha = 0.4_real64
+        alpha = 0.1_real64
         if (iter == 0) then
             alpha = 1.0_real64
         end if
@@ -1297,12 +1304,19 @@ module wang_landau
             weights_log(i) = SUM(wl_logdos(first:last)) / REAL(ABS(first - last + 1))
         end do
 
+        weights_log = weights_log / SUM(weights_log)
+        
         ! normalize
         weights_mc = 1 / wl_mc_steps
         weights_mc = weights_mc / SUM(weights_mc)
+        if (my_rank == 0) then
+            print*, "Weights MC: ", weights_mc
+            print*, "Weights Log: ", weights_log
+            print*, "Weights Previous: ", weights_previous
+        end if
     
-        !frac =  alpha/2*(weights_mc + weights_log) + (1.0_real64 - alpha)*weights_previous
-        frac =  alpha*weights_log + (1.0_real64 - alpha)*weights_previous
+        !frac =  alpha*(0.5_real64*weights_mc + 0.5_real64*weights_log) + (1.0_real64 - alpha)*weights_previous
+        frac =  alpha*weights_mc + (1.0_real64 - alpha)*weights_previous
         frac = frac / SUM(frac)
 
         frac = frac / SUM(frac)
@@ -1731,7 +1745,7 @@ subroutine energy_explore(wl_logdos)
     ! Reduce global
     call MPI_Allreduce(MPI_IN_PLACE, wl_logdos, size(wl_logdos), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
     wl_logdos = wl_logdos/REAL(mpi_processes)
-    wl_logdos = wl_logdos - MINVAL(wl_logdos)
+    !wl_logdos = wl_logdos - MINVAL(wl_logdos)
 
     call merge_configs()
 
