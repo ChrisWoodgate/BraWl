@@ -676,7 +676,7 @@ module wang_landau
     call MPI_IRECV(stop_enter_energy_window, 1, MPI_LOGICAL, MPI_ANY_SOURCE, 10000, MPI_COMM_WORLD, request, ierr)
 
     i_steps = 0
-    sweeps = wl_setup_internal%mc_sweeps
+    sweeps = 50
     do while(.True.)
       i_steps = i_steps + 1
       if (MOD(i_steps, setup_internal%n_atoms*sweeps*5) == 0) then
