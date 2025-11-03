@@ -570,17 +570,17 @@ for sweep in sweeps:
             max_y = 0
             for walker in range(len(walkers)):
                 plt.errorbar(
-                    windows * (walkers[walker] + 1),
-                    efficiency[method, walker, :, overlap] / (windows * (walkers[walker] + 1)),
-                    yerr=efficiency_err[method, walker, :, overlap] / (windows * (walkers[walker] + 1)),
+                    windows * (walkers[walker]),
+                    efficiency[method, walker, :, overlap] / (windows * (walkers[walker])),
+                    yerr=efficiency_err[method, walker, :, overlap] / (windows * (walkers[walker])),
                     capsize=3, ls='none', fmt='o',
                     label="{}".format(walkers[walker])
                 )
                 if max_y < np.max(
-                    efficiency[method, walker, :, overlap] / (windows * (walkers[walker] + 1))
+                    efficiency[method, walker, :, overlap] / (windows * (walkers[walker]))
                 ):
                     max_y = np.max(
-                        efficiency[method, walker, :, overlap] / (windows * (walkers[walker] + 1))
+                        efficiency[method, walker, :, overlap] / (windows * (walkers[walker]))
                     )
 
             plt.gca().axhline(y=1, linestyle='-')
