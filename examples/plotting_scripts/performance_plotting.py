@@ -387,6 +387,30 @@ for overlap in range(len(overlaps)):
     plt.savefig('{:02d}_{}_walker_speedup.pdf'.format(overlaps[overlap], methods[method]), bbox_inches='tight')
     plt.close()
 
+cores = np.linspace(1, int(np.max(windows)*np.max(walkers)), int(np.max(windows)*np.max(walkers)))
+for overlap in range(len(overlaps)):
+  for method in range(len(methods)):
+    max_y = 0
+    for walker in range(len(walkers)):
+      plt.errorbar(windows*(walker+1), efficiency[method, walker, :, overlap]/windows*(walker+1), yerr=efficiency_err[method, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walkers[walker]))
+      if max_y < np.max(efficiency[method, walker, :, overlap]):
+        max_y = np.max(efficiency[method, walker, :, overlap])
+    
+    plt.plot(cores, cores, color="#D62728")
+    #plt.plot(cores, cores**2, linestyle="--", color="#FF9896")
+    plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
+    #plt.xticks(cores, labels=cores)
+    plt.ylim(0, max_y*1.25)
+    plt.xlabel("Wang-Landau Instances")
+    plt.ylabel("Efficiency")
+    #plt.title("Speed-up for Method {}".format(methods_label[method]))
+    #plt.legend(loc="lower right", title="Walkers")
+    #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=len(walkers), title="Walkers")
+    plt.legend(loc='center left', bbox_to_anchor=(1.02, 0.5), ncol=1, title="Walkers")
+    
+    plt.savefig('{:02d}_{}_walker_efficiency.pdf'.format(overlaps[overlap], methods[method]), bbox_inches='tight')
+    plt.close()
+
 one_sums = np.zeros([len(methods), len(windows), len(overlaps), repeats])
 one_sums = sums[:, 0, :, :, :]
 one_sums_err = np.zeros([len(windows),len(overlaps)])
