@@ -396,7 +396,7 @@ for overlap in range(len(overlaps)):
       if max_y < np.max(efficiency[method, walker, :, overlap]):
         max_y = np.max(efficiency[method, walker, :, overlap])
     
-    ax.axhline(y=1, linestyle='-')
+    plt.gca().axhline(y=1, linestyle='-')
     #plt.plot(cores, cores, color="#D62728")
     #plt.plot(cores, cores**2, linestyle="--", color="#FF9896")
     plt.gca().yaxis.set_major_formatter(ticker.FormatStrFormatter('%.1f'))
