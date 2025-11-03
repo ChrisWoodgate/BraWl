@@ -793,7 +793,8 @@ module wang_landau
         wl_mc_steps(mpi_index) = wl_mc_steps(mpi_index) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
       end if
 
-      if (minval(mpi_wl_hist) > 1000.0_real64 .and. pre_sampled_state == 0) then
+      flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
+      if (minval(mpi_wl_hist) > 1000.0_real64 .and. pre_sampled_state == 0 .and. flatness > wl_setup_internal%flatness) then
         pre_sampled(mpi_index) = 1
       end if
       call MPI_ALLREDUCE(pre_sampled, pre_sampled_buffer, wl_setup_internal%num_windows, &
@@ -1291,7 +1292,7 @@ module wang_landau
         !diffusion_prev = diffusion_merge
         !bins = NINT(REAL(wl_setup_internal%bins)*diffusion_merge/SUM(diffusion_merge))
 
-        alpha = 0.1_real64
+        alpha = 0.2_real64
         if (iter == 0) then
             alpha = 1.0_real64
         end if
@@ -1302,13 +1303,13 @@ module wang_landau
             first = window_intervals(i,1)
             last = window_intervals(i,2)
             weights_log(i) = SUM(wl_logdos(first:last)) / REAL(ABS(first - last + 1))
+            weights_mc(i) = 1 / (wl_mc_steps(i)/REAL(ABS(first - last + 1)))
         end do
 
-        weights_log = weights_log / SUM(weights_log)
-        
         ! normalize
-        weights_mc = 1 / wl_mc_steps
+        !weights_mc = 1 / wl_mc_steps
         weights_mc = weights_mc / SUM(weights_mc)
+        weights_log = weights_log / SUM(weights_log)
     
         !frac =  alpha*(0.5_real64*weights_mc + 0.5_real64*weights_log) + (1.0_real64 - alpha)*weights_previous
         frac =  alpha*weights_mc + (1.0_real64 - alpha)*weights_previous
