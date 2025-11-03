@@ -470,7 +470,7 @@ for sweep in sweeps:
                             wl_lb_max_time = np.array(
                                 wl_lb_max_time["grid data"][:], dtype=np.float64
                             ).T
-                        elif walkers[walker] == 1:
+                        elif walkers[walker] == 6:
                             filename = (
                                 "{}_{:02d}_{:02d}_{:02d}_{}/load_balance/wl_lb_max_time.dat"
                                 .format(method, walkers[walker], windows[window],
@@ -539,7 +539,7 @@ for sweep in sweeps:
             max_y = 0
             for walker in range(len(walkers)):
                 plt.errorbar(
-                    windows * (walker + 1),
+                    windows * (walkers[walker] + 1),
                     efficiency[method, walker, :, overlap],
                     yerr=efficiency_err[method, walker, :, overlap],
                     capsize=3, ls='none', fmt='o',
@@ -570,17 +570,17 @@ for sweep in sweeps:
             max_y = 0
             for walker in range(len(walkers)):
                 plt.errorbar(
-                    windows * (walker + 1),
-                    efficiency[method, walker, :, overlap] / (windows * (walker + 1)),
-                    yerr=efficiency_err[method, walker, :, overlap] / (windows * (walker + 1)),
+                    windows * (walkers[walker] + 1),
+                    efficiency[method, walker, :, overlap] / (windows * (walkers[walker] + 1)),
+                    yerr=efficiency_err[method, walker, :, overlap] / (windows * (walkers[walker] + 1)),
                     capsize=3, ls='none', fmt='o',
                     label="{}".format(walkers[walker])
                 )
                 if max_y < np.max(
-                    efficiency[method, walker, :, overlap] / (windows * (walker + 1))
+                    efficiency[method, walker, :, overlap] / (windows * (walkers[walker] + 1))
                 ):
                     max_y = np.max(
-                        efficiency[method, walker, :, overlap] / (windows * (walker + 1))
+                        efficiency[method, walker, :, overlap] / (windows * (walkers[walker] + 1))
                     )
 
             plt.gca().axhline(y=1, linestyle='-')
