@@ -449,7 +449,7 @@ plot_walker_efficiency([0, 1, 2], [0], replica=True)
 methods = np.array([0, 2, 4])
 methods_label = np.array(["1", "3", "5"])
 windows = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
-walkers = np.array([6])
+walkers = np.array([1, 6])
 overlaps = np.array([25])
 sweeps = np.array([1, 50, 200])
 
@@ -460,15 +460,26 @@ for sweep in sweeps:
             for window in range(len(windows)):
                 for overlap in range(len(overlaps)):
                     for k in range(1, repeats + 1):
-                        filename = (
-                            "sharing_{}_{:02d}_{:02d}_{:02d}_{:03d}_{}/load_balance/wl_lb_max_time.dat"
-                            .format(method, walkers[walker], windows[window],
-                                    overlaps[overlap], sweep, k)
-                        )
-                        wl_lb_max_time = nc.Dataset(filename)
-                        wl_lb_max_time = np.array(
-                            wl_lb_max_time["grid data"][:], dtype=np.float64
-                        ).T
+                        if walkers[walker] == 1:
+                            filename = (
+                                "sharing_{}_{:02d}_{:02d}_{:02d}_{:03d}_{}/load_balance/wl_lb_max_time.dat"
+                                .format(method, walkers[walker], windows[window],
+                                        overlaps[overlap], sweep, k)
+                            )
+                            wl_lb_max_time = nc.Dataset(filename)
+                            wl_lb_max_time = np.array(
+                                wl_lb_max_time["grid data"][:], dtype=np.float64
+                            ).T
+                        elif walkers[walker] == 6:
+                            filename = (
+                                "{}_{:02d}_{:02d}_{:02d}_{}/load_balance/wl_lb_max_time.dat"
+                                .format(method, walkers[walker], windows[window],
+                                        overlaps[overlap], k)
+                            )
+                            wl_lb_max_time = nc.Dataset(filename)
+                            wl_lb_max_time = np.array(
+                                wl_lb_max_time["grid data"][:], dtype=np.float64
+                            ).T
 
                         row_sums = np.max(wl_lb_max_time, axis=1)
                         sums[method_id, walker, window, overlap, k - 1] = np.sum(row_sums)
@@ -587,6 +598,5 @@ for sweep in sweeps:
                 bbox_inches='tight'
             )
             plt.close()
-
 
 exit()
