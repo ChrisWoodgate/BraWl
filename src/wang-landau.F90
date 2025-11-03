@@ -1309,11 +1309,6 @@ module wang_landau
         ! normalize
         weights_mc = 1 / wl_mc_steps
         weights_mc = weights_mc / SUM(weights_mc)
-        if (my_rank == 0) then
-            print*, "Weights MC: ", weights_mc
-            print*, "Weights Log: ", weights_log
-            print*, "Weights Previous: ", weights_previous
-        end if
     
         !frac =  alpha*(0.5_real64*weights_mc + 0.5_real64*weights_log) + (1.0_real64 - alpha)*weights_previous
         frac =  alpha*weights_mc + (1.0_real64 - alpha)*weights_previous
