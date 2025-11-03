@@ -392,7 +392,7 @@ for overlap in range(len(overlaps)):
   for method in range(len(methods)):
     max_y = 0
     for walker in range(len(walkers)):
-      plt.errorbar(windows*(walker+1), efficiency[method, walker, :, overlap]/(windows*(walker+1)), yerr=efficiency_err[method, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walkers[walker]))
+      plt.errorbar(windows*(walker+1), efficiency[method, walker, :, overlap]/(windows*(walker+1)), yerr=efficiency_err[method, walker, :, overlap]/(windows*(walker+1)), capsize=3, ls='none', fmt='o', label="{}".format(walkers[walker]))
       if max_y < np.max(efficiency[method, walker, :, overlap]/(windows*(walker+1))):
         max_y = np.max(efficiency[method, walker, :, overlap]/(windows*(walker+1)))
     
