@@ -539,7 +539,7 @@ for sweep in sweeps:
             max_y = 0
             for walker in range(len(walkers)):
                 plt.errorbar(
-                    windows * (walkers[walker] + 1),
+                    windows * (walkers[walker]),
                     efficiency[method, walker, :, overlap],
                     yerr=efficiency_err[method, walker, :, overlap],
                     capsize=3, ls='none', fmt='o',
