@@ -393,8 +393,8 @@ for overlap in range(len(overlaps)):
     max_y = 0
     for walker in range(len(walkers)):
       plt.errorbar(windows*(walker+1), efficiency[method, walker, :, overlap]/(windows*(walker+1)), yerr=efficiency_err[method, walker, :, overlap], capsize=3, ls='none', fmt='o', label="{}".format(walkers[walker]))
-      if max_y < np.max(efficiency[method, walker, :, overlap]):
-        max_y = np.max(efficiency[method, walker, :, overlap])
+      if max_y < np.max(efficiency[method, walker, :, overlap]/(windows*(walker+1))):
+        max_y = np.max(efficiency[method, walker, :, overlap]/(windows*(walker+1)))
     
     plt.gca().axhline(y=1, linestyle='-')
     #plt.plot(cores, cores, color="#D62728")
