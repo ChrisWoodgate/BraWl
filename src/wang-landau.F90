@@ -223,7 +223,7 @@ module wang_landau
 
       flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
 
-      if (converged == 0 .and. flatness > wl_setup_internal%flatness .and. minval(mpi_wl_hist) > 10.0_real64) then
+      if (converged == 0 .and. flatness > wl_setup_internal%flatness) then
         ! End timer
         end = mpi_wtime()
         converged = 1
@@ -794,7 +794,10 @@ module wang_landau
       end if
 
       flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
-      if (minval(mpi_wl_hist) > 1000.0_real64 .and. pre_sampled_state == 0 .and. flatness > wl_setup_internal%flatness) then
+      !print*, my_rank, minval(mpi_wl_hist), 1000.0_real64/REAL(num_walkers), &
+      !minval(mpi_wl_hist) > 1000.0_real64/REAL(num_walkers), flatness
+      if (minval(mpi_wl_hist) > 1000.0_real64/REAL(num_walkers) .and. pre_sampled_state == 0 &
+       .and. flatness > wl_setup_internal%flatness) then
         pre_sampled(mpi_index) = 1
       end if
       call MPI_ALLREDUCE(pre_sampled, pre_sampled_buffer, wl_setup_internal%num_windows, &
@@ -1297,7 +1300,7 @@ module wang_landau
             alpha = 1.0_real64
         end if
         w_min = 10.0_real64/REAL(wl_setup_internal%bins)
-        weights_previous = REAL((window_intervals(:,2) - window_intervals(:,1) + 1))/REAL(wl_setup_internal%bins)
+        weights_previous = diffusion_prev
 
         do i = 1, wl_setup_internal%num_windows
             first = window_intervals(i,1)
@@ -1314,8 +1317,8 @@ module wang_landau
         !frac =  alpha*(0.5_real64*weights_mc + 0.5_real64*weights_log) + (1.0_real64 - alpha)*weights_previous
         frac =  alpha*weights_mc + (1.0_real64 - alpha)*weights_previous
         frac = frac / SUM(frac)
+        diffusion_prev = frac
 
-        frac = frac / SUM(frac)
         frac = MAX(frac, w_min)
         free_mask = (frac > w_min)
         if (ABS(SUM(frac) - 1.0_real64) > 1.0e-12_real64) then
