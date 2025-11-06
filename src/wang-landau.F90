@@ -173,6 +173,7 @@ module wang_landau
     !--------------------!
     ! Pre-Sampling       !
     !--------------------!
+    iter = 1
     call pre_sampling(wl_logdos, mpi_wl_hist)
 
     call comms_wait()
@@ -186,7 +187,7 @@ module wang_landau
     !--------------------!
     ! Main Wang-Landau   !
     !--------------------!
-    iter = 0
+    iter = iter + 1
     converged = 0
     converged_sum = 0
     radial_time = 0.0_real64
@@ -208,11 +209,11 @@ module wang_landau
           REAL(COUNT(INT(mpi_wl_hist)/=0))/REAL(SIZE(mpi_wl_hist)), "Acceptance Ratio: ", &
           REAL(accepted)/(REAL(wl_setup_internal%mc_sweeps*setup_internal%n_atoms))*100, "%"
         end if
-        mpi_wl_hist = 0.0_real64
+        mpi_wl_hist = mpi_wl_hist/2.0_real64
       end if 
       call sweeps(wl_logdos, mpi_wl_hist)
 
-      lb_mc_steps(iter+2) = lb_mc_steps(iter+2) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
+      lb_mc_steps(iter) = lb_mc_steps(iter) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
       if (converged == 0) then
         wl_mc_steps(mpi_index) = wl_mc_steps(mpi_index) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
       end if
@@ -238,8 +239,6 @@ module wang_landau
         converged_sum = 0
         !Reset the histogram
         mpi_wl_hist = 0.0_real64
-        ! Increase iteration
-        iter = iter + 1
         !Reduce f
         wl_f = wl_f*0.5_real64
         !wl_f = wl_f/(1.0_real64 + 0.5_real64*iter)
@@ -312,6 +311,9 @@ module wang_landau
         end if
         end if
         
+        ! Increase iteration
+        iter = iter + 1
+
         start = mpi_wtime()
       end if
     end do
@@ -823,6 +825,7 @@ module wang_landau
     
     end if
     end do
+
     call save_rho_E(rho_saved, radial_record)
     !call zero_subtract_logdos(wl_logdos)
     call dos_average(wl_logdos)
@@ -833,6 +836,11 @@ module wang_landau
     radial_time = 0.0_real64 ! radial time already accounted for
     call reduce_time(start, end, radial_time)
     call MPI_ALLREDUCE(MPI_IN_PLACE, wl_mc_steps, SIZE(wl_mc_steps), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
+    
+    call save_rho_E(rho_saved, radial_record)
+    call save_wl_data(bin_edges, wl_logdos, wl_hist)
+    call save_load_balance_data(window_indices, rank_time_buffer, lb_mc_steps, window_overlap)
+
     call mpi_window_optimise(0)
     wl_mc_steps = 0.0_real64
     if (my_rank == 0) then
@@ -852,8 +860,6 @@ module wang_landau
 
     !call enter_energy_window()
     call load_window_config()
-
-    !call zero_subtract_logdos(wl_logdos)
   end subroutine pre_sampling
 
   !> @brief   Creates initial energy windows
@@ -1038,12 +1044,13 @@ module wang_landau
       num_iter = num_iter + 1
       wl_f = wl_f*0.5
     end do
+    num_iter = num_iter + 1 ! Account for pre_sampling
     wl_f = wl_setup_internal%wl_f
     allocate(lb_bins(num_iter, wl_setup_internal%num_windows))
     allocate(lb_avg_time(num_iter, wl_setup_internal%num_windows))
     allocate(lb_max_time(num_iter, wl_setup_internal%num_windows))
-    allocate(lb_mc_steps(num_iter+1))
-    allocate(lb_mc_steps_buffer(num_iter+1))
+    allocate(lb_mc_steps(num_iter))
+    allocate(lb_mc_steps_buffer(num_iter))
     allocate(window_time(num_iter))
     allocate(diffusion_prev(wl_setup_internal%num_windows))
     allocate(pre_sampled(wl_setup_internal%num_windows))
