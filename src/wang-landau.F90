@@ -209,7 +209,6 @@ module wang_landau
           REAL(COUNT(INT(mpi_wl_hist)/=0))/REAL(SIZE(mpi_wl_hist)), "Acceptance Ratio: ", &
           REAL(accepted)/(REAL(wl_setup_internal%mc_sweeps*setup_internal%n_atoms))*100, "%"
         end if
-        mpi_wl_hist = mpi_wl_hist/2.0_real64
       end if 
       call sweeps(wl_logdos, mpi_wl_hist)
 
