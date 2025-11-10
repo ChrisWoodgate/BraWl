@@ -217,9 +217,7 @@ module wang_landau
         wl_mc_steps(mpi_index) = wl_mc_steps(mpi_index) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
       end if
 
-      if (MOD(i_sweeps, 10) == 0) then
-        call replica_exchange(config)
-      end if
+      call replica_exchange(config)
 
       flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
 
@@ -291,7 +289,7 @@ module wang_landau
         call save_load_balance_data(window_indices, rank_time_buffer, lb_mc_steps, window_overlap)
         
         if (ANY([0,1] == wl_setup_internal%performance)) then
-          call mpi_window_optimise(iter)
+          call mpi_window_optimise(iter-1)
         end if
 
         wl_mc_steps = 0.0_real64
@@ -1282,7 +1280,7 @@ module wang_landau
 
     real(real64) :: weights_previous(wl_setup_internal%num_windows), weights_log(wl_setup_internal%num_windows), &
     frac(wl_setup_internal%num_windows), weights_mc(wl_setup_internal%num_windows), &
-    alpha, w_min, rem, scale, sum_free
+    alpha, w_min, rem, scale, sum_free, scaling
     integer :: idx(wl_setup_internal%num_windows), first, last, diff
     logical :: free_mask(wl_setup_internal%num_windows)
 
@@ -1292,6 +1290,9 @@ module wang_landau
       if (my_rank == 0) then
 
         alpha = 0.2_real64
+        scaling = 0.9_real64
+        alpha = alpha*(scaling**(iter-1))
+
         if (iter == 0) then
             alpha = 1.0_real64
         end if
@@ -1309,6 +1310,7 @@ module wang_landau
         !weights_mc = 1 / wl_mc_steps
         weights_mc = weights_mc / SUM(weights_mc)
         weights_log = weights_log / SUM(weights_log)
+        weights_mc = (1 / rank_time_buffer(:,1)) / SUM(1 / rank_time_buffer(:,1))
     
         !frac =  alpha*(0.5_real64*weights_mc + 0.5_real64*weights_log) + (1.0_real64 - alpha)*weights_previous
         frac =  alpha*weights_mc + (1.0_real64 - alpha)*weights_previous
