@@ -442,7 +442,7 @@ module wang_landau
     real(real64), allocatable, intent(in) :: rank_time_buffer(:, :), lb_mc_steps(:), window_overlap(:,:)
     call MPI_REDUCE(lb_mc_steps, lb_mc_steps_buffer, SIZE(lb_mc_steps), MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     if (my_rank == 0) then
-      lb_bins(iter, :) = REAL(window_indices(:, 2) - window_indices(:, 1) + 1)
+      lb_bins(iter, :) = REAL(window_intervals(:, 2) - window_intervals(:, 1) + 1)
       lb_avg_time(iter, :) = rank_time_buffer(:,1)
       lb_max_time(iter, :) = rank_time_buffer(:,3)
       window_time(iter) = MAXVAL(rank_time_buffer(:,3))
@@ -1112,7 +1112,7 @@ module wang_landau
     target_energy = (mpi_bin_edges(1) + mpi_bin_edges(SIZE(mpi_bin_edges)))/2
 
     ! Load balance diffusion
-    diffusion_prev = (window_intervals(:,2) - window_intervals(:,1) + 1)**2
+    diffusion_prev = 1.0_real64/REAL(wl_setup_internal%num_windows)
 
     ! Load balance arrays
     lb_bins = -1.0_real64
@@ -1162,37 +1162,10 @@ module wang_landau
   !> @date    2024 
   subroutine dos_average(wl_logdos)
     real(real64), intent(inout) :: wl_logdos(:)
-    integer :: i, j
 
-    do i = 1, wl_setup_internal%num_windows
-      if (mpi_index == i) then
-        if (my_rank /= (i - 1)*num_walkers) then
-          call MPI_Send(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, (i - 1)*num_walkers, i, MPI_COMM_WORLD, ierr)
-          !print*, my_rank, "send", (i - 1)*num_walkers
-        end if
-        if (my_rank == (i - 1)*num_walkers) then
-          do j = 1, num_walkers - 1
-            call MPI_Recv(wl_logdos_buffer, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, &
-            (i - 1)*num_walkers + j, i, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-            !print*, my_rank, "recv", (i - 1)*num_walkers + j
-            wl_logdos = wl_logdos + wl_logdos_buffer
-          end do
-        end if
-        if (my_rank == (i - 1)*num_walkers) then
-          wl_logdos = wl_logdos/num_walkers
-          do j = 1, num_walkers - 1
-            call MPI_Send(wl_logdos, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, (i - 1)*num_walkers + j, i, MPI_COMM_WORLD, &
-                          ierr)
-            !print*, my_rank, "send", (i - 1)*num_walkers + j
-          end do
-        else
-          call MPI_Recv(wl_logdos_buffer, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, (i - 1)*num_walkers, i, MPI_COMM_WORLD, &
-                        MPI_STATUS_IGNORE, ierr)
-          wl_logdos = wl_logdos_buffer
-          !print*, my_rank, "recv", (i - 1)*num_walkers
-        end if
-      end if
-    end do
+    call MPI_Allreduce(MPI_IN_PLACE, wl_logdos, size(wl_logdos), MPI_DOUBLE_PRECISION, MPI_SUM, sub_comm, ierr)
+    wl_logdos = wl_logdos/REAL(mpi_processes/wl_setup_internal%num_windows)
+
   end subroutine dos_average
   
   !> @brief   Routine that combines DoS across windows
@@ -1212,7 +1185,7 @@ module wang_landau
     ! Internal
     integer :: i, j, beta_index
     real(real64) :: beta_original, beta_merge, beta_diff, scale_factor
-    integer :: mpi_start_idx, mpi_end_idx
+    integer :: dos_start_idx, dos_end_idx
 
     beta_index = 0
 
@@ -1227,23 +1200,23 @@ module wang_landau
         call MPI_Send(window_indices(mpi_index,2), 1, MPI_INT, 0, 2, MPI_COMM_WORLD, ierr)
       end if
       if (my_rank == 0) then
-        call MPI_Recv(wl_logdos_buffer, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, (i - 1)*num_walkers, 0, MPI_COMM_WORLD, &
+        call MPI_Recv(wl_logdos_buffer, wl_setup_internal%bins, MPI_DOUBLE_PRECISION, window_rank_index(i,1), 0, MPI_COMM_WORLD, &
           MPI_STATUS_IGNORE, ierr)
-        call MPI_Recv(mpi_start_idx, 1, MPI_INT, (i - 1)*num_walkers, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
-        call MPI_Recv(mpi_end_idx, 1, MPI_INT, (i - 1)*num_walkers, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+        call MPI_Recv(dos_start_idx, 1, MPI_INT, window_rank_index(i,1), 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
+        call MPI_Recv(dos_end_idx, 1, MPI_INT, window_rank_index(i,1), 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE, ierr)
         scale_factor = 0.0_real64
-        beta_diff = HUGE(beta_diff)
+        beta_diff = HUGE(1.0_real64)
         
         do j = 0,  window_indices(i-1, 2) - window_indices(i, 1) - 1
-          beta_original = wl_logdos_combine(mpi_start_idx + j + 1) - wl_logdos_combine(mpi_start_idx + j)
-          beta_merge = wl_logdos_buffer(mpi_start_idx + j + 1) - wl_logdos_buffer(mpi_start_idx + j)
+          beta_original = wl_logdos_combine(dos_start_idx + j + 1) - wl_logdos_combine(dos_start_idx + j)
+          beta_merge = wl_logdos_buffer(dos_start_idx + j + 1) - wl_logdos_buffer(dos_start_idx + j)
           if (ABS(beta_original - beta_merge) < beta_diff) then
             beta_diff = ABS(beta_original - beta_merge)
-            beta_index = mpi_start_idx + j
+            beta_index = dos_start_idx + j + 1
           end if
         end do
 
-        do j = beta_index, mpi_end_idx
+        do j = beta_index, dos_end_idx
           wl_logdos_combine(j) = wl_logdos_buffer(j) + wl_logdos_combine(beta_index) - wl_logdos_buffer(beta_index)
         end do
       end if
@@ -1289,8 +1262,8 @@ module wang_landau
     if (wl_setup_internal%num_windows > 1) then
       if (my_rank == 0) then
 
-        alpha = 0.2_real64
-        scaling = 0.9_real64
+        alpha = 0.8_real64
+        scaling = 0.8_real64
         alpha = alpha*(scaling**(iter-1))
 
         if (iter == 0) then
@@ -1310,7 +1283,7 @@ module wang_landau
         !weights_mc = 1 / wl_mc_steps
         weights_mc = weights_mc / SUM(weights_mc)
         weights_log = weights_log / SUM(weights_log)
-        weights_mc = (1 / rank_time_buffer(:,1)) / SUM(1 / rank_time_buffer(:,1))
+        !weights_mc = (1 / rank_time_buffer(:,1)) / SUM(1 / rank_time_buffer(:,1))
     
         !frac =  alpha*(0.5_real64*weights_mc + 0.5_real64*weights_log) + (1.0_real64 - alpha)*weights_previous
         frac =  alpha*weights_mc + (1.0_real64 - alpha)*weights_previous
