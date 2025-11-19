@@ -92,26 +92,26 @@ We highlight examples of its use in generating a training dataset for a machine-
 Finally, the package has also been used to benchmark the efficiency of various parallelisation strategies proposed for the Wang-Landau sampling algorithm [@naguszewskioptimal2025].
 In this work, we explicitly consider several illustrative examples of the results which can be obtained using the sampling algorithms outlined above applied to the Bragg-Williams model as implemented in the package. Throughout these examples, the atom-atom EPIs for the Bragg-Williams model are obtained using the $S^{(2)}$ theory for multicomponent alloys [@khanstatistical2016; @woodgatemodelling2024].
 
-![Evolution of the simulation internal energy (top panel) and conditional pair probabilities (bottom panel) for an Fe$_{0.5}$Ni$_{0.5}$ alloy as a function of the number of Metropolis-Hastings sweeps at a simulation temperature of $T=300$ K. One 'sweep' is one trial move per atom in the system. Beyond approximately 100 sweeps, the system can be seen to have reached equilibrium, with L1$_0$ order established.\label{fig:feniequilibration}](feniequilibration.pdf){ width=55% }
-
 As an example of the Metropolis-Hastings Monte Carlo algorithm, we consider its application to the binary FeNi alloy, first discussed by @woodgateint2024.
 \autoref{fig:feniequilibration} shows the internal energy and conditional pair probabilities (quantifying ASRO) of a simulation cell containing 256 atoms as a function of the number of Metropolis-Hastings 'sweeps', where a sweep refers to performing a number of trial Metropolis-Hastings moves equal to the number of atoms in the simulation cell.
 The simulation is performed at 300 K, below the alloy's L1$_0$ disorder-order transition temperature.
 The L1$_0$ phase is a structure where $2/3$ of the nearest neighbours of Fe (Ni) atoms are Ni (Fe) atoms, and where none of the next-nearest neighbours of Fe (Ni) atoms are Ni (Fe) atoms.
 It can be seen that this ordering is swiftly established as the number of Monte Carlo sweeps increases, albeit with some remaining thermal noise.
 
-![Plots of energy probability distributions, Warren-Cowley ASRO parameters ($\alpha_n^{pq}$) and specific heat ($C_V$) as a function of temperature for AlTiCrMo obtained using lattice-based Monte Carlo simulations employing Wang-Landau sampling. Here, show $\alpha_n^{pq}$ only for $n = 1$. The zero of the energy scale for the energy histograms is set to be equal to the average internal energy of the alloy obtained at a simulation temperature of 3000 K.\label{fig:wlAlTiCrMo}](wlAlTiCrMo.pdf){ width=55% }
+![Evolution of the simulation internal energy (top panel) and conditional pair probabilities (bottom panel) for an Fe$_{0.5}$Ni$_{0.5}$ alloy as a function of the number of Metropolis-Hastings sweeps at a simulation temperature of $T=300$ K. One 'sweep' is one trial move per atom in the system. Beyond approximately 100 sweeps, the system can be seen to have reached equilibrium, with L1$_0$ order established.\label{fig:feniequilibration}](feniequilibration.pdf){ width=60% }
 
 As an example of Wang-Landau sampling, we consider its application to the AlTiCrMo refractory high-entropy superalloy, first discussed by @woodgateemergent2025, for which results are shown in \autoref{fig:wlAlTiCrMo}.
 The top panel shows calculated energy probability distributions (histograms) at various temperatures, while the bottom panel shows the specific heat and evolution of the Warren-Cowley ASRO parameters as a function of temperature.
 The high-temperature peak in the specific heat data is associated with the experimentally observed B2 crystallographic ordering.
 
-![Internal energy, $E$, and isochoric specific heat, $C_V$, obtained using the Nested Sampling algorithm applied to the equiatomic, fcc, AlCrFeCoNi high-entropy alloy. The simulation cell contained 108 atoms. Upon cooling, the initial peak in the specific heat is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases.\label{fig:nsalcrfeconi}](nsalcrfeconi.pdf){ width=55% }
-
 Finally, as an example of application of the Nested Sampling algorithm, we consider its application to the AlCrFeCoNi high-entropy alloy, first discussed by @woodgatestructure2024.
 \autoref{fig:nsalcrfeconi} plots the internal energy, $E$, and isochoric specific heat, $C_V$, obtained for the equiatomic, fcc, AlCrFeCoNi system.
 The simulation cell contained 108 atoms.
 The initial peak in the specific heat encountered upon cooling from high temperature is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases, which is understood to be consistent with experimental data for this system.
+
+![Plots of energy probability distributions, Warren-Cowley ASRO parameters ($\alpha_n^{pq}$) and specific heat ($C_V$) as a function of temperature for AlTiCrMo obtained using lattice-based Monte Carlo simulations employing Wang-Landau sampling. Here, show $\alpha_n^{pq}$ only for $n = 1$. The zero of the energy scale for the energy histograms is set to be equal to the average internal energy of the alloy obtained at a simulation temperature of 3000 K.\label{fig:wlAlTiCrMo}](wlAlTiCrMo.pdf){ width=60% }
+
+![Internal energy, $E$, and isochoric specific heat, $C_V$, obtained using the Nested Sampling algorithm applied to the equiatomic, fcc, AlCrFeCoNi high-entropy alloy. The simulation cell contained 108 atoms. Upon cooling, the initial peak in the specific heat is associated with an L1$_2$ ordering driven by Al, with subsequent peaks indicating eventual decomposition into multiple competing phases.\label{fig:nsalcrfeconi}](nsalcrfeconi.pdf){ width=60% }
 
 # Performance
 
