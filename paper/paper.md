@@ -44,7 +44,7 @@ Frequently, a mixture of elements will form a regular crystalline lattice with s
 The nature of atomic arrangements in a material determines many important physical properties.
 For a given combination of elements, it is therefore crucial to understand the nature of atomic ordering in a material, as well as the temperature at which it emerges upon cooling, to guide materials processing strategies.
 One physically intuitive model for the internal energy of an alloy is the Bragg-Williams model, which assumes that atoms in the alloy interact in a pairwise manner.
-Crucially, the effective pair interactions (EPIs) which appear in the Bragg-Williams Hamiltonian can be obtained _ab initio_ using density functional theory (DFT) calculations.
+Crucially, the atom-atom effective pair interactions (EPIs) which appear in the Bragg-Williams Hamiltonian can be obtained _ab initio_ using density functional theory (DFT) calculations.
 When appropriate sampling techniques are applied to the Bragg-Williams model, it is possible to explore the configuration space of a given alloy in detail and determine equilibrium phases as a function of temperature, leading to construction of phase diagrams.
 Here, we present `BraWl`, a Fortran package implementing a range of conventional and enhanced sampling algorithms for exploration of the phase space of the Bragg-Williams model, facilitating study of diffusional solid-solid transformations in binary and multicomponent alloys.
 These sampling algorithms include Metropolis-Hastings Monte Carlo, Wang-Landau sampling, and Nested Sampling.
@@ -63,35 +63,6 @@ Examples of widely-used such packages include ATAT [@vandewallealloy2002], ICET 
 To our knowledge, there is no open-source package specifically focussing on the implementation of a range of sampling algorithms applied to the Bragg-Williams model.
 We therefore believe that BraWl fills a gap in the capabilities of the current alloy software ecosystem.
 Additionally, we hope that the modular way in which the package is constructed could enable implementation of more complex Hamiltonians, as well as further sampling algorithms in addition to those detailed below, in due course.
-
-## The Bragg-Williams Hamiltonian
-
-A physically intuitive, lattice-based model for the internal energy of a substitutional alloy is the Bragg-Williams model [@braggeffect1934; @braggeffect1935], which assumes that the internal energy of an alloy takes a simple, pairwise form.
-We specify a particular arrangement of atoms by a discrete set of site occupation numbers, $\left\{ \xi_{i\gamma} \right\}$, where $\xi_{i \gamma} = 1$ if lattice site $i$ is occupied by an atom of species $\gamma$ and $\xi_{i \gamma} = 0$ otherwise.
-The Bragg-Williams Hamiltonian then has the form
-\begin{equation}
-    H(\{\xi_{i\gamma}\}) = \frac{1}{2}\sum_{i \gamma; j\gamma^{\prime}} V_{i\gamma; j\gamma^{\prime}} \xi_{i \gamma} \xi_{j \gamma^{\prime}},
-    \label{eq:b-w1}
-\end{equation}
-where $V_{i\gamma; j\gamma^{\prime}}$ denotes the effective pair interaction (EPI) between an atom of chemical species $\gamma$ on lattice site $i$ and an atom of chemical species $\gamma^{\prime}$ on lattice site $j$.
-(The factor of $\frac{1}{2}$ eliminates double-counting in the summation.)
-For a system of finite size, it is assumed that periodic boundary conditions are applied in all coordinate directions.
-
-Generally, the assumption is made that that the EPIs are spatially homogeneous and isotropic, and \autoref{eq:b-w1} is therefore rewritten as
-\begin{equation}
-    H(\{\xi_{i\gamma}\}) = \frac{1}{2}\sum_{i \gamma} \xi_{i \gamma} \left( \sum_{n} \sum_{j \in n(i)} \sum_{\gamma^{\prime}} V^{(n)}_{\gamma \gamma^{\prime}} \xi_{j \gamma^{\prime}} \right),
-    \label{eq:b-w2}
-\end{equation}
-where the sum over $i$ remains a sum over lattice sites, but the sum over $n$ denotes a sum over the coordination shells (nearest-neighbours, next-nearest-neighbours, _etc._) of the lattice.
-The notation $n(i)$ is then used to denote the set of lattice sites which are $n$th nearest-neighbours to site $i$.
-Then $V^{(n)}_{\gamma \gamma^{\prime}}$ denotes the effective pair interaction between chemical species $\gamma$ and $\gamma^{\prime}$ on coordination shell $n$.
-It is reasonable to assume that, for most alloys, the strength of EPIs will tail off quickly with decreasing distance, and the sum over $n$ can be taken over the first few coordination shells of the underlying lattice type being considered.
-(This is, of course, equivalent to imposing some radial 'cutoff' on an interatomic potential.)
-
-EPIs for the Bragg-Williams Hamiltonian can be obtained using a variety of methods, generally those based on density functional theory.
-As examples of such methods, we highlight the recovery of such interactions obtained by fitting to a set of DFT total energy evaluations on alloy supercells [@zhangrobust2020; @liumonte2021], the generalised perturbation method (GPM) [@ducastellegeneralized1976; @rubanatomic2004], and techniques using the language of concentration waves to describe the atomic-scale chemical fluctuations [@singhatomic2015; @khanstatistical2016].
-Once the EPIs for a given alloy composition are obtained, the phase stability of a particular alloy can be examined using sampling techniques applied to the Bragg-Williams model.
-This is the purpose of `BraWl` as presented in this work.
 
 # Sampling algorithms
 
@@ -116,7 +87,10 @@ The relevant quantities are:
 # Example Applications
 
 BraWL has been used, with success, to study the phase behaviour of a range of binary and multicomponent alloys, for example the binary Fe-Ga system (Galfenol) [@marchantab2021], the Fe-Ni system [@woodgateint2024], the Cantor-Wu medium- and high-entropy alloys [@woodgatecompositional2022; @woodgateinterplay2023], the refractory high-entropy alloys [@woodgateshortrange2023; @woodgatecompetition2024], the Al$_x$CrFeCoNi system [@woodgatestructure2024], and the AlTiVNb and AlTiCrMo refractory high-entropy superalloys [@woodgateemergent2025].
-The package has also been used to generate atomic configurations for training datasets for machine-learned interatomic potentials, for example for the prototypical austenitic stainless steel, Fe$_7$Cr$_2$Ni [@shenoycollinearspin2024].
+Additionally, the package has been used to generate atomic configurations with physically motivated ASRO and/or ALRO for subsequent study using a range of other simulation techniques.
+We highlight examples of its use in generating a training dataset for a machine-learned interatomic potential for the prototypical austenitic stainless steel, Fe$_7$Cr$_2$Ni [@shenoycollinearspin2024], as well as its use in generating configurations for use in a transition state study for ferromagnetic Fe-Ni alloys [@fisherlattice2025].
+Finally, the package has also been used to benchmark the efficiency of various parallelisation strategies proposed for the Wang-Landau sampling algorithm [@naguszewskioptimal2025].
+In this work, we explicitly consider several illustrative examples of the results which can be obtained using the sampling algorithms outlined above applied to the Bragg-Williams model as implemented in the package. Throughout these examples, the atom-atom EPIs for the Bragg-Williams model are obtained using the $S^{(2)}$ theory for multicomponent alloys [@khanstatistical2016; @woodgatemodelling2024].
 
 As an example of the Metropolis-Hastings Monte Carlo algorithm, we consider its application to the binary FeNi alloy, first discussed by @woodgateint2024.
 \autoref{fig:feniequilibration} shows the internal energy and conditional pair probabilities (quantifying ASRO) of a simulation cell containing 256 atoms as a function of the number of Metropolis-Hastings 'sweeps', where a sweep refers to performing a number of trial Metropolis-Hastings moves equal to the number of atoms in the simulation cell.
