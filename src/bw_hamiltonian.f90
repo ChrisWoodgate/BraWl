@@ -1613,7 +1613,7 @@ module bw_hamiltonian
     nbrs(17)  = config(ib, site_i, ltltlt, fw)
     nbrs(18)  = config(ib, upupup, site_j, fw)
     nbrs(19)  = config(ib, dndndn, site_j, fw)
-    nbrs(20)  = config(ib, site_k, rtrtrt, fw)
+    nbrs(20)  = config(ib, site_i, rtrtrt, fw)
     nbrs(21)  = config(ib, up, site_j, fwfwfw)
     nbrs(22)  = config(ib, dn, site_j, fwfwfw)
     nbrs(23)  = config(ib, site_i, rt, fwfwfw)

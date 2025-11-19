@@ -43,7 +43,7 @@ ax.set_ylabel('Internal energy, $E$ (meV/atom)')
 # And the heat capacity data on another
 ax2 = ax.twinx()
 ax2.plot(temperature, heat_capacity, label='$C_V$')
-ax2.set_ylabel('Heat Capacity, $C_V$ ($k_B$/atom)')
+ax2.set_ylabel('Specific heat, $C_V$ ($k_B$/atom)')
 ax2.set_ylim(0.0, 1.1*np.max(heat_capacity))
 
 fig.legend(loc=(0.7, 0.45))
