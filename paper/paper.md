@@ -57,6 +57,7 @@ It achieves this by providing implementation of both the Bragg-Williams Hamilton
 The result is a package which can determine phase equilibria as a function of both temperature and alloy composition, which leads to the construction of alloy phase diagrams.
 Additionally, the package can be used for extraction of representative equilibrated atomic configurations for visualisation, as well as for use in complementary modelling approaches.
 An in-depth discussion of the background, underlying theory, and technical details of the sampling algorithms implemented in the package is given by @naguszewskibrawl2025.
+Much of this discussion is also available in the package's documentation.
 
 There are a range of existing packages capable of simulating alloy phase equilibria, both open- and closed-source.
 Examples of widely-used such packages include ATAT [@vandewallealloy2002], ICET [@angqvisticet2019] and CELL [@rigamonticell2024], though all of these focus primarily on implementation of a generalised cluster expansion, rather than the simpler form of the Bragg-Williams Hamiltonian.
@@ -128,7 +129,7 @@ Accordingly, for large systems with many elements in the alloy composition, long
 We emphasise that, naturally, any given sampling algorithm is not anticipated to visit all possible system configurations, only a representative example that is converged.
 
 To assess the performance of the `BraWl` package, we measure the time taken for a Metropolis-Hastings run at a single temperature, as this quantifies the rate of sampling and thus the performance of all of the considered algorithms.
-As a benchmark, we consider a simulation on the equiatomic AlTiVNb alloy using the EPIs taken from @woodgateemergent2025, which include interactions up to and including sixth-nearest neighbours, and a simulation cell consisting of $8\times8\times8$ bcc unit cells with $N=1024$ in total.
+As a benchmark, we consider a simulation on the equiatomic AlTiVNb alloy using the EPIs obtained by @woodgateemergent2025, which include interactions up to and including sixth-nearest neighbours, and a simulation cell consisting of $8\times8\times8$ bcc unit cells with $N=1024$ in total.
 The sampling run consisted of a Metropolis-Hastings run with 1,024,000 trial Metropolis-Hastings swaps ($10^3$ trial moves per atom) during an initial burn-in phase, followed by a sampling run of 10,240,000 trial atomic swaps ($10^4$ trial moves per atom) during which statistics are gathered.
 The energy of the simulation was stored every 1,024 trial moves for a total of 10,000 decorrelated energy samples, while the Warren-Cowley parameters up to and including the second coordination shell of the lattice were evaluated and stored every 10,240 trial moves for a total of 1,000 decorrelated ASRO samples.
 (Typically, fewer samples are required to reliably converge ASRO results than are required to estimate quantities such as as the specific heat.) For a simulation performed locally in serial on an Apple M3 Pro CPU (ARM architecture) with `BraWl` built using the GNU compiler collection `v15.1.0` at `-O3` compiler optimisation, this simulation run took an average of 12.5 s across three attempts, indicating an average of approximately 900,000 trial atomic swaps per second.
