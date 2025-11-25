@@ -130,7 +130,7 @@ We emphasise that, naturally, any given sampling algorithm is not anticipated to
 To assess the performance of the `BraWl` package, we measure the time taken for a Metropolis-Hastings run at a single temperature, as this quantifies the rate of sampling and thus is crucial in determining the performance of all of the considered sampling algorithms.
 We also focus exclusively on serial performance.
 This is because the Metropolis-Hastings algorithm in not inherently parallelisable unless several independent simulations (_e.g._ at different temperatures, compositions, or using different random number seeds) are run independently, while parallel implementation/performance of the Wang-Landau sampling  [@naguszewskioptimal2025] and Nested Sampling algorithms [@unglertreplica2025] is discussed elsehwhere.
-(Also, at present, only conventional, serial Nested Sampling is implemented in `BraWl`.)
+(Also, at the time of writing, only conventional, serial Nested Sampling is implemented in `BraWl`.)
 
 As a benchmark, we consider a simulation on the equiatomic AlTiVNb alloy using the EPIs obtained by @woodgateemergent2025, which include interactions up to and including sixth-nearest neighbours, and a simulation cell consisting of $8\times8\times8$ bcc unit cells with $N=1024$ in total.
 The sampling run consisted of a Metropolis-Hastings run with 1,024,000 trial Metropolis-Hastings swaps ($10^3$ trial moves per atom) during an initial burn-in phase, followed by a sampling run of 10,240,000 trial atomic swaps ($10^4$ trial moves per atom) during which statistics are gathered.
