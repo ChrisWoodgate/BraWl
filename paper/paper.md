@@ -53,7 +53,7 @@ We demonstrate the capabilities of the package by applying it to some prototypic
 # Statement of need
 
 The Fortran package `BraWl` facilitates simulation of the thermodynamics and phase stability of both binary and multicomponent alloys.
-It achieves this by providing implementation of both the Bragg-Williams Hamiltonian (a lattice-based model expressing the internal energy of an alloy as a sum of atom-atom effective pair interactions) concurrently with a range of conventional and enhanced sampling techniques for exploration of the alloy configuration space.
+It achieves this by providing an implementation of the Bragg-Williams Hamiltonian (a lattice-based model expressing the internal energy of an alloy as a sum of atom-atom effective pair interactions) concurrently with implementations of a range of conventional and enhanced sampling techniques for exploration of the alloy configuration space.
 The result is a package which can determine phase equilibria as a function of both temperature and alloy composition, which leads to the construction of alloy phase diagrams.
 Additionally, the package can be used for extraction of representative equilibrated atomic configurations for visualisation, as well as for use in complementary modelling approaches.
 An in-depth discussion of the background, underlying theory, and technical details of the sampling algorithms implemented in the package is given by @naguszewskibrawl2025.
