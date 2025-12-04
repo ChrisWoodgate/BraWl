@@ -25,10 +25,10 @@ affiliations:
  - name: Department of Physics, University of Warwick, United Kingdom
    index: 1
    ror: 01a77tt86
- - name: Department of Chemistry, University of Warwick, UK
+ - name: Department of Chemistry, University of Warwick, United Kingdom
    index: 2
    ror: 01a77tt86
- - name: School of Physics, University of Bristol, UK
+ - name: School of Physics, University of Bristol, United Kingdom
    index: 3
    ror: 0524sp257
 date: 13 May 2025
