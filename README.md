@@ -126,8 +126,8 @@ To generate and host your own version of the documentation, you should:
 3. Navigate to the freshly-generated `docs/html` directory and `open` index.html. (Alternatively, use your system's filemanager to open this in your web browser.)
 
 ## Citations
-If you use `BraWl` in your research, please cite our preprint documenting the package and its capabilities:
-* H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393).
+If you use `BraWl` in your research, please cite the associated JOSS article in any resulting publications:
+* H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [Journal of Open Source Software **10**, 8346 (2025).](https://doi.org/10.21105/joss.08346).
 
 ## List of publications
 A (hopefully fairly complete) list of publications where `Brawl` was used is as follows:
