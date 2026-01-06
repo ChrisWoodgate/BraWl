@@ -6,6 +6,9 @@
 
 `BraWl` — a package for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian. The package implements a range of conventional and enhanced sampling techniques, including Metropolis-Hastings Monte Carlo, Nested Sampling, and Wang-Landau sampling. It is designed to be extensible so additional sampling algorithms can be implemented in due course. This `README` contains key information and installation instructions, while developer documentation can be found at: [https://chriswoodgate.github.io/BraWl/](https://chriswoodgate.github.io/BraWl/)
 
+You can read more about the package in our JOSS article:
+* H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [Journal of Open Source Software **10**, 8346 (2025).](https://doi.org/10.21105/joss.08346).
+
 Copyright (C) The Authors 2019-2025. Released under the GNU Lesser General Public License, version 3.
 
 ## Background
