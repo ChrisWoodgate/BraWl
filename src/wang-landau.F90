@@ -1270,6 +1270,7 @@ module wang_landau
             alpha = 1.0_real64
         end if
         w_min = 10.0_real64/REAL(wl_setup_internal%bins)
+        w_min = 0.02_real64
         weights_previous = diffusion_prev
 
         do i = 1, wl_setup_internal%num_windows
@@ -1325,8 +1326,10 @@ module wang_landau
             call sort_descending(bins, idx)
         
             diff = wl_setup_internal%bins - SUM(bins)
+            !print*, diff
             i = 1
             do while (diff /= 0)
+                !print*, i-1, SIZE(bins)
                 j = idx(mod(i-1, SIZE(bins)) + 1)
                 if (diff > 0) then
                     bins(j) = bins(j) + 1
