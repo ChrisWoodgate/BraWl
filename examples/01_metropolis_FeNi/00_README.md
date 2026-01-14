@@ -3,7 +3,7 @@
 These examples demonstrate applications of Metropolis-Hastings Monte Carlo to the FeNi system. 
 
 The atom-atom effective pair interactions are taken from:
-* C. D. Woodgate, L. H. Lewis, J. B. Staunton, [npj Computational Materials *10*, 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y).
+* C. D. Woodgate, L. H. Lewis, J. B. Staunton, [npj Computational Materials **10**, 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y).
 
 These so-called 'effective pair interactions' are material-specific and must be chosen/derived suitably for the system being studied. It is common to recover them by fitting to an _ab initio_ DFT dataset, or from some form of perturbative concentration wave analysis applied to a given reference medium, typically that described by the coherent potential approximation (CPA). **It is therefore important to realise that `BraWl` is intended to be used as part of a multistage modelling workflow, rather than simply as a standalone package.**
 
