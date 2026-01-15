@@ -36,6 +36,7 @@ module bw_hamiltonian
 
   ! Simple cubic routines
   public :: simple_cubic_energy_1shells
+  public :: simple_cubic_energy_2shells
 
   contains
 
@@ -1990,13 +1991,12 @@ module bw_hamiltonian
   !>         cubic lattice
   function simple_cubic_2shell_energy(setup, site_b, site_i, site_j, site_k, config, species) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
-    integer(int16), allocatable, dimension(:) :: nbrs
+    integer(array_int) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
     integer :: i, up, dn, fw, bw, lt, rt, ib
 
     energy=0.0_real64
@@ -2092,12 +2092,11 @@ module bw_hamiltonian
   !>         neighbours on the simple cubic lattice
   function simple_cubic_energy_2shells(setup, config, site_b, site_i, site_j, site_k) &
            result(energy)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     real(real64) :: energy
     class(run_params), intent(in) :: setup
     integer, intent(in) :: site_b, site_i, site_j, site_k
-    integer(int16) :: species
+    integer(array_int) :: species
 
     species = config(site_b, site_i, site_j, site_k)
 
