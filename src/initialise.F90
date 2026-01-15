@@ -153,6 +153,8 @@ module initialise
       setup%n_atoms = 8*setup%n_1*setup%n_2*setup%n_3
       if (setup%interaction_range .eq. 1) then
         setup%nbr_energy => simple_cubic_energy_1shells
+      else if (setup%interaction_range .eq. 2) then
+        setup%nbr_energy => simple_cubic_energy_2shells
       else
         call comms_finalise()
         stop 'Unsupported number of shells'

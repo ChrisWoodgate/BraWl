@@ -36,6 +36,7 @@ module bw_hamiltonian
 
   ! Simple cubic routines
   public :: simple_cubic_energy_1shells
+  public :: simple_cubic_energy_2shells
 
   contains
 
@@ -1971,6 +1972,72 @@ module bw_hamiltonian
   end function simple_cubic_1shell_energy
 
   !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 2nd-nearest
+  !>          neighbours on the simple cubic lattice
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2026
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 2nd-nearest neighbours on the simple
+  !>         cubic lattice
+  function simple_cubic_2shell_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           result(energy)
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
+    integer :: i, up, dn, fw, bw, lt, rt, ib
+
+    energy=0.0_real64
+    
+    ! Compute where my neighbours are
+    up = modulo(  site_i, setup%n_1) + 1
+    dn = modulo(site_i-2, setup%n_1) + 1
+    lt = modulo(  site_j, setup%n_2) + 1
+    rt = modulo(site_j-2, setup%n_2) + 1
+    fw = modulo(  site_k, setup%n_3) + 1
+    bw = modulo(site_k-2, setup%n_3) + 1
+
+    ! Basis index (always =1 for this lattice implementation,
+    ! but keep here for generality)
+    ib = site_b
+      
+    allocate(nbrs(12))
+
+    ! Compute the energies of neighbours
+    nbrs(1)  = config(ib,site_i,     lt,     bw)
+    nbrs(2)  = config(ib,    dn, site_j,     bw)
+    nbrs(3)  = config(ib,    up, site_j,     bw)
+    nbrs(4)  = config(ib,site_i,     rt,     bw)
+    nbrs(5)  = config(ib,    up,     lt, site_k)
+    nbrs(6)  = config(ib,    dn,     lt, site_k)
+    nbrs(7)  = config(ib,    up,     rt, site_k)
+    nbrs(8)  = config(ib,    dn,     rt, site_k)
+    nbrs(9)  = config(ib,site_i,     lt,     fw)
+    nbrs(10) = config(ib,    dn, site_j,     fw)
+    nbrs(11) = config(ib,    up, site_j,     fw)
+    nbrs(12) = config(ib,site_i,     rt,     fw)
+    
+    ! Sum them
+    do i=1, 12
+      energy = energy + V_ex(species, nbrs(i),2)
+    end do
+ 
+    deallocate(nbrs)
+  end function simple_cubic_2shell_energy
+
+  !> @brief   Function to compute the contribution to the simulation
   !>          energy made by an atom interacting with atoms up to and
   !>          including its 1st-nearest neighbours on the simple cubic
   !>          lattice
@@ -2003,5 +2070,39 @@ module bw_hamiltonian
     energy = simple_cubic_1shell_energy(setup, site_b, site_i, site_j, site_k, config, species)
     
   end function simple_cubic_energy_1shells
+
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 2nd-nearest neighbours on the simple cubic
+  !>          lattice
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2026
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 2nd-nearest
+  !>         neighbours on the simple cubic lattice
+  function simple_cubic_energy_2shells(setup, config, site_b, site_i, site_j, site_k) &
+           result(energy)
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int) :: species
+
+    species = config(site_b, site_i, site_j, site_k)
+
+    energy = simple_cubic_1shell_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + simple_cubic_2shell_energy(setup, site_b, site_i, site_j, site_k, config, species)
+    
+  end function simple_cubic_energy_2shells
 
 end module bw_hamiltonian
