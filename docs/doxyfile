@@ -1,0 +1,53 @@
+# Project name
+PROJECT_NAME           = BraWl
+
+# Output directory for documentation
+OUTPUT_DIRECTORY       = docs
+
+# Enable recursive search in subdirectories
+RECURSIVE              = YES
+
+# Input files and directories
+INPUT                  = src docs/mainpage.md
+FILE_PATTERNS          = *.f90 *.md
+
+# Enable Fortran-specific optimizations
+OPTIMIZE_FOR_FORTRAN   = YES
+
+# Extract all documented entities
+EXTRACT_ALL            = YES
+
+# Include private members
+EXTRACT_PRIVATE        = YES
+
+# Include package members
+EXTRACT_PACKAGE        = YES
+
+# Include static members
+USE_MATHJAX = YES
+
+# Include static members
+GENERATE_HTML = YES
+
+# Include static members
+EXTRACT_STATIC         = YES
+
+# Include local methods
+EXTRACT_LOCAL_METHODS  = YES
+
+# Enable source browsing
+SOURCE_BROWSER         = YES
+
+# Include source code in documentation
+INLINE_SOURCES         = YES
+
+# Enable call and caller graphs
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+
+# Enable dot tool for diagrams
+HAVE_DOT               = YES
+
+MARKDOWN_SUPPORT = YES
+USE_MDFILE_AS_MAINPAGE = docs/mainpage.md
+

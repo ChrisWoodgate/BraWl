@@ -1,28 +1,52 @@
-!----------------------------------------------------------------------!
-! io.f90                                                               !
-!                                                                      !
-! Module containing input/output routines.                             !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2025 !
-!----------------------------------------------------------------------!
+!> @file    io.f90
+!>
+!> @brief   Assorted routines and tools for file and data i/o
+!>
+!> @details This module contains routines for reading/writing
+!>          information about a simulation (either to the screen or to
+!>          file in plain text format. Data to be stored in binary
+!>          format is written using the NetCDF library, for which the
+!>          relevant routines can be found in netcdf_io.f90
+!>
+!> @author  C. D. Woodgate
+!> @date    2020-2025
 module io
 
   use kinds
+  use derived_types
   use shared_data
   use command_line
   use display
-  use netcdf
   use comms
   
   implicit none
 
+  private
+
+  public :: write_info, make_data_directories, read_control_file,      &
+            echo_control_file, read_exchange, parse_inputs,            &
+            parse_metropolis_inputs, read_metropolis_file,             &
+            echo_metropolis_file, read_ns_file, read_tmmc_file,        &
+            read_wl_file
+
+  ! Variables for keeping track of time
+  real(real64) :: t_start, t_stop
+
   contains
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to write software version, date, and time               !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to print software version, date, and time
+  !>
+  !> @details Some ASCII-art, names of developers/contributors, and
+  !>          date/time when execution of the program started and
+  !>          finished.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2024-2025
+  !>
+  !> @param  point Character string (either 's' or 'f') telling us
+  !>               whether we are at the start or finish of simulation
+  !>
+  !> @return None
   subroutine write_info(point)
 
     character (len=1) point
@@ -32,10 +56,15 @@ module io
     call date_and_time(date=date,time=time)
 
     write(6,'(/,72("="))')
-    write(6,'(22x,"BraWl Version 0.2.1, 18.07.24")')
+    write(6,'(22x,"BraWl Version 1.0.0, 09.05.25")')
     write(6,'(72("-"))')
 
     if (point .eq. 's') then
+
+      ! Start the clock
+      call cpu_time(t_start)
+
+      ! Print relevant info to screen
       write(6, '(20x,"    ____            _       ____")')
       write(6, '(20x,"   / __ )_________ | |     / / /")')
       write(6, '(20x,"  / __  / ___/ __ `/ | /| / / / ")')
@@ -43,9 +72,13 @@ module io
       write(6, '(20x,"/_____/_/   \__,_/ |__/|__/_/   ")')
       write(6, '(20x,"                                ")')
       write(6,'(72("-"))')
-      write(6, '("  Authors: Hubert J. Naguszewski,  ")')
-      write(6, '("           Livia B. Partay,        ")')
-      write(6, '("           Christopher D. Woodgate")')
+      write(6, '("      Authors: Hubert J. Naguszewski,  ")')
+      write(6, '("               Livia B. Partay,        ")')
+      write(6, '("               Christopher D. Woodgate")')
+      write(6,'(72("-"))')
+      write(6, '(" Contributors: Heather Ratcliffe")')
+      write(6, '("               David Quigley    ")')
+      write(6, '("               Adam M. Krajewski")')
       write(6,'(72("-"))')
       write(6,'(15x,"This run started at",1x,a," on",1x,a)')           &
                time(1:2)//":"//time(3:4)//":"//time(5:6),              &
@@ -54,32 +87,51 @@ module io
       write(6,'(15x,"This run finished at",1x,a," on",1x,a)')          &
                time(1:2)//":"//time(3:4)//":"//time(5:6),              &
                date(7:8)//"."//date(5:6)//"."//date(1:4)
+      write(6,'(72("-"))')
+      ! Start the clock
+      call cpu_time(t_stop)
+      write(6,'(20x,"Execution time",1x,f9.1,1x," seconds")') t_stop-t_start
     endif
 
     write(6,'(72("="),/)' )
 
   end subroutine write_info
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to make directories for storing data                    !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to make directories for storing data
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2021-2025
+  !>
+  !> @param  point Character string (either 's' or 'f') telling us
+  !>               whether we are at the start or finish of simulation
+  !>
+  !> @return None
   subroutine make_data_directories(my_rank)
+
     integer :: my_rank
 
     ! make a directory for the grid states, diagnostics, 
     ! and radial_densities for each thread
-    if(my_rank == 0) call execute_command_line('mkdir -p grids')
-    if(my_rank == 0) call execute_command_line('mkdir -p diagnostics')
-    if(my_rank == 0) call execute_command_line('mkdir -p radial_densities')
+    if(my_rank == 0) call execute_command_line('mkdir -p configs')
+    if(my_rank == 0) call execute_command_line('mkdir -p energies')
+    if(my_rank == 0) call execute_command_line('mkdir -p asro')
+
   end subroutine make_data_directories
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to parse control file                                   !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read the input file defining the simulation
+  !>
+  !> @details As of v0.4.0, need to read this file AND a separate input
+  !>          file relevant to Metropolis, Nested Sampling, Wang-Landau
+  !>          algorithms.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @param  filename Name of file to read
+  !> @param  parameters Derived type containing simulation parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine read_control_file(filename, parameters, my_rank)
 
     character(len=*), intent(in) :: filename
@@ -96,8 +148,18 @@ module io
 
     ios=0; line=0
 
-    ! Defaults if these are not specified.
+    ! Initialise to default values---this means Valgrid will be happy
+    parameters%mode = 301
+    parameters%lattice = 'fcc'
+    parameters%lattice_parameter = 3.57
+    parameters%n_1 = 4
+    parameters%n_2 = 4
+    parameters%n_3 = 4
+    parameters%n_basis = 1
+    parameters%n_species = 4
+    parameters%interaction_file = 'V_ijs.txt'
     parameters%wc_range = 2
+    parameters%static_seed = .false.
 
     ! See if the relevant file exists
     inquire(file=trim(filename), exist=exists)
@@ -105,12 +167,12 @@ module io
     ! Exit cleanly if we can't find it
     if (.not. exists) then
       call comms_finalise()
-      stop 'Could not find control file ' // trim(filename)
+      stop 'Could not find input file ' // trim(filename)
     end if
 
     ! If we can find it, output that we are reading it
     if(my_rank == 0) then
-      write(6,'(25("-"),x,"Parsing control file",x,25("-"),/)')
+      write(6,'(26("-"),x,"Parsing input file",x,26("-"),/)')
     end if
 
     ! Open it for reading
@@ -165,6 +227,8 @@ module io
           check(9) = .true.
         case ('wc_range')
           read(buffer, *, iostat=ios) parameters%wc_range
+        case ('static_seed')
+          read(buffer, *, iostat=ios) parameters%static_seed
         case default
         end select
       end if
@@ -265,24 +329,17 @@ module io
 
   end subroutine read_control_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to print that the input file is being parsed to screen  !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
-  subroutine print_parse()
-
-    print*, '###############################'
-    print*, '#     Parsing input file      #'
-
-  end subroutine print_parse
-
-  !--------------------------------------------------------------------!
-  ! Subroutine to echo the input file to the screen                    !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to echo the contents of the input file to
+  !>          the screen
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @param  parameters Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine echo_control_file(parameters)
+
     type(run_params) :: parameters
     integer :: i
 
@@ -313,17 +370,30 @@ module io
 
   end subroutine echo_control_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read in exchange parameters from file                !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read the atom-atom effective pair
+  !>          interactions (EPIs) from file
+  !>
+  !> @details The file should represent the EPIs on each coordination
+  !>          shell as an sxs matrix, with a blank line between the set
+  !>          of EPIs for one coordination shell and those for the
+  !>          next. They should be given in order from nearest to
+  !>          furthest coordination shell.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine read_exchange(setup, my_rank)
+
     type(run_params) , intent(in) :: setup
     integer :: my_rank
 
     if(my_rank == 0) then
-      write(6,'(15("-"),x,"Reading atom-atom interaction parameters",x,15("-"),/)')
+      !write(6,'(72("-"),/)', advance='no')
+      write(6,'(8("-"),x,"Reading atom-atom effective pair interaction parameters",x, 7("-"),/)')
     end if
 
     V_ex = 0.0_real64
@@ -337,35 +407,42 @@ module io
     end if
 
     if(my_rank == 0) then
-      write(6,'(72("-"),/)')
+      write(6,'(3("-"),x,"Read atom-atom effective pair interaction parameters successfully",x, &
+                &2("-"),/)')!, advance='no')
+      !write(6,'(72("-"),/)')
     end if
 
   end subroutine read_exchange
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to parse command-line arguments and look for input file !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to parse command line arguments
+  !>
+  !> @details For routines which actually *parse* the command line
+  !>          arguments, see command_line.f90
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine parse_inputs(setup, my_rank)
+
     type(run_params) :: setup
     integer :: my_rank
     character(len=30) :: control = ' '
-
-    ! Parse the command line arguments
-    call parse_args()
 
     ! Parse the name of the input file
     if(my_rank == 0) then
       write(6,'(22("-"),x,"Parsing name of input file",x,22("-"),/)')
     end if
-      if(.not. get_arg('control', control)) then
+      if(.not. get_arg('input', control)) then
         if (my_rank == 0) then
-          print*, 'Input file not specified with "control=<name>"'
-          print*, 'Defaulting to searching for "input.txt"'
+          print*, 'Input file not specified with "input=<name>"'
+          print*, 'Defaulting to searching for "brawl.inp"'
           print*, ' '
         end if
-        control = 'input.txt'
+        control = 'brawl.inp'
       else
         if (my_rank == 0) then
           print*, 'Input file name is: ', control
@@ -383,18 +460,20 @@ module io
 
   end subroutine parse_inputs
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to parse command-line arguments and look for input file !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to parse the Metropolis MC input file
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2020-2025
+  !>
+  !> @param  metropolis Derived type containing Metropolis MC parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine parse_metropolis_inputs(metropolis, my_rank)
+
     type(metropolis_params) :: metropolis
     integer :: my_rank
     character(len=30) :: control = ' '
-
-    ! Parse the command line arguments
-    call parse_args()
 
     ! Parse the name of the input file
     if(my_rank == 0) then
@@ -405,7 +484,6 @@ module io
           print*, ' Metropolis input file not specified with "metropolis=<name>"'
           print*, ' '
           print*, ' Defaulting to searching for "metropolis.inp"'
-          print*, ' '
         end if
         control = 'metropolis.inp'
       else
@@ -419,18 +497,25 @@ module io
     call read_metropolis_file(control, metropolis, my_rank)
 
     if(my_rank == 0) then
+      write(6,'(x,"Parameters to be used are as follows",/)')
+    end if
+
+    if(my_rank == 0) then
       call echo_metropolis_file(metropolis)
       write(6,'(/,15("-"),x,"Parsed Metropolis input file successfully",x,14("-"),/)')
     end if
 
   end subroutine parse_metropolis_inputs
 
-
-  !--------------------------------------------------------------------!
-  ! Subroutine to parse Metropolis MC input file                       !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to parse the Metropolis MC input file
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2025
+  !>
+  !> @param  metropolis Derived type containing Metropolis MC parameters
+  !> @param  my_rank Rank of current MPI process
+  !>
+  !> @return None
   subroutine read_metropolis_file(filename, metropolis, my_rank)
 
     character(len=*), intent(in) :: filename
@@ -446,13 +531,24 @@ module io
     ios=0; line=0
 
     ! Defaults if these are not specified.
+    metropolis%burn_in_start = .False.
     metropolis%burn_in = .False.
-    metropolis%burn_in_steps = 0
-    metropolis%radial_sample_steps = 0
-    metropolis%asro = .false.
-    metropolis%alro = .false.
-    metropolis%asro = .false.
-    metropolis%dump_grids = .false.
+    metropolis%n_burn_in_steps = 0
+    metropolis%calculate_energies = .true.
+    metropolis%write_trajectory_energy = .false.
+    metropolis%calculate_asro = .true.
+    metropolis%calculate_alro = .false.
+    metropolis%n_sample_steps_asro = 0
+    metropolis%n_sample_steps_alro = 0
+    metropolis%write_trajectory_xyz = .false.
+    metropolis%write_trajectory_energy = .false.
+    metropolis%write_trajectory_asro = .false.
+    metropolis%n_sample_steps_trajectory = 0
+    metropolis%write_initial_config_xyz = .false.
+    metropolis%write_initial_config_nc = .false.
+    metropolis%write_final_config_xyz = .false.
+    metropolis%write_final_config_nc = .false.
+    metropolis%read_start_config_nc = .false.
     metropolis%T_steps = 1
     metropolis%delta_T = 1
     metropolis%nbr_swap = .false.
@@ -497,24 +593,48 @@ module io
         case ('mode')
           read(buffer, *, iostat=ios) metropolis%mode
           check(1) = .true.
+        case ('n_mc_steps')
+          read(buffer, *, iostat=ios) metropolis%n_mc_steps
+          check(2) = .true.
+        case ('burn_in_start')
+          read(buffer, *, iostat=ios) metropolis%burn_in_start
         case ('burn_in')
           read(buffer, *, iostat=ios) metropolis%burn_in
-        case ('burn_in_steps')
-          read(buffer, *, iostat=ios) metropolis%burn_in_steps
-        case ('n_mc_steps')
-          read(buffer, *, iostat=ios) metropolis%mc_steps
-          check(2) = .true.
-        case ('sample_steps')
-          read(buffer, *, iostat=ios) metropolis%sample_steps
+        case ('n_burn_in_steps')
+          read(buffer, *, iostat=ios) metropolis%n_burn_in_steps
+        case ('calculate_energies')
+          read(buffer, *, iostat=ios) metropolis%calculate_energies
+        case ('n_sample_steps')
+          read(buffer, *, iostat=ios) metropolis%n_sample_steps
           check(3) = .true.
-        case ('radial_sample_steps')
-          read(buffer, *, iostat=ios) metropolis%radial_sample_steps
-        case ('dump_grids')
-          read(buffer, *, iostat=ios) metropolis%dump_grids
-        case ('asro')
-          read(buffer, *, iostat=ios) metropolis%asro
-        case ('alro')
-          read(buffer, *, iostat=ios) metropolis%alro
+        case ('calculate_asro')
+          read(buffer, *, iostat=ios) metropolis%calculate_asro
+        case ('n_sample_steps_asro')
+          read(buffer, *, iostat=ios) metropolis%n_sample_steps_asro
+        case ('calculate_alro')
+          read(buffer, *, iostat=ios) metropolis%calculate_alro
+        case ('n_sample_steps_alro')
+          read(buffer, *, iostat=ios) metropolis%n_sample_steps_alro
+        case ('n_sample_steps_trajectory')
+          read(buffer, *, iostat=ios) metropolis%n_sample_steps_trajectory
+        case ('write_trajectory_xyz')
+          read(buffer, *, iostat=ios) metropolis%write_trajectory_xyz
+        case ('write_trajectory_energy')
+          read(buffer, *, iostat=ios) metropolis%write_trajectory_energy
+        case ('write_trajectory_asro')
+          read(buffer, *, iostat=ios) metropolis%write_trajectory_asro
+        case ('write_initial_config_xyz')
+          read(buffer, *, iostat=ios) metropolis%write_initial_config_xyz
+        case ('write_initial_config_nc')
+          read(buffer, *, iostat=ios) metropolis%write_initial_config_nc
+        case ('write_final_config_xyz')
+          read(buffer, *, iostat=ios) metropolis%write_final_config_xyz
+        case ('write_final_config_nc')
+          read(buffer, *, iostat=ios) metropolis%write_final_config_nc
+        case ('read_start_config_nc')
+          read(buffer, *, iostat=ios) metropolis%read_start_config_nc
+        case ('start_config_file')
+          read(buffer, *, iostat=ios) metropolis%start_config_file
         case ('T')
           read(buffer, *, iostat=ios) metropolis%T
           check(4) = .true.
@@ -531,9 +651,14 @@ module io
 
     close(15)
 
-
-    if (metropolis%radial_sample_steps .eq. 0) then
-      metropolis%radial_sample_steps = metropolis%sample_steps
+    if (metropolis%n_sample_steps_alro .eq. 0) then
+      metropolis%n_sample_steps_asro = metropolis%n_sample_steps
+    endif
+    if (metropolis%n_sample_steps_alro .eq. 0) then
+      metropolis%n_sample_steps_alro = metropolis%n_sample_steps
+    endif
+    if (metropolis%n_sample_steps_trajectory .eq. 0) then
+      metropolis%n_sample_steps_trajectory = metropolis%n_sample_steps
     endif
 
     ! Check that the user has provided all the necessary inputs
@@ -545,7 +670,7 @@ module io
       else if (.not. check(2)) then
         stop "Missing 'n_mc_steps' in Metropolis input file"
       else if (.not. check(3)) then
-        stop "Missing 'sample_steps' in Metropolis input file"
+        stop "Missing 'n_sample_steps' in Metropolis input file"
       else if (.not. check(4)) then
         stop "Missing 'T' in Metropolis input file"
       else
@@ -553,68 +678,106 @@ module io
       end if
     end if
 
+    ! If burning in at all temperatures, we should do the first, too
+    if(metropolis%burn_in) then
+      metropolis%burn_in_start = .True.
+    end if
+
   end subroutine read_metropolis_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to echo the Metropolis input file to the screen         !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to echo the contents of the Metropolis input
+  !>          file to the screen
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2025
+  !>
+  !> @param  metropolis Derived type containing Metroplis parameters
+  !>
+  !> @return None
   subroutine echo_metropolis_file(metropolis)
+
     type(metropolis_params) :: metropolis
 
-    print*, ' Using mode =          ', metropolis%mode
-    print*, ' Using burn_in =       ', metropolis%burn_in
-    print*, ' Using burn_in_steps = ', metropolis%burn_in_steps
-    print*, ' Using n_mc_steps =    ', metropolis%mc_steps
-    print*, ' Using sample_steps =  ', metropolis%sample_steps
-    print*, ' Using n_species =     ', metropolis%radial_sample_steps
-    print*, ' Using dump_grids =    ', metropolis%dump_grids
-    print*, ' Using asro =          ', metropolis%asro
-    print*, ' Using alro =          ', metropolis%alro
-    print*, ' Using T =             ', metropolis%T
-    print*, ' Using T_steps =       ', metropolis%T_steps
-    print*, ' Using delta_T =       ', metropolis%delta_T
-    print*, ' Using nbr_swap =      ', metropolis%nbr_swap
+    print*, ' mode =                       ', metropolis%mode
+    print*, ' n_mc_steps =                 ', metropolis%n_mc_steps
+    print*, ' burn_in_start =              ', metropolis%burn_in_start
+    print*, ' burn_in =                    ', metropolis%burn_in
+    print*, ' n_burn_in_steps =            ', metropolis%n_burn_in_steps
+    print*, ' n_sample_steps =             ', metropolis%n_sample_steps
+    print*, ' calculate_energies =         ', metropolis%calculate_energies
+    print*, ' write_trajectory_energy =    ', metropolis%write_trajectory_energy
+    print*, ' write_trajectory_asro =      ', metropolis%write_trajectory_asro
+    print*, ' calculate_asro =             ', metropolis%calculate_asro
+    print*, ' n_sample_steps_asro =        ', metropolis%n_sample_steps_asro
+    print*, ' calculate_alro =             ', metropolis%calculate_alro
+    print*, ' n_sample_steps_alro =        ', metropolis%n_sample_steps_alro
+    print*, ' write_trajectory_xyz =       ', metropolis%write_trajectory_xyz
+    print*, ' n_sample_steps_trajectory =  ', metropolis%n_sample_steps_trajectory
+    print*, ' write_final_config_xyz =     ', metropolis%write_final_config_xyz
+    print*, ' write_final_config_nc =      ', metropolis%write_final_config_nc
+    print*, ' read_start_config_nc =       ', metropolis%read_start_config_nc
+    if (metropolis%read_start_config_nc) then
+      print*, ' starting configuration file  ', metropolis%start_config_file
+    end if
+    print*, ' T =                          ', metropolis%T
+    print*, ' T_steps =                    ', metropolis%T_steps
+    print*, ' delta_T =                    ', metropolis%delta_T
+    print*, ' nbr_swap =                   ', metropolis%nbr_swap
 
   end subroutine echo_metropolis_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read and parse nested sampling control file          !
-  !                                                                    !
-  ! L. B. Partay, Warwick                                         2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read and parse nested sampling control file
+  !>
+  !> @author  L. B. Partay
+  !> @date    2024
+  !>
+  !> @param  filename Name of the nested sampling input file (expected
+  !>                  to be "ns_input.txt")
+  !> @param  parameters Derived type of ns_params, containing nested
+  !>                    sampling parameters
+  !>
+  !> @return None
   subroutine read_ns_file(filename, parameters)
+
     character(len=*), intent(in) :: filename
     logical, dimension(8) :: check
     type(ns_params) :: parameters
-    character(len=100) :: buffer, label
+    character(len=144) :: buffer, label, first_char
     integer :: line, pos, ios
 
     check = .false.
 
     ios=0; line=0
 
+    ! Print to screen that we are looking for the NS input file
+    if(my_rank == 0) then
+      write(6,'(/,18("-"),x,"Parsing Nested Sampling input file",x,18("-"),/)')
+    end if
+
+    print*, ' Looking for Nested Sampling input file named: ', filename, new_line('a')
+
     open(25, file=filename, iostat=ios)
 
+    ! Exit cleanly if we cannot find it
     if (ios .ne. 0) then
       call comms_finalise()
       stop 'Could not parse input file. Aborting...'
     end if
 
-    write(*,'(a)', advance='no') new_line('a')
-    print*, '###############################'
-    print*, '#  Parsing NS input file      #'
-    print*, '###############################'
-
-    print*, '# NS input file name: ', filename
-
+    ! Otherwise, read it
     do while (ios==0)
 
       read(25, "(A)", iostat=ios) buffer
 
       if(ios==0) then
         line=line+1
+
+        ! Check if the first non-whitespace character is a hash.
+        ! If so, this is a comment line---ignore it.
+        first_char = trim(buffer)
+        if (first_char(1:1) .eq. '#') then
+          continue
+        end if
 
         pos = scan(buffer, '=')
         label=buffer(1:pos-1)
@@ -623,40 +786,49 @@ module io
         select case (label)
         case ('n_walkers')
           read(buffer, *, iostat=ios) parameters%n_walkers
-          print*, '# Read n_walkers = ', parameters%n_walkers
+          print*, ' Read n_walkers = ', parameters%n_walkers
         case ('n_steps')
           read(buffer, *, iostat=ios) parameters%n_steps
-          print*, '# Read n_steps = ', parameters%n_steps
+          print*, ' Read n_steps = ', parameters%n_steps
         case ('n_iter')
           read(buffer, *, iostat=ios) parameters%n_iter
-          print*, '# Read n_iter = ', parameters%n_iter
+          print*, ' Read n_iter = ', parameters%n_iter
         case ('outfile_ener')
           read(buffer, *, iostat=ios) parameters%outfile_ener
-          print*, '# Read outfile_ener = ', parameters%outfile_ener
+          print*, ' Read outfile_ener = ', parameters%outfile_ener
         case ('outfile_traj')
           read(buffer, *, iostat=ios) parameters%outfile_traj
-          print*, '# Read outfile_traj = ', parameters%outfile_traj
+          print*, ' Read outfile_traj = ', parameters%outfile_traj
         case ('traj_freq')
           read(buffer, *, iostat=ios) parameters%traj_freq
-          print*, '# Write configuration every n-th NS iteration = ', parameters%traj_freq
+          print*, ' Write configuration every n-th NS iteration = ', parameters%traj_freq
         case default
-          print*, '# Skipping invalid label'
         end select
       end if
     end do
 
-    print*, '# Finished parsing NS input file #'
-    print*, '###############################', new_line('a')
+    ! If all has gone to plan, print that we have read this file
+    if(my_rank == 0) then
+      write(6,'(/,12("-"),x,"Successfully parsed Nested Sampling input file",x,12("-"),/)')
+    end if
+
     close(25)
 
   end subroutine read_ns_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read and parse nested tmmc control file              !
-  !                                                                    !
-  ! H. Naguszewski, Warwick                                       2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read and parse transition matrix Monte Carlo
+  !>          (TMMC) input file
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024
+  !>
+  !> @param  filename Name of the TMMC input file
+  !> @param  parameters Derived type of tmmc_params, containing TMMC
+  !>                    parameters
+  !>
+  !> @return None
   subroutine read_tmmc_file(filename, parameters, my_rank)
+
     integer :: my_rank
     character(len=*), intent(in) :: filename
     logical, dimension(8) :: check
@@ -765,12 +937,19 @@ module io
 
   end subroutine read_tmmc_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read and parse nested wang landau control file       !
-  !                                                                    !
-  ! H. Naguszewski, Warwick                                       2024 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to read and parse Wang-Landau sampling input
+  !>          file
+  !>
+  !> @author  H. J. Naguszewski
+  !> @date    2024
+  !>
+  !> @param  filename Name of the Wang-Landau input file
+  !> @param  parameters Derived type of wl_params, containing
+  !>                    Wang-Landau parameters
+  !>
+  !> @return None
   subroutine read_wl_file(filename, parameters, my_rank)
+
     integer :: my_rank
     character(len=*), intent(in) :: filename
     logical, dimension(10) :: check
@@ -892,75 +1071,4 @@ module io
 
   end subroutine read_wl_file
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to read and parse nested wang landau control file       !
-  !                                                                    !
-  ! H. Naguszewski, Warwick                                       2024 !
-  !--------------------------------------------------------------------!
-  subroutine read_es_file(filename, parameters, my_rank)
-    integer :: my_rank
-    character(len=*), intent(in) :: filename
-    logical, dimension(1) :: check
-    type(es_params) :: parameters
-    character(len=100) :: buffer, label
-    integer :: line, pos, ios
-
-    check = .false.
-
-    ios=0; line=0
-
-    open(25, file=filename, iostat=ios)
-
-    if (ios .ne. 0) then
-      call comms_finalise()
-      stop 'Could not parse energy spectrum input file. Aborting...'
-    end if
-
-    if (my_rank == 0) then
-      write(*,'(a)', advance='no') new_line('a')
-      print*, '######################################'
-      print*, '# Parsing energy spectrum input file #'
-      print*, '######################################'
-
-      print*, '# energy spectrum input file name: ', filename
-    end if
-
-    do while (ios==0)
-
-      read(25, "(A)", iostat=ios) buffer
-
-      if(ios==0) then
-        line=line+1
-
-        pos = scan(buffer, '=')
-        label=buffer(1:pos-1)
-        buffer = buffer(pos+1:)
-
-        select case (label)
-        case ('mc_sweeps')
-          read(buffer, *, iostat=ios) parameters%mc_sweeps
-          if (my_rank == 0) then
-            print*, '# Read mc_sweeps = ', parameters%mc_sweeps
-          end if
-          check(1) = .true.
-        case default
-          if (my_rank == 0) then
-            print*, '# Skipping invalid label'
-          end if
-        end select
-      end if
-    end do
-
-    if (my_rank == 0) then
-      print*, '# Finished parsing energy spectrum input file #'
-      print*, '###############################################', new_line('a')
-    end if
-    close(25)
-
-    if (.not. all(check)) then
-      call comms_finalise()
-      stop 'Missing parameter in energy spectrum input file'
-    end if
-
-  end subroutine read_es_file
 end module io

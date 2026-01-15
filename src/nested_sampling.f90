@@ -1,11 +1,12 @@
-!----------------------------------------------------------------------!
-! nested_sampling.f90                                                  !
-!                                                                      !
-! Module containing routines implementing the Nested Sampling          !
-! algorithm.                                                           !
-!                                                                      !
-! L. B. Partay,  Warwick                                          2024 !
-!----------------------------------------------------------------------!
+!> @file    nested_sampling.f90
+!>
+!> @brief   Assorted routines and tools to perform Nested Sampling
+!>
+!> @details This module contains routines necessary for the Nested Sampling
+!>          calculations.
+!>
+!> @author  L. B. Partay
+!> @date    2024
 module nested_sampling
 
   use initialise
@@ -14,42 +15,48 @@ module nested_sampling
   use io
   use comms
   use c_functions
-  use energetics
+  use bw_hamiltonian
   use random_site
   use analytics
-  use write_netcdf
+  use netcdf_io
   use write_xyz
-  use write_diagnostics
-  use metropolis
   
   implicit none
 
   contains
 
-  !--------------------------------------------------------------------!
-  ! Main nested sampling routine.                                      !
-  !                                                                    !
-  ! L. B. Partay,  Warwick                                        2024 !
-  !--------------------------------------------------------------------!
-  subroutine nested_sampling_main(setup, nested_sampling, my_rank)
+  !> @brief   Main nested sampling routine.
+  !>
+  !> @details This routine performs the nested sampling calculation. Input parameters (such as
+  !>          the number of walkers, random walk parameters...etc.) are read from the "ns_input.txt" 
+  !>          file. The first section of the routine generate the initial random configurations, which is
+  !>          followed by the main nested sampling cycle: recording and discarding the highest energy
+  !>          configuration, replacing it with a new one, generated from an existing walker via a series
+  !>          of random swaps.
+  !>          The routine makes use of the pair_swap subroutine to calculate energies.
+  !> 
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  nested_sampling Derived type containing nested sampling parameters
+  !> 
+  !> @return None
+  !>
+  !> @author  L. B. Partay
+  !> @date    2024
+  subroutine nested_sampling_main(setup, nested_sampling)
 
     ! Arrays for storing instances of the system, as nested sampling walkers
     type(run_params) :: setup
     type(ns_params) :: nested_sampling
   
-    ! Rank of this processor
-    ! Redundant if we are in serial
-    integer, intent(in) :: my_rank
-
     ! Energy before and after swap and change
     real(real64) :: e_unswapped, e_swapped, delta_e, ener_limit, rnd
     real(real64) :: acc_ratio, rnde
     real(real64), dimension(:), allocatable :: walker_energies
     ! Array for all the walkers configurations, with indices of n_base, n1, n2, n3, i_walker
-    integer(int16), dimension(:,:,:,:,:), allocatable :: ns_walkers
+    integer(array_int), dimension(:,:,:,:,:), allocatable :: ns_walkers
     
     ! Occupancy of each site
-    integer(int16) :: site1, site2
+    integer(array_int) :: site1, site2
     integer :: i_walker, i_step, i_iter, irnd, n_at
     integer :: n_acc, i_max(1), extra_steps
   
@@ -57,13 +64,15 @@ module nested_sampling
     integer, dimension(4) :: rdm1, rdm2
 
     ! open and parse input parameters needed for nested sampling
-    call read_ns_file("ns_input.txt", nested_sampling)
+    call read_ns_file("ns_input.inp", nested_sampling)
     open(35,file=nested_sampling%outfile_ener)
 
     ! creat arrays for storing all the NS walker configurations and their energies
     allocate(ns_walkers(setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3,nested_sampling%n_walkers))
     allocate(walker_energies(nested_sampling%n_walkers))
     walker_energies=0.0d0
+
+    write(*,'(16("-"),x,"Initialising set of walkers for NS run",x, 16("-"),/)')
 
     ! initialise all walkers 
     do i_walker = 1,nested_sampling%n_walkers
@@ -80,24 +89,27 @@ module nested_sampling
        call initial_setup(setup, config)
        ns_walkers(:,:,:,:,i_walker) = config
        
-       ! Check the average concentrations
-       if (i_walker == 1) call print_particle_count(setup, ns_walkers(:,:,:,:,i_walker))
-    
        ! Calculate all the inital energies and print to screen
        ! Add small random number to the energy to avoid configurations to be degenerate in energy
-       call random_number(rnde)
+       rnde = genrand()
        walker_energies(i_walker)=setup%full_energy(ns_walkers(:,:,:,:,i_walker))+rnde*1e-8
-       print*, 'Energy', i_walker, 'is: ', walker_energies(i_walker)
+       print*, ' Initial energy of walker ', i_walker, 'is: ', walker_energies(i_walker)
     
     enddo
+
+    write(*,'(/,16("-"),x,"Set of walkers successfully initialised",x, 15("-"),/)')
+
+    ! Print the cell contents to screen
+    call print_particle_count(setup, ns_walkers(:,:,:,:,1), 0)
     
     extra_steps=0
     
     !---------------------------------!
     ! Main NS iteration cycle         !
     !---------------------------------!
-    print*, '********* MAIN NS CYCLE STARTS ************'
-    print*, 'Will do',nested_sampling%n_iter,'iterations, starting with', nested_sampling%n_steps,'MC steps initially.'
+    write(*,'(24("-"),x,"Entering main NS cycle",x, 24("-"),/)')
+    print*, 'Will do',nested_sampling%n_iter,'iterations, starting with', &
+             nested_sampling%n_steps,'MC steps initially.', new_line('a')
     
     do i_iter = 1, nested_sampling%n_iter
     
@@ -134,7 +146,7 @@ module nested_sampling
        ! Generate a new sample, starting from an existing walker and doing a set of random steps
 
        ! pick configuration for cloning
-       call random_number(rnd)
+       rnd = genrand()
        irnd=ceiling(rnd*nested_sampling%n_walkers)
        ns_walkers(:,:,:,:,i_max(1)) = ns_walkers(:,:,:,:,irnd)
        walker_energies(i_max(1)) = walker_energies(irnd)
@@ -186,9 +198,10 @@ module nested_sampling
        endif        
     
     enddo
-    print*, 'All NS iterations are done, sampling finished.'
+    print*, new_line('a'), ' All NS iterations are done, sampling finished.'
     close(35)
     
+    write(*,'(/,26("-"),x,"Leaving NS routine",x, 26("-"))')
   
   end subroutine nested_sampling_main
 

@@ -1,11 +1,14 @@
-!----------------------------------------------------------------------!
-! main.f90                                                             !
-!                                                                      !
-! Example bontewarlo program for developers.                           !
-!                                                                      !
-! C. D. Woodgate,  Bristol                                        2024 !
-!----------------------------------------------------------------------!
-program main
+!> @file    example.f90
+!>
+!> @brief   Example program showing the code's functionalities for
+!>          developers
+!>
+!> @details This file contains an example program showcasing the code's
+!>          functionalities.
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2024
+program example
   
   use initialise
   use comms
@@ -14,13 +17,12 @@ program main
   use nested_sampling
   use tmmc
   use wang_landau
-  use energy_spectrum
   use io
   use kinds
   use c_functions
-  use write_netcdf
+  use netcdf_io
   use write_xyz
-  use write_diagnostics
+  use metropolis_output
   use display
   use howto_examples
 
@@ -30,6 +32,9 @@ program main
   type(run_params) :: setup
 
   ! Nested Sampling parameters type
+  type(metropolis_params) :: metropolis
+
+  ! Nested Sampling parameters type
   type(ns_params) :: ns_setup
 
   ! Tmmc parameters type
@@ -37,9 +42,6 @@ program main
 
   ! Wang Landau parameters type
   type(wl_params) :: wl_setup
-
-  ! Energy Spectrum parameters type
-  type(es_params) :: es_setup
 
   ! Start MPI
   call comms_initialise()
@@ -56,8 +58,13 @@ program main
   ! Read in atom-atom interaction
   call read_exchange(setup, my_rank)
 
+  ! Read the Metropolis control file
+  call parse_metropolis_inputs(metropolis, my_rank)
+
   ! Initialise PNRG
-  call initialise_pnrg(setup%seedtime)
+  ! static_seed is true if we would like to use a fixed seed and false
+  ! otherwise
+  call initialise_prng(setup%static_seed)
 
   ! Initialise some function pointers
   call initialise_function_pointers(setup)
@@ -66,18 +73,19 @@ program main
   call make_data_directories(my_rank)
 
   ! Initialise some global arrays
-  call initialise_global_arrays(setup)
+  call initialise_global_metropolis_arrays(setup, metropolis)
 
   ! Initialise some local arrays
   call initialise_local_arrays(setup)
+  call initialise_local_metropolis_arrays(setup, metropolis)
 
   !-----------------------------------------!
   ! Main examples routine in howto_examples !
   !-----------------------------------------!
-  call examples(setup, my_rank)
+  call examples(setup, metropolis, my_rank)
 
   ! Clean up
-  call global_clean_up()
+  call global_metropolis_clean_up()
 
   ! Clean up
   call clean_up_interaction()
@@ -91,4 +99,4 @@ program main
   ! Finalise MPI
   call comms_finalise()
 
-end program main
+end program example

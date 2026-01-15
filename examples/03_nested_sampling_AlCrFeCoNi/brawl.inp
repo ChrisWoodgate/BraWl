@@ -1,0 +1,31 @@
+# Mode 301 means run a 3D simulation ('3') using Nested Sampling ('03')
+mode=303
+
+# The code currently works with the cubic representation of the fcc lattice. 4 atoms per unit cell
+lattice = fcc
+
+# The lattice parameter
+# This only matters for xyz file output. Internally the code works with normalised coordination shells for a given lattice type
+lattice_parameter = 3.605
+
+# Number of atoms in directions 1 (x), 2(y), and 3(z)
+n_1=3
+n_2=3
+n_3=3
+
+# Number of chemical species
+n_species = 5
+
+# The species names and concentrations
+species_names = Al Cr Fe Co Ni
+species_concentrations =0.2    0.2    0.2    0.2    0.2   
+
+# The range of the interaction and the file where the parameters can be found
+interaction_range = 4
+interaction_file = 'fcc_al_1.00_crfeconi.vij'
+
+# N+1, where N is the distance to which you would like to compute conditional pair probabilities, ASRO parameters
+wc_range = 3
+
+# Swap just nearest-neighbours (if 'true') or any pair of lattice sites (if 'false')
+nbr_swap = .false.

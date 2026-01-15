@@ -1,51 +1,82 @@
-!----------------------------------------------------------------------!
-! analytics.f90                                                        !
-!                                                                      !
-! Various routines and tools for analysing the simulation              !
-!                                                                      !
-! C. D. Woodgate,  Warwick                                        2023 !
-!----------------------------------------------------------------------!
+!> @file    analytics.f90
+!>
+!> @brief   Assorted routines and tools for analysing a simulation
+!>
+!> @details This module contains routines for analysing various aspects
+!>          of a simulation, including counting the number of particles,
+!>          calculating the neighbours of a given site on the lattice,
+!>          and calculating the atomic short-range order parameters.
+!>
+!> @author  C. D. Woodgate
+!> @date    2019-2025
 module analytics
 
   use kinds
+  use derived_types
+  use constants
   use shared_data
   use io
   use display
   
   implicit none
 
+  private
+
+  public :: store_state, average_state, total_particle_count,          &
+            print_particle_count, lattice_shells, radial_densities
+
   contains
 
-  !--------------------------------------------------------------------!
-  ! Routine to add this state to the average (for LRO)                 !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to add this configuration to the average
+  !>
+  !> @details This is needed to compute the average occupancy of each
+  !>          lattice site at the end of a simulation.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  averages Array of floats where averages are being stored
+  !> @param  config Current atomic configuration
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
   subroutine store_state(averages, config, setup)
-    !integer(int16), allocatable, dimension(:,:,:), intent(in) :: config
-    integer(int16), dimension(:,:,:), intent(in) :: config
-    type(run_params), intent(in) :: setup
-    real(real64), dimension(:,:,:,:), intent(inout), allocatable :: averages
-    integer :: i,j,k,l
 
-    do i=1, setup%n_species
-      do l=1, 2*setup%n_3
-        do k=1, 2*setup%n_2
-          do j=1, 2*setup%n_1
-            if (config(j,k,l) == i) then
-              averages(i,j,k,l) = averages(i,j,k,l) + 1.0_real64
-            end if
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    type(run_params), intent(in) :: setup
+    real(real64), dimension(:,:,:,:,:), intent(inout), allocatable :: averages
+    integer :: i,j,k,l,m
+
+    do m=1, 2*setup%n_3
+      do l=1, 2*setup%n_2
+        do k=1, 2*setup%n_1
+          do j=1, setup%n_basis
+            do i=1, setup%n_species
+              if (config(j,k,l,m) == i) then
+                averages(i,j,k,l,m) = averages(i,j,k,l,m) + 1.0_real64
+              end if
+            end do
           end do
         end do
       end do
     end do
+
   end subroutine store_state
 
-  !--------------------------------------------------------------------!
-  ! Routine to compute the average (for LRO)                           !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to compute average occupancies
+  !>
+  !> @details At the end of the simulation, divide the stored
+  !>          occupancies by the number of times we stored them, to get
+  !>          the average occupancy of each lattice site.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  averages Array of floats where averages are being stored
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  n_steps Number of steps at which the state was stored
+  !>
+  !> @return None
   subroutine average_state(averages, setup, n_steps)
     type(run_params), intent(in) :: setup
     integer, intent(in) :: n_steps
@@ -57,14 +88,21 @@ module analytics
     end do
   end subroutine average_state
   
-  !--------------------------------------------------------------------!
-  ! Routine to count the number of particles (used for testing)        !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Function to count the total number of particles in the box
+  !>
+  !> @details This function was mainly used for testing during code
+  !>          development, to make sure no particles were dissapearing.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  config Current atomic configuration
+  !>
+  !> @return The total number of particles in the simulation cell
   function total_particle_count(setup, config) result(total_count)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+    !integer(array_int), allocatable, dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     type(run_params) :: setup
     integer :: total_count
     integer :: i,j,k,b
@@ -75,7 +113,7 @@ module analytics
       do k=1, 2*setup%n_3
         do j=1, 2*setup%n_2
           do i=1, 2*setup%n_1
-            if (config(b,i,j,k) .ne. 0_int16) then
+            if (config(b,i,j,k) .ne. 0_array_int) then
               total_count = total_count + 1
             end if
           end do
@@ -85,19 +123,26 @@ module analytics
 
   end function total_particle_count
 
-  !--------------------------------------------------------------------!
-  ! Routine to print the number of particles of each species (used for !
-  ! testing)                                                           !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
-  subroutine print_particle_count(setup, config)
-    !integer(int16), allocatable, dimension(:,:,:,:), intent(in) :: config
-    integer(int16), dimension(:,:,:,:), intent(in) :: config
+  !> @brief   Subroutine to print the number of atoms of each species
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2023
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  config Current atomic configuration
+  !>
+  !> @return None
+  subroutine print_particle_count(setup, config, my_rank)
+    !integer(array_int), allocatable, dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
     type(run_params) :: setup
     integer, dimension(4) :: sizes
     integer, dimension(:), allocatable :: species_count
-    integer :: i,j,k, n
+    integer :: i,j,k, n, my_rank
+
+    if(my_rank == 0) then
+      write(6,'(16("-"),x,"Checking contents of simulation cell(s)",x, 15("-"),/)')
+    end if
 
     sizes = shape(config)
 
@@ -106,10 +151,10 @@ module analytics
     species_count = 0
     n=0
 
-    do k=1, sizes(3)
-      do j=1, sizes(2)
-        do i=1, sizes(1)
-          if (config(1,i,j,k) .ne. 0_int16) then
+    do k=1, sizes(4)
+      do j=1, sizes(3)
+        do i=1, sizes(2)
+          if (config(1,i,j,k) .ne. 0_array_int) then
             n = n+1
             species_count(config(1,i,j,k)) = &
               species_count(config(1,i,j,k)) + 1
@@ -118,28 +163,48 @@ module analytics
       end do
     end do
 
-    print*, 'Particle counts are: '
+    if(my_rank == 0) then
+      write(6,'(x,"Simulation cell is",x,A,/)') setup%lattice
+      write(6,'(x,"There are:",/)')
+      write(6,'(x,I3,x,"cells in direction 1,")') setup%n_1
+      write(6,'(x,I3,x,"cells in direction 2,")') setup%n_2
+      write(6,'(x,I3,x,"cells in direction 3,",/)') setup%n_3
+      write(6,'(x,"for a total of ",I5,x,"atoms in the cell.",/)') n
 
-    do i=1, setup%n_species-1
-      print*, 'Species ', i ,species_count(i)
-    end do
+      write(6,'(x,"The breakdown is:",/)')
 
-    print*, 'Species ', setup%n_species,                   &
-             species_count(setup%n_species), new_line('a')
-    
+      write(6,'(x,"Index | Element | Number of Atoms")')
+      write(6,'(x,33("-"))')
+      do i=1, setup%n_species
+        write(6,'(x,I5," |      ", A, " | ", I9)')                         &
+              i, setup%species_names(i), species_count(i)
+      end do
+    end if
+
     deallocate(species_count)
+
+    if(my_rank == 0) then
+      write(6,'(/,17("-"),x,"End of info about simulation cell(s)",x, 17("-"),/)')
+    end if
 
   end subroutine print_particle_count
 
-  !--------------------------------------------------------------------!
-  ! Subroutine to compute on-shell distances. Could just calculate     !
-  ! these once, but this is good for a variety of lattices.            !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to compute lattice shell distances
+  !>
+  !> @details Could just calculate these once, but this routine is good
+  !>          for a variety of lattice types.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  shells Array where shell distances will be stored
+  !> @param  config Current atomic configuration
+  !>
+  !> @return None
   subroutine lattice_shells(setup, shells, configuration)
-    !integer(int16), dimension(:,:,:,:), allocatable :: configuration
-    integer(int16), dimension(:,:,:,:) :: configuration
+
+    integer(array_int), dimension(:,:,:,:) :: configuration
     type(run_params), intent(in) :: setup
     integer :: i,j,k,b,l
     real(real64) :: dist
@@ -178,7 +243,7 @@ module analytics
         do i=1, 2*setup%n_1
           do b=1, setup%n_basis
             ! Cycle if this lattice site is empty
-            if (configuration(b,i,j,k) .eq. 0_int16) cycle
+            if (configuration(b,i,j,k) .eq. 0_array_int) cycle
             dist     = sqrt(real((k-1)**2) + &
                             real((j-1)**2) + &
                             real((i-1)**2))
@@ -209,16 +274,26 @@ module analytics
 
   end subroutine lattice_shells
 
-  !--------------------------------------------------------------------!
-  ! Function to compute radial densities, i.e. atomic short-range      !
-  ! order parameters.                                                  !
-  !                                                                    !
-  ! C. D. Woodgate,  Bristol                                      2025 !
-  !--------------------------------------------------------------------!
+  !> @brief   Subroutine to compute radial densities (ASRO parameters)
+  !>
+  !> @details This routine computes the conditional probabilities of
+  !>          one type of atom neighbouring another type of atom. These
+  !>          are *not* the Warren-Cowley ASRO parameters, but you can
+  !>          convert to them using a simple rescaling.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  configuration Current atomic configuration
+  !> @param  n_shells Number of shells on which to compute probabilities
+  !> @param  shell_distances Array of lattice shell distances
+  !>
+  !> @return The computed radial densities (conditional probabilities)
   function radial_densities(setup, configuration, n_shells,            &
                             shell_distances) result(r_densities)
     type(run_params), intent(in) :: setup
-    integer(int16), dimension(:,:,:,:) :: configuration
+    integer(array_int), dimension(:,:,:,:) :: configuration
     real(real64), dimension(:), allocatable :: shell_distances
     real(real64), dimension(setup%n_species,setup%n_species,           &
                             n_shells) :: r_densities
@@ -244,7 +319,7 @@ module analytics
           do i_b=1, setup%n_basis
             do l=1, setup%n_species
               if (configuration(i_b, i_1, i_2, i_3) .eq.              &
-                                int(l, kind=int16)) then
+                                int(l, kind=array_int)) then
                 particle_counts(l) = particle_counts(l) + 1
               end if
             end do
@@ -271,7 +346,7 @@ module analytics
         do i_1=1, 2*setup%n_1
           do i_b=1, setup%n_basis
           ! Cycle if this site is empty
-          if (configuration(i_b, i_1, i_2, i_3) .eq. 0_int16) cycle
+          if (configuration(i_b, i_1, i_2, i_3) .eq. 0_array_int) cycle
             ! Loop over neighbouring sites, accounting for
             ! P.B.C.s
             do jj_3=i_3-loop_3, i_3+loop_3, 1
@@ -281,7 +356,7 @@ module analytics
                 do jj_1=i_1-loop_1, i_1+loop_1, 1
                   j_1 = modulo(jj_1-1, 2*setup%n_1) + 1
                   do j_b=1, setup%n_basis
-                    if (configuration(j_b, j_1, j_2, j_3) .eq. 0_int16) cycle
+                    if (configuration(j_b, j_1, j_2, j_3) .eq. 0_array_int) cycle
                     ! Compute the distance to this site, accounting
                     ! for PBCs
                     d_x = real(i_1-j_1)
@@ -329,12 +404,21 @@ module analytics
   end function radial_densities
 
 
-  !--------------------------------------------------------------------!
-  ! Quicksort routine.                                                 !
-  !                                                                    !
-  ! C. D. Woodgate,  Warwick                                      2023 !
-  !--------------------------------------------------------------------!
+  !> @brief   Implementation of the quicksort algorithm for arrays
+  !>
+  !> @details Puts an array of real numbers into size order from
+  !>          smallest to largest. Note that this operates *on* the
+  !>          input array---if you would like to keep the unsorted
+  !>          array, make a copy of it.
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2023
+  !>
+  !> @param  array Array of real (real64) numbers to sort
+  !>
+  !> @return None
   recursive subroutine quicksort(array)
+
     real(real64), intent(inout)::array(:)
     real(real64) :: temp,pivot
     integer :: i,j,last,left,right

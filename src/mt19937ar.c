@@ -134,7 +134,7 @@ unsigned long f90_init_genrand(int seedtime, int my_rank){
     /*printf(" # Using time-based random seed %ld\n",seed);*/
   }
   else {
-    seed = -110179;
+    seed = 110179+11*my_rank;
   }
   init_genrand(seed);
   return seed;

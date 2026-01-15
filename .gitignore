@@ -22,6 +22,9 @@
 # Ignore pdfs
 *.pdf
 
+# Ignore svgs
+*.svg
+
 # Ignore executables
 *.exe
 
@@ -33,7 +36,67 @@
 
 # But not the license file
 !LICENSE.txt
+!requirements.txt
 
-# Also ignore the examples directories
-!examples/00_examples_tests/*
-!examples/01_CrCoNi/*
+# Ignore input files
+*.inp
+# And interaction files
+*.vij
+# But not those in the examples directories
+!examples/*/*.inp
+!examples/*/*/*.inp
+!examples/*/*.vij
+!examples/*/*/*.vij
+
+# Don't ignore any text files in the examples directories
+!examples/*/*.txt
+!examples/*/*/*.txt
+
+# Ignore any gumpf that a user has in their tests directory
+tests/*
+
+# But don't ignore the reference data for testing
+!tests/01_serial_metropolis
+!tests/02_parallel_metropolis
+!tests/03_serial_nested_sampling
+!tests/04_parallel_wang-landau
+!tests/99_ref
+!tests/ci_test.py
+
+tests/01_serial_metropolis/*
+!tests/01_serial_metropolis/fcc_epi.vij
+!tests/01_serial_metropolis/brawl.inp
+!tests/01_serial_metropolis/metropolis.inp
+!tests/01_serial_metropolis/metropolis_serial_test.py
+
+tests/02_parallel_metropolis/*
+!tests/02_parallel_metropolis/bcc_epi.vij
+!tests/02_parallel_metropolis/brawl.inp
+!tests/02_parallel_metropolis/metropolis.inp
+!tests/02_parallel_metropolis/metropolis_parallel_test.py
+
+tests/03_serial_nested_sampling/*
+!tests/03_serial_nested_sampling/fcc_al_1.00_crfeconi.vij
+!tests/03_serial_nested_sampling/brawl.inp
+!tests/03_serial_nested_sampling/ns_input.inp
+!tests/03_serial_nested_sampling/ns_test.py
+
+tests/04_parallel_wang-landau/*
+!tests/04_parallel_wang-landau/bcc_epi.vij
+!tests/04_parallel_wang-landau/brawl.inp
+!tests/04_parallel_wang-landau/wl_input.inp
+!tests/04_parallel_wang-landau/wl_test.py
+
+tests/99_ref/*
+!tests/99_ref/01_serial_metropolis
+!tests/99_ref/01_serial_metropolis/*
+!tests/99_ref/02_parallel_metropolis
+!tests/99_ref/02_parallel_metropolis/*
+!tests/99_ref/03_serial_nested_sampling
+!tests/99_ref/03_serial_nested_sampling/*
+!tests/99_ref/04_parallel_wang-landau
+!tests/99_ref/04_parallel_wang-landau/*
+
+# Ignore locally Doxygen-generated files
+docs/html/
+docs/latex/
