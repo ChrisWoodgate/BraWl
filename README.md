@@ -148,9 +148,9 @@ A (hopefully fairly complete) list of publications where `Brawl` was used is as 
 12. H. J. Naguszewski, C. D. Woodgate, D. Quigley, [arXiv:2510.11562](https://arxiv.org/abs/2510.11562).
 
 ## Authors
-- Hubert J. Naguszewski
-- Livia B. Pártay
-- Christopher D. Woodgate
+- Hubert J. Naguszewski ([@HubertJN](https://github.com/HubertJN), University of Warwick)
+- Livia B. Pártay ([@liviabp](https://github.com/liviabp), University of Warwick)
+- Christopher D. Woodgate ([@ChrisWoodgate](https://github.com/ChrisWoodgate), University of Bristol)
 
 ## Contributors
 - Heather Ratcliffe
