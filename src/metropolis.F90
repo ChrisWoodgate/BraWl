@@ -591,6 +591,27 @@ module metropolis
     ! Set up the lattice
     call initial_setup(setup, config)
 
+    ! Make the relevant directories
+    if ((metropolis%write_final_config_xyz).or.(metropolis%write_final_config_nc)) then
+      if(my_rank == 0) call execute_command_line('mkdir -p configs')
+    end if
+    if (metropolis%calculate_energies) then
+      if(my_rank == 0) call execute_command_line('mkdir -p energies')
+    end if
+    if (metropolis%calculate_asro) then
+      if(my_rank == 0) call execute_command_line('mkdir -p asro')
+    end if
+    if (metropolis%calculate_alro) then
+      if(my_rank == 0) call execute_command_line('mkdir -p alro')
+    end if
+    if ((metropolis%write_trajectory_energy).or.(metropolis%write_trajectory_asro).or.(metropolis%write_trajectory_xyz)) then
+      if(my_rank == 0) call execute_command_line('mkdir -p trajectories')
+    end if
+
+    ! Make sure the required directories have been made before moving
+    ! to later portions of the calculation
+    call comms_wait()
+
 #ifdef USE_MPI
 
     ! Initialise some global arrays
@@ -676,7 +697,7 @@ module metropolis
         acceptance = acceptance + accept
 
         ! Draw samples
-        if (mod(i, metropolis%n_sample_steps_asro) .eq. 0) then
+        if (mod(i, metropolis%n_sample_steps) .eq. 0) then
 
           ! Get the energy of this configuration
           current_energy = setup%full_energy(config)
