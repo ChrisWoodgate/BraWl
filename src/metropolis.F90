@@ -27,12 +27,45 @@ module metropolis
 
   private
 
-  public :: metropolis_simulated_annealing,                            &
-            metropolis_decorrelated_samples,                           &
+  public :: metropolis_main,                                           &
             monte_carlo_step_nbr,                                      &
             monte_carlo_step_lattice
 
   contains
+
+  !> @brief   Subroutine for selecting the Metropolis subroutine to use
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2026
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  metropolis Derived type containing Metropolis MC parameters
+  !> @param  my_rank Rank of this process
+  !>
+  !> @return None
+  subroutine metropolis_main(setup, metropolis, my_rank)
+
+    ! Rank of this processor
+    integer, intent(in) :: my_rank
+
+    ! Derived type describing simulation setup
+    type(run_params) :: setup
+    type(metropolis_params) :: metropolis
+
+    ! Select the relevant mode, exit cleanly if unrecognised
+    if (trim(metropolis%mode) .eq. 'simulated_annealing') then
+      call metropolis_simulated_annealing(setup, metropolis, my_rank)
+    else if (trim(metropolis%mode) .eq. 'decorrelated_samples') then
+      call metropolis_decorrelated_samples(setup, metropolis, my_rank)
+    else
+      if (my_rank .eq. 1) then
+        print*, ' Unrecognised Metropolis mode', metropolis%mode
+      end if
+      call comms_finalise()
+      stop 'Exiting as unrecognised Metropolis mode requested'
+    end if
+
+  end subroutine metropolis_main
 
   !> @brief   Subroutine for performing simulated annealing using
   !>          the Metropolis Monte Carlo algorithm
