@@ -52,6 +52,9 @@ module metropolis
     type(run_params) :: setup
     type(metropolis_params) :: metropolis
 
+    ! Read the Metropolis control file
+    call parse_metropolis_inputs(metropolis, my_rank)
+
     ! Select the relevant mode, exit cleanly if unrecognised
     if (trim(metropolis%mode) .eq. 'simulated_annealing') then
       call metropolis_simulated_annealing(setup, metropolis, my_rank)
@@ -112,9 +115,6 @@ module metropolis
 
     ! Long-range order parameters at each temperature step
     real(real64), allocatable, dimension(:,:,:,:,:) :: order
-
-    ! Read the Metropolis control file
-    call parse_metropolis_inputs(metropolis, my_rank)
 
     ! Make the relevant directories
     if ((metropolis%write_final_config_xyz).or.(metropolis%write_final_config_nc)) then
@@ -587,9 +587,6 @@ module metropolis
   
     ! Name of xyz file
     character(len=50) :: xyz_file
-
-    ! Read the Metropolis control file
-    call parse_metropolis_inputs(metropolis, my_rank)
 
     ! Set up the lattice
     call initial_setup(setup, config)
