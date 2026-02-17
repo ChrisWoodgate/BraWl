@@ -71,7 +71,7 @@ ifeq ($(SYSTEM),Darwin)
   FFLAGS += $(shell nf-config --fflags)
   LDFLAGS += $(shell nf-config --flibs) $(shell nc-config --libs) -lnetcdf -lnetcdff
   ifeq ($(strip $(compiler)),mpifort)
-    LDFLAGS += -L/opt/homebrew/Cellar/openblas/0.3.30/lib
+    LDFLAGS += -L/opt/homebrew/Cellar/openblas/0.3.31_1/lib
   endif
 else
   ifeq ($(strip $(compiler)),gfortran)
