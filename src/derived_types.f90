@@ -303,13 +303,22 @@ module derived_types
   !> @param  mc_sweeps Number of sweeps (each sweep is n_atoms mc steps)
   !> @param  bins Number of bins across energy range
   !> @param  num_windows Number of energy windows
-  !> @param  bin_overlap Number of bins in the overlap region
+  !> @param  bin_overlap Percentage overlap between windows
   !> @param  tolerance Tolerance for Wang-Landau
   !> @param  wl_f Flatness for Wang-Landau histogram
   !> @param  energy_min Energy range minimum
   !> @param  energy_max Energy range maximum
   !> @param  T Temperature to use for dynamics
   !> @param  radial_samples Number of radial density samples to draw per bin
+  !> @param  performance Performance analysis mode 
+  !>         0 - non-uniform windows | dynamic window sizes | replica exchange
+  !>         1 - non-uniform windows | dynamic window sizes |        x
+  !>         2 - non-uniform windows |          x           | replica exchange
+  !>         3 - non-uniform windows |          x           |        x
+  !>         4 -         x           |          x           | replica exchange
+  !>         5 -         x           |          x           |        x
+  !> @param nbr_swap Logical that determines dynamics used (Kawasaki or random neighbour swaps)
+  !> @param mc_select Function pointer to Monte Carlo site selection implmentation used at runtime
   type wl_params
 
     ! Number of  sweeps (each sweep is n_atoms mc steps)
@@ -318,8 +327,8 @@ module derived_types
     integer :: bins
     ! Number of energy windows
     integer :: num_windows
-    ! Number of bins in the overlap region
-    integer :: bin_overlap
+    ! Percentage overlap between windows
+    real :: bin_overlap
     ! Tolerance for wang landau
     real :: tolerance
     ! Flatness for wang landau histogram
@@ -332,7 +341,12 @@ module derived_types
     real :: energy_max
     ! Radial density samples per bin
     integer :: radial_samples
-
+    ! Performance analysis
+    integer :: performance
+    ! Dynamics type
+    logical :: nbr_swap
+    ! Monte Carlo step to call. (Neighbour swap or whole lattice swap)
+    procedure(), pointer, nopass :: mc_select => null()
   end type wl_params
 
   !--------------------------------------------------------------------!

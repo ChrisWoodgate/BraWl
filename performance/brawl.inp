@@ -1,0 +1,12 @@
+mode=302
+n_1=4
+n_2=4
+n_3=4
+n_species = 4
+lattice = bcc
+lattice_parameter = 3.02475
+interaction_file = 'AlTiCrMo.vij'
+interaction_range = 6
+wc_range = 3
+species_names =Al Ti Cr Mo
+species_concentrations = 0.25 0.25 0.25 0.25

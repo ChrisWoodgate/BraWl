@@ -977,6 +977,10 @@ module io
       print*, '# wang landau input file name: ', filename
     end if
 
+    ! Default values
+    parameters%performance = 0
+    parameters%nbr_swap = .False.
+
     do while (ios==0)
 
       read(25, "(A)", iostat=ios) buffer
@@ -1049,6 +1053,16 @@ module io
             print*, '# Read radial_samples = ', parameters%radial_samples
           end if
           check(10) = .true.
+        case ('performance')
+          read(buffer, *, iostat=ios) parameters%performance
+          if (my_rank == 0) then
+            print*, '# Read performance = ', parameters%performance
+          end if
+        case ('nbr_swap')
+          read(buffer, *, iostat=ios) parameters%nbr_swap
+          if (my_rank == 0) then
+            print*, '# Read nbr_swap = ', parameters%nbr_swap
+          end if
 
         case default
           if (my_rank == 0) then

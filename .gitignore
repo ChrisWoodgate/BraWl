@@ -100,3 +100,11 @@ tests/99_ref/*
 # Ignore locally Doxygen-generated files
 docs/html/
 docs/latex/
+
+# Ignore slurm scripts
+performance/
+!performance/*.inp
+!performance/*.vij
+!performance/*.py
+!performance/batch/batch_submit.sh
+!performance/batch/slurm_gen.py

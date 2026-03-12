@@ -52,7 +52,8 @@ module initialise
   subroutine initialise_prng(static_seed)
 
     logical :: static_seed
-    integer :: seedtime = 0
+    integer :: seedtime = 0, status, job_id
+    character(len=20) :: slurm_job_id_str
 
     if(my_rank == 0) then
       write(6,'(18("-"),x,"Seeding random number generator(s)",x,18("-"),/)')
@@ -69,8 +70,16 @@ module initialise
       seedtime = 1
     end if
 
+    ! Read slurm job id if it exists
+    call GET_ENVIRONMENT_VARIABLE('SLURM_JOB_ID', slurm_job_id_str, status=status)
+    if (status == 0) then
+      read(slurm_job_id_str, *) job_id
+    else
+      job_id = 0
+    endif
+
     ! Initialise the prng
-    seed = f90_init_genrand(seedtime, int(my_rank, kind=C_INT))
+    seed = f90_init_genrand(seedtime, int(my_rank, kind=C_INT), job_id)
 
     call comms_wait()
 
