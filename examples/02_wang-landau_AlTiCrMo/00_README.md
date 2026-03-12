@@ -10,4 +10,4 @@ A Wang-Landau sampling run needs the following input files:
 
 Run 'mpirun -n 8 /path/to/brawl/brawl.run' to launch the simulation. Once it has finished, analyse the results with wl\_vis.py. (Note that this example requires a parallel build.)
 
-The simulation should take around 45 minutes. You may want to run it in the background. A good tool for this (and other terminal multiplexing activities) is GNU Screen.
+The simulation should take at most 5 minutes. You may want to run it in the background. A good tool for this (and other terminal multiplexing activities) is GNU Screen.
