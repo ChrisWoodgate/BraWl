@@ -158,7 +158,7 @@ module derived_types
     !    - This option draws grid configurations a set number of steps
     !      apart (for producing indicative equilibrated atomic configs
     !      at a given temperature.
-    character(len=20) :: mode
+    character(len=30) :: mode
     ! Number of monte carlo steps (at each temperature if annealing)
     integer :: n_mc_steps
     ! Burn in at FIRST temperature if doing simulated annealing?

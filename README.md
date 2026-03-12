@@ -6,6 +6,9 @@
 
 `BraWl` — a package for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian. The package implements a range of conventional and enhanced sampling techniques, including Metropolis-Hastings Monte Carlo, Nested Sampling, and Wang-Landau sampling. It is designed to be extensible so additional sampling algorithms can be implemented in due course. This `README` contains key information and installation instructions, while developer documentation can be found at: [https://chriswoodgate.github.io/BraWl/](https://chriswoodgate.github.io/BraWl/)
 
+You can read more about the package in our JOSS article:
+* H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [Journal of Open Source Software **10**, 8346 (2025).](https://doi.org/10.21105/joss.08346).
+
 Copyright (C) The Authors 2019-2025. Released under the GNU Lesser General Public License, version 3.
 
 ## Background
@@ -65,7 +68,7 @@ netCDF/1.7.2
 The Python modules can be installed using `pip install -r requirements.txt`, executed in the main directory. It is recommended to install these within a virtual environment which can be created within `BraWl` using `python -m venv venv` and the activated using `source venv/bin/activate`. (Compatibility of the plotting scripts with later/earlier versions of the listed packages is anticipated, but not guaranteed.)
 
 ## Compilation
-At the moment the code has been tested with GCC and OpenMPI, versions as specified above. Put the code in a directory like `~/codes/BraWl` and navigate to that directory. Assuming the dependencies mentioned above have been installed and configured correctly, building the code should be as simple as running the commands
+Compilation of the code has been tested with GCC and OpenMPI, versions as specified above, as well as with the Intel compilers. Put the code in a directory like `~/codes/BraWl` and navigate to that directory. Assuming the dependencies mentioned above have been installed and configured correctly, building the code should be as simple as running the commands
 ```
 make compiler=mpifort
 ```
@@ -106,7 +109,7 @@ mpirun -np <num_processors> /path/to/BraWl/brawl.run input=<brawl_input_name> me
 ## Examples
 If you navigate to the `examples` subdirectory, you should find various further subdirectories containing some example input files demonstrating the code's usage, which can be run inside those directories. These input files are commented to explain what the various parameters mean and do.
 
-Most options specified in the input files are fairly self-explanatory. Commented examples of input files can be found in the `examples` subdirectory. The least obvious is the `mode' option of `brawl.inp`. Because it is our intention to include 2D (and potentially 1D) options in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented (and fully tested) options are:
+Most options specified in the input files are fairly self-explanatory. Commented examples of input files can be found in the `examples` subdirectory. The least obvious is the `mode` option of `brawl.inp`. Because it is our intention to include 2D (and potentially 1D) options in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented (and fully tested) options are:
 - 01: Metropolis-Hastings Monte Carlo. Uses the Metropolis-Hastings algortithm to equilibrate a system then perform sampling. Can also be used to perform simulated annealing, _e.g._ as used in [npj Comput. Mater. **10** 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y), or to draw decorrelated samples for use in other modelling approaches, such as training machine-learned interatomic potentials, _e.g._ as used in [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
 - 02: Wang-Landau sampling. Uses Wang-Landau sampling to compute the simulation density of states in energy, which can then be used to sample thermodynamic quantities as a post-processing step. This procedure is outlined in [J. Phys.: Mater. **8**, 045002 (2025)](https://doi.org/10.1088/2515-7639/adf468).
 - 03: Nested sampling. Uses the nested sampling algorithm to sample the configuration space from random initial configurations, allowing to calculate the partition function at an arbitrary temperature during the post-processing step. This procedure is outlined in [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
@@ -126,27 +129,30 @@ To generate and host your own version of the documentation, you should:
 3. Navigate to the freshly-generated `docs/html` directory and `open` index.html. (Alternatively, use your system's filemanager to open this in your web browser.)
 
 ## Citations
-If you use `BraWl` in your research, please cite our preprint documenting the package and its capabilities:
-* H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393).
+If you use `BraWl` in your research, please cite the associated JOSS article in any resulting publications:
+* H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [Journal of Open Source Software **10**, 8346 (2025).](https://doi.org/10.21105/joss.08346).
 
 ## List of publications
 A (hopefully fairly complete) list of publications where `Brawl` was used is as follows:
-1. G. A. Marchant, C. D. Woodgate, C. E. Patrick, J. B. Staunton, [Phys. Rev. B **103**, 094414 (2021)](https://doi.org/10.1103/PhysRevB.103.094414).
-2. C. D. Woodgate, J. B. Staunton, [Phys. Rev. B **105**, 115124 (2022)](https://doi.org/10.1103/PhysRevB.105.115124).
-3. C. D. Woodgate, J. B. Staunton, [Phys. Rev. Mater. **7**, 013801 (2023)](https://doi.org/10.1103/PhysRevMaterials.7.013801).
-4. C. D. Woodgate, D. Hedlund, L. H. Lewis, J. B. Staunton, [Phys. Rev. Mater. **7**, 053801 (2023)](https://doi.org/10.1103/PhysRevMaterials.7.053801).
-5. C. D. Woodgate, J. B. Staunton, [J. Appl. Phys. **135**, 135106 (2024)](https://doi.org/10.1063/5.0200862).
-6. L. Shenoy, C. D. Woodgate, J. B. Staunton, A. P. Bartók, C. S. Becquart, C. Domain, J. R. Kermode, [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
+1. G. A. Marchant, C. D. Woodgate, C. E. Patrick, J. B. Staunton, [Physical Review B **103**, 094414 (2021)](https://doi.org/10.1103/PhysRevB.103.094414).
+2. C. D. Woodgate, J. B. Staunton, [Physical Review B **105**, 115124 (2022)](https://doi.org/10.1103/PhysRevB.105.115124).
+3. C. D. Woodgate, J. B. Staunton, [Physical Review Materials **7**, 013801 (2023)](https://doi.org/10.1103/PhysRevMaterials.7.013801).
+4. C. D. Woodgate, D. Hedlund, L. H. Lewis, J. B. Staunton, [Physical Review Materials **7**, 053801 (2023)](https://doi.org/10.1103/PhysRevMaterials.7.053801).
+5. C. D. Woodgate, J. B. Staunton, [Journal of Applied Physics **135**, 135106 (2024)](https://doi.org/10.1063/5.0200862).
+6. L. Shenoy, C. D. Woodgate, J. B. Staunton, A. P. Bartók, C. S. Becquart, C. Domain, J. R. Kermode, [Physical Review Materials **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
 7. C. D. Woodgate, _"Modelling Atomic Arrangements in Multicomponent Alloys: A Perturbative, First-Principles-Based Approach"_ [Springer Series in Materials Science, Vol. 346 (Springer Nature Switzerland, Cham, 2024)](https://doi.org/10.1007/978-3-031-62021-8).
-8. C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
-9. C. D. Woodgate, L. H. Lewis, J. B. Staunton, [npj Comput. Mater. **10**, 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y).
-10. C. D. Woodgate, H. J. Naguszewski, D. Redka, J. Minar, D. Quigley, J. B. Staunton, [J. Phys.: Mater. **8**, 045002 (2025)](https://doi.org/10.1088/2515-7639/adf468).
+8. C. D. Woodgate, G. A. Marchant, L. B. Pártay, J. B. Staunton, [npj Computational Materials **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
+9. C. D. Woodgate, L. H. Lewis, J. B. Staunton, [npj Computational Materials **10**, 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y).
+10. C. D. Woodgate, H. J. Naguszewski, D. Redka, J. Minar, D. Quigley, J. B. Staunton, [Journal of Physics: Materials **8**, 045002 (2025)](https://doi.org/10.1088/2515-7639/adf468).
 11. A. M. Fisher, C. D. Woodgate, X. Zhang, G. C. Hadjipanayis, L. H. Lewis, J. B. Staunton, [arXiv:2508.19124](https://doi.org/10.48550/arXiv.2508.19124).
+12. H. J. Naguszewski, C. D. Woodgate, D. Quigley, [arXiv:2510.11562](https://arxiv.org/abs/2510.11562).
+13. X. Zhang, C. D. Woodgate, G. Hadjipanayis, J. B. Staunton, L. H. Lewis, [Acta Materialia **307**, 121965 (2026)](https://doi.org/10.1016/j.actamat.2026.121965).
+14. C. D. Woodgate, H. J. Naguszewski, N. F. Piwek, D. Redka, [arXiv:2601.16528](https://doi.org/10.48550/arXiv.2601.16528).
 
 ## Authors
-- Hubert J. Naguszewski
-- Livia B. Pártay
-- Christopher D. Woodgate
+- Hubert J. Naguszewski ([@HubertJN](https://github.com/HubertJN), University of Warwick)
+- Livia B. Pártay ([@liviabp](https://github.com/liviabp), University of Warwick)
+- Christopher D. Woodgate ([@ChrisWoodgate](https://github.com/ChrisWoodgate), University of Bristol)
 
 ## Contributors
 - Heather Ratcliffe

@@ -27,12 +27,48 @@ module metropolis
 
   private
 
-  public :: metropolis_simulated_annealing,                            &
-            metropolis_decorrelated_samples,                           &
+  public :: metropolis_main,                                           &
             monte_carlo_step_nbr,                                      &
             monte_carlo_step_lattice
 
   contains
+
+  !> @brief   Subroutine for selecting the Metropolis subroutine to use
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2026
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  metropolis Derived type containing Metropolis MC parameters
+  !> @param  my_rank Rank of this process
+  !>
+  !> @return None
+  subroutine metropolis_main(setup, metropolis, my_rank)
+
+    ! Rank of this processor
+    integer, intent(in) :: my_rank
+
+    ! Derived type describing simulation setup
+    type(run_params) :: setup
+    type(metropolis_params) :: metropolis
+
+    ! Read the Metropolis control file
+    call parse_metropolis_inputs(metropolis, my_rank)
+
+    ! Select the relevant mode, exit cleanly if unrecognised
+    if (trim(metropolis%mode) .eq. 'simulated_annealing') then
+      call metropolis_simulated_annealing(setup, metropolis, my_rank)
+    else if (trim(metropolis%mode) .eq. 'decorrelated_samples') then
+      call metropolis_decorrelated_samples(setup, metropolis, my_rank)
+    else
+      if (my_rank .eq. 1) then
+        print*, ' Unrecognised Metropolis mode', metropolis%mode
+      end if
+      call comms_finalise()
+      stop 'Exiting as unrecognised Metropolis mode requested'
+    end if
+
+  end subroutine metropolis_main
 
   !> @brief   Subroutine for performing simulated annealing using
   !>          the Metropolis Monte Carlo algorithm
@@ -79,9 +115,6 @@ module metropolis
 
     ! Long-range order parameters at each temperature step
     real(real64), allocatable, dimension(:,:,:,:,:) :: order
-
-    ! Read the Metropolis control file
-    call parse_metropolis_inputs(metropolis, my_rank)
 
     ! Make the relevant directories
     if ((metropolis%write_final_config_xyz).or.(metropolis%write_final_config_nc)) then
@@ -555,11 +588,29 @@ module metropolis
     ! Name of xyz file
     character(len=50) :: xyz_file
 
-    ! Read the Metropolis control file
-    call parse_metropolis_inputs(metropolis, my_rank)
-
     ! Set up the lattice
     call initial_setup(setup, config)
+
+    ! Make the relevant directories
+    if ((metropolis%write_final_config_xyz).or.(metropolis%write_final_config_nc)) then
+      if(my_rank == 0) call execute_command_line('mkdir -p configs')
+    end if
+    if (metropolis%calculate_energies) then
+      if(my_rank == 0) call execute_command_line('mkdir -p energies')
+    end if
+    if (metropolis%calculate_asro) then
+      if(my_rank == 0) call execute_command_line('mkdir -p asro')
+    end if
+    if (metropolis%calculate_alro) then
+      if(my_rank == 0) call execute_command_line('mkdir -p alro')
+    end if
+    if ((metropolis%write_trajectory_energy).or.(metropolis%write_trajectory_asro).or.(metropolis%write_trajectory_xyz)) then
+      if(my_rank == 0) call execute_command_line('mkdir -p trajectories')
+    end if
+
+    ! Make sure the required directories have been made before moving
+    ! to later portions of the calculation
+    call comms_wait()
 
 #ifdef USE_MPI
 
@@ -646,7 +697,7 @@ module metropolis
         acceptance = acceptance + accept
 
         ! Draw samples
-        if (mod(i, metropolis%n_sample_steps_asro) .eq. 0) then
+        if (mod(i, metropolis%n_sample_steps) .eq. 0) then
 
           ! Get the energy of this configuration
           current_energy = setup%full_energy(config)
