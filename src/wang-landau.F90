@@ -282,11 +282,11 @@ module wang_landau
           write (*, *)
           wl_f_prev = wl_f
         end if
-
+        
         call save_rho_E(rho_saved, radial_record)
 
         call save_wl_data(bin_edges, wl_logdos, wl_hist)
-        call save_load_balance_data(window_indices, rank_time_buffer, lb_mc_steps, window_overlap)
+        call save_load_balance_data(rank_time_buffer, lb_mc_steps, window_overlap)
         
         if (ANY([0,1] == wl_setup_internal%performance)) then
           call mpi_window_optimise(iter-1)
@@ -437,8 +437,7 @@ module wang_landau
   !>
   !> @author  H. J. Naguszewski
   !> @date    2024 
-  subroutine save_load_balance_data(window_indices, rank_time_buffer, lb_mc_steps, window_overlap)
-    integer, intent(in) :: window_indices(:, :)
+  subroutine save_load_balance_data(rank_time_buffer, lb_mc_steps, window_overlap)
     real(real64), allocatable, intent(in) :: rank_time_buffer(:, :), lb_mc_steps(:), window_overlap(:,:)
     call MPI_REDUCE(lb_mc_steps, lb_mc_steps_buffer, SIZE(lb_mc_steps), MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD, ierr)
     if (my_rank == 0) then
@@ -530,7 +529,7 @@ module wang_landau
     real(real64) :: bin_range
 
     bin_range = bin_edges(bins + 1) - bin_edges(1)
-    index = int(((energy - bin_edges(1))/(bin_range))*real(bins)) + 1
+    index = int(((energy - bin_edges(1))/(bin_range))*real(bins, real64)) + 1
   end function bin_index
 
   !> @brief   Main routine that performs Monte Carlo sweeps
@@ -836,7 +835,7 @@ module wang_landau
     
     call save_rho_E(rho_saved, radial_record)
     call save_wl_data(bin_edges, wl_logdos, wl_hist)
-    call save_load_balance_data(window_indices, rank_time_buffer, lb_mc_steps, window_overlap)
+    call save_load_balance_data(rank_time_buffer, lb_mc_steps, window_overlap)
 
     call mpi_window_optimise(0)
     wl_mc_steps = 0.0_real64
@@ -1326,10 +1325,9 @@ module wang_landau
             call sort_descending(bins, idx)
         
             diff = wl_setup_internal%bins - SUM(bins)
-            !print*, diff
+
             i = 1
             do while (diff /= 0)
-                !print*, i-1, SIZE(bins)
                 j = idx(mod(i-1, SIZE(bins)) + 1)
                 if (diff > 0) then
                     bins(j) = bins(j) + 1
