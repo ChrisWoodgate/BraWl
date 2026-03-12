@@ -54,23 +54,23 @@ mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=custom_cmap.colors)
 #print(subfolders)
 #directory = input("Input directory to pull data from: ")
 
-filename = "data/wl_dos_bins.dat"
+filename = "data/wl_dos_bins.nc"
 bin_edges = nc.Dataset(filename)
 bin_edges = np.array(bin_edges["grid data"][:], dtype=np.float64)
 
-filename = "data/wl_dos.dat"
+filename = "data/wl_dos.nc"
 wl_logdos = nc.Dataset(filename)
 wl_logdos = np.array(wl_logdos["grid data"][:], dtype=np.float64)
 plt.plot(wl_logdos)
 
-filename = "asro/rho_of_E.dat"
+filename = "asro/rho_of_E.nc"
 rho_of_E = nc.Dataset(filename)
 
 rho = rho_of_E.variables['rho data'][:]
 U_data = rho_of_E.variables['U data'][:]
 
 elements = ""  # Initialize an empty string to store species data
-with open("input.txt", 'r') as file:
+with open("brawl.inp", 'r') as file:
     for line in file:
         if 'species_name' in line:  # Check if the line contains the species_name variable
             parts = line.split("=")  # Split the line by '=' and get everything after it
@@ -82,14 +82,10 @@ concentrations = 1.0/n_species*np.ones(n_species)
 
 wl_logdos = wl_logdos - np.max(wl_logdos)
 
-filename = "wl_hist.dat"
-wl_hist = nc.Dataset(filename)
-wl_hist = np.array(wl_hist["grid data"][:], dtype=np.float64)
-
 kb_ev = 8.167333262e-5
 ev_to_ry = 13.605693122
 kb_ry = kb_ev/ev_to_ry
-n_atoms = 1024
+n_atoms = 128
 ev_to_mev = 1000
 # unit conversion
 #kb_ev = kb_ry
