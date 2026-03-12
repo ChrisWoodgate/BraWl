@@ -8,4 +8,3 @@ wl_f=0.05
 energy_min=-99
 energy_max=0.0
 radial_samples=8
-performance=0
