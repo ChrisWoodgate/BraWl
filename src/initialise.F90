@@ -437,6 +437,7 @@ module initialise
     integer(array_int), allocatable, dimension(:,:,:,:) :: config
     integer(int32), dimension(4) :: grid_dims
     integer :: i, j, k, n_sites, idx
+    integer(int64) :: round_err, round_check, inc
     integer(array_int) :: l, n_species
     real(real64) :: rand
     integer(int64), dimension(setup%n_species) :: species_count, check
@@ -470,11 +471,48 @@ module initialise
         setup%species_concentrations(i) = real(species_count(i))/real(setup%n_atoms)
       end do
     ! Case user specified concentrations of each species
+    !else
+    !  do i=1, n_species-1
+    !    species_count(i) = floor(real(n_sites)*setup%species_concentrations(i))
+    !  end do
+    !  species_count(n_species) = n_sites - sum(species_count(1:(n_species-1)))
+    !end if
     else
-      do i=1, n_species-1
-        species_count(i) = floor(real(n_sites)*setup%species_concentrations(i))
+      do i=1, n_species
+        species_count(i) = nint(real(n_sites)*setup%species_concentrations(i))
       end do
-      species_count(n_species) = n_sites - sum(species_count(1:(n_species-1)))
+
+      ! Work out the rounding error from the concentrations
+      round_err = sum(species_count)-n_sites
+
+      ! +1 if round_err is positive
+      ! -1 if round_err is negative
+      inc = sign(1_int64, -round_err)
+
+      ! Save a copy for incrementing and checking
+      round_check = round_err
+
+      ! If we have fewer atoms than we should, gradually add one to each
+      ! species, starting from index 1, until correct, avoiding any zero
+      ! species. Do the opposite if we have more atoms than we should.
+      ! The variable 'inc' determines whether we are adding or removing.
+      do while (round_check .ne. 0)
+        do j=1, n_species
+          if (species_count(j) .eq. 0) cycle
+          if (round_check .eq. 0) cycle
+          species_count(j) = species_count(j) + inc
+          round_check = round_check + inc
+        end do
+      end do
+
+    end if
+
+    ! Make sure species counts make sense
+    if (.not. (sum(species_count).eq.n_sites)) then
+      call comms_finalise()
+      print*, 'Species counts do not sum to the number of lattice sites'
+      print*, 'Species counts: ', species_count
+      stop 'Error in initial_setup()'
     end if
 
     ! Set configuration to be zero
