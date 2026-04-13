@@ -124,17 +124,18 @@ double genrand(void)
   /* divided by 2^32 */
 }
 
-unsigned long f90_init_genrand(int seedtime, int my_rank){
+unsigned long f90_init_genrand(int seedtime, int my_rank, unsigned long job_id){
   unsigned long seed;
   /*printf(" Recieved seedtime = %d\n", seedtime);*/
   if(seedtime) {
     seed = time(NULL);
     seed += 11*my_rank;
+    seed += job_id;
     if(seed%2 ==0) { seed += 1;}
     /*printf(" # Using time-based random seed %ld\n",seed);*/
   }
   else {
-    seed = 110179+my_rank;
+    seed = 110179+11*my_rank;
   }
   init_genrand(seed);
   return seed;

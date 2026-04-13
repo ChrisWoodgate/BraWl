@@ -1,0 +1,76 @@
+# This defines the simulation 'mode'
+mode = simulated_annealing
+
+# The number of trial Monte Carlo moves to make
+# (at each temperature, if looping over temperatures)
+n_mc_steps = 128
+
+# Would we like to burn in at the first temperature?
+burn_in_start = F
+
+# Would we like to burn in at *every* temperature?
+# (If T, then burn_in_start will also be T)
+burn_in = F
+
+# How many burn-in steps to make
+# (not used if no burn in is applied)
+n_burn_in_steps = 0
+
+# How frequently to sample simulation information, e.g. energy
+n_sample_steps = 1
+
+# Would we like to calculate and store the simulation energy?
+calculate_energies = T
+
+# How frequently to simulation trajectory information if gathered
+# Must be an integer multiple of n_sample_steps
+n_sample_steps_trajectory = 1
+
+# Would we like to write the energy trajectory to file?
+write_trajectory_energy = T
+
+# Would we like to write the ASRO trajectory to file?
+write_trajectory_asro = T
+
+# Would we like to calculate the ASRO?
+calculate_asro = T
+
+# How frequently to sample the ASRO?
+# Must be an integer multiple of n_sample_steps
+# This is more demanding than an energy calculation, so it is possible to sample less frequently
+n_sample_steps_asro = 128
+
+# Would we like to calculate the ALRO?
+calculate_alro = F
+
+# How frequently to sample the ALRO?
+# Must be an integer multiple of n_sample_steps
+n_sample_steps_alro = 128
+
+# Would we like to write an (extended) xyz file of the trajectory
+write_trajectory_xyz = F
+
+# Would we like to write the final config (at the end of a temperature) to an xyz file?
+write_final_config_xyz = F
+
+# Would we like to write the final config (at the end of a temperature) to a .nc file (for restart)?
+write_final_config_nc = T
+
+# Would we like to write the initial config (at the start of a temperature after burn-in) to a .nc file?
+write_initial_config_nc = T
+
+# Would be like to read-in the start configuration from file?
+# If no, initial configuration will be random
+read_start_config_nc = F
+
+# (Initial) temperature to use in simulation
+T = 300.0
+
+# How many temperature steps to use, if more than one
+T_steps = 1
+
+# Increment by which to change the temperature (unused if only one temperature is considered)
+delta_T = 0.0
+
+# Are we strictly swapping nearest-neighbours only, or swapping across the entire lattice?
+nbr_swap = F

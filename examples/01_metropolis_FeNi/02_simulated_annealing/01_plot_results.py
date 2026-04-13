@@ -45,7 +45,7 @@ fig, ax1 = plt.subplots(figsize=(6,4))
 
 # Use the first axis for the heat capacity data
 ax1.set_xlabel(r'Temperature, $T$ (K)')
-ax1.set_ylabel(r'Heat capacity, $C_V$ ($k_B$/atom)')
+ax1.set_ylabel(r'Specific heat, $C_V$ ($k_B$/atom)')
 ax1.plot(temps, C, label=r'$C_V$', color='black')
 ax1.set_ylim(0.0, 2.5)
 ax1.set_xlim(0.0, 1200.0)

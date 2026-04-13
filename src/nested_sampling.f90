@@ -91,7 +91,7 @@ module nested_sampling
        
        ! Calculate all the inital energies and print to screen
        ! Add small random number to the energy to avoid configurations to be degenerate in energy
-       call random_number(rnde)
+       rnde = genrand()
        walker_energies(i_walker)=setup%full_energy(ns_walkers(:,:,:,:,i_walker))+rnde*1e-8
        print*, ' Initial energy of walker ', i_walker, 'is: ', walker_energies(i_walker)
     
@@ -146,7 +146,7 @@ module nested_sampling
        ! Generate a new sample, starting from an existing walker and doing a set of random steps
 
        ! pick configuration for cloning
-       call random_number(rnd)
+       rnd = genrand()
        irnd=ceiling(rnd*nested_sampling%n_walkers)
        ns_walkers(:,:,:,:,i_max(1)) = ns_walkers(:,:,:,:,irnd)
        walker_energies(i_max(1)) = walker_energies(irnd)

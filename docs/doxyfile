@@ -24,6 +24,12 @@ EXTRACT_PRIVATE        = YES
 EXTRACT_PACKAGE        = YES
 
 # Include static members
+USE_MATHJAX = YES
+
+# Include static members
+GENERATE_HTML = YES
+
+# Include static members
 EXTRACT_STATIC         = YES
 
 # Include local methods

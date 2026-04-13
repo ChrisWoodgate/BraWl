@@ -19,7 +19,6 @@ program main
   use c_functions
   use netcdf_io
   use write_xyz
-  use metropolis_output
   use display
 
 #ifdef USE_MPI
@@ -90,7 +89,7 @@ program main
   if (setup%mode == 301) then
 
     ! Run Metropolis with Kawasaki dynamics
-    call metropolis_simulated_annealing(setup, metropolis_setup, my_rank)
+    call metropolis_main(setup, metropolis_setup, my_rank)
 
   !----------------------!
   ! Wang-Landau sampling !
