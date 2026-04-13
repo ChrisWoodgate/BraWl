@@ -18,7 +18,7 @@ n_species = 5
 
 # The species names and concentrations
 species_names =A B C D E
-species_counts = 51 51 51 51 52
+species_numbers = 51 51 51 51 52
 
 # The range of the interaction and the file where the parameters can be found
 interaction_range = 6
