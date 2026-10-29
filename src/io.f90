@@ -148,7 +148,7 @@ module io
 
     ios=0; line=0
 
-    ! Initialise to default values---this means Valgrid will be happy
+    ! Initialise to some default values---this means Valgrind will be happy
     parameters%mode = 301
     parameters%lattice = 'fcc'
     parameters%lattice_parameter = 3.57
