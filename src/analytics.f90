@@ -212,8 +212,8 @@ module analytics
     real(real64), dimension(:), allocatable :: all_shells, shells
 
     ! One entry for every point of the simulation grid (plus one)
-    allocate(all_shells(setup%n_grid_1*setup%n_grid_2*setup%n_grid_3    &
-                        *setup%n_basis+1))
+    allocate(all_shells(setup%n_grid_1*setup%n_grid_2                  &
+                        *setup%n_grid_3*setup%n_basis+1))
 
     all_shells = 0.0_real64
     shells = 0.0_real64

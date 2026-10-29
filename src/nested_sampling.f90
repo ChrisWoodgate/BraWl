@@ -68,7 +68,8 @@ module nested_sampling
     open(35,file=nested_sampling%outfile_ener)
 
     ! creat arrays for storing all the NS walker configurations and their energies
-    allocate(ns_walkers(setup%n_basis, setup%n_grid_1, setup%n_grid_2, setup%n_grid_3, &
+    allocate(ns_walkers(setup%n_basis, setup%n_grid_1,                 &
+                        setup%n_grid_2, setup%n_grid_3,                &
                         nested_sampling%n_walkers))
     allocate(walker_energies(nested_sampling%n_walkers))
     walker_energies=0.0d0

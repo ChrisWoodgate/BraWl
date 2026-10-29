@@ -133,8 +133,8 @@ module initialise
 
     if (metropolis%calculate_alro) then
       ! Radial densities as a function of temperature
-      allocate(av_order_of_T(setup%n_species, setup%n_basis,             &
-                             setup%n_grid_1, setup%n_grid_2,             &
+      allocate(av_order_of_T(setup%n_species, setup%n_basis,           &
+                             setup%n_grid_1, setup%n_grid_2,           &
                              setup%n_grid_3, metropolis%T_steps))
       av_order_of_T = 0.0_real64
     end if
@@ -336,7 +336,7 @@ module initialise
     shells = 0.0_real64
 
     ! Allocate array for storing configuration
-    allocate(config(setup%n_basis, setup%n_grid_1, setup%n_grid_2,       &
+    allocate(config(setup%n_basis, setup%n_grid_1, setup%n_grid_2,     &
                     setup%n_grid_3))
     config = 0_array_int
 
@@ -380,8 +380,8 @@ module initialise
 
     if (metropolis%calculate_alro) then
       ! Radial densities as a function of temperature
-      allocate(order_of_T(setup%n_species, setup%n_basis,                &
-                          setup%n_grid_1, setup%n_grid_2,                &
+      allocate(order_of_T(setup%n_species, setup%n_basis,              &
+                          setup%n_grid_1, setup%n_grid_2,              &
                           setup%n_grid_3, metropolis%T_steps))
       order_of_T = 0.0_real64
     end if

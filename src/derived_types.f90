@@ -32,13 +32,22 @@ module derived_types
   !> @date    2020-2026
   !>
   !> @param mode Paramater defining the mode of operation
-  !> @param n_1 Number of unit cells in direction 1 (x, for orthorhombic systems)
-  !> @param n_2 Number of unit cells in direction 2 (y, for orthorhombic systems)
-  !> @param n_3 Number of unit cells in direction 3 (z, for orthorhombic systems)
+  !> @param n_1 Number of unit cells in direction 1 (x, for orthorhombic
+  !>            systems)
+  !> @param n_2 Number of unit cells in direction 2 (y, for orthorhombic
+  !>            systems)
+  !> @param n_3 Number of unit cells in direction 3 (z, for orthorhombic
+  !>            systems)
   !> @param n_basis Number of atoms in basis (Note: not user-specified, determined based on lattice type)
-  !> @param n_grid_1 Extent of the configuration array in direction 1 (Note: not user-specified, determined based on lattice type)
-  !> @param n_grid_2 Extent of the configuration array in direction 2 (Note: not user-specified, determined based on lattice type)
-  !> @param n_grid_3 Extent of the configuration array in direction 3 (Note: not user-specified, determined based on lattice type)
+  !> @param n_grid_1 Extent of the configuration array in direction 1
+  !>                 (Note: not user-specified, determined based on
+  !>                 lattice type)
+  !> @param n_grid_2 Extent of the configuration array in direction 2
+  !>                 (Note: not user-specified, determined based on
+  !>                 lattice type)
+  !> @param n_grid_3 Extent of the configuration array in direction 3
+  !>                 (Note: not user-specified, determined based on
+  !>                 lattice type)
   !> @param n_species Number of chemical species
   !> @param n_atoms Number of atoms in the cell (Note: not user-specified, determined based on size and lattice type)
   !> @param static_seed Whether to use a static PRNG seed (for testing)

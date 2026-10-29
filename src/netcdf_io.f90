@@ -1418,7 +1418,8 @@ module netcdf_io
     call check(nf90_inq_varid(file_id, "configuration", grid_id))
 
     ! Allocate my grid for reading in
-    allocate(config(setup%n_basis, setup%n_grid_1, setup%n_grid_2, setup%n_grid_3))
+    allocate(config(setup%n_basis, setup%n_grid_1, setup%n_grid_2,     &
+                    setup%n_grid_3))
 
     ! Read in
     call check(nf90_get_var(file_id, grid_id, config))
