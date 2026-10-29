@@ -1546,7 +1546,7 @@ module wang_landau
     max_bin = mpi_end_idx
   
     ! Generate random bin index
-    call random_number(rand_val)
+    rand_val = genrand()
     rand_bin = min_bin + int(rand_val * real(max_bin - min_bin + 1, real64))
     ! Load the selected configuration
     config = config_per_bin(rand_bin, :, :, :, :)
@@ -1574,7 +1574,7 @@ module wang_landau
 
             if (size(ranks_with_config) > 0) then
                 ! Randomly select one rank
-                call random_number(rand_val)
+                rand_val = genrand()
                 pick_rank = ranks_with_config(1 + int(rand_val * size(ranks_with_config)))
 
                 ! Broadcast which rank was selected
