@@ -342,6 +342,7 @@ module neighbour_tables
     m = maxval(n_list)
     allocate(setup%tables%nbrs(4, m, 2))
     allocate(setup%tables%nbr_group(m, 2))
+    allocate(setup%tables%group_start(n_groups_needed + 1, 2))
     allocate(setup%tables%n_nbrs_energy(2))
     allocate(setup%tables%n_nbrs_asro(2))
     setup%tables%nbrs = 0
@@ -370,6 +371,16 @@ module neighbour_tables
           setup%tables%n_nbrs_energy(b0) = n
         if (g .le. setup%wc_range - 1)                                 &
           setup%tables%n_nbrs_asro(b0) = n
+      end do
+      ! Where each group starts in the (group-ordered) list
+      do g=1, n_groups_needed + 1
+        setup%tables%group_start(g, b0) = j + 1
+        do n=1, j
+          if (setup%tables%nbr_group(n, b0) .ge. g) then
+            setup%tables%group_start(g, b0) = n
+            exit
+          end if
+        end do
       end do
     end do
 
@@ -551,6 +562,8 @@ module neighbour_tables
       deallocate(setup%tables%nbrs)
     if (allocated(setup%tables%nbr_group))                             &
       deallocate(setup%tables%nbr_group)
+    if (allocated(setup%tables%group_start))                          &
+      deallocate(setup%tables%group_start)
     if (allocated(setup%tables%n_nbrs_energy))                         &
       deallocate(setup%tables%n_nbrs_energy)
     if (allocated(setup%tables%n_nbrs_asro))                           &

@@ -56,6 +56,9 @@ module derived_types
   !> @param nbrs Neighbour offsets (basis index, di, dj, dk) of each
   !>             basis atom, ordered by group
   !> @param nbr_group Group index of each neighbour
+  !> @param group_start Index in the neighbour list of each basis atom
+  !>                    at which each group starts (with one extra
+  !>                    entry marking the end of the last group)
   !> @param n_nbrs_energy Number of neighbours of each basis atom
   !>                      within the interaction range
   !> @param n_nbrs_asro Number of neighbours of each basis atom within
@@ -84,6 +87,9 @@ module derived_types
     ! (basis index of the neighbour, di, dj, dk) and group index
     integer, allocatable, dimension(:,:,:) :: nbrs
     integer, allocatable, dimension(:,:) :: nbr_group
+    ! Start of each group in the neighbour list of each basis atom,
+    ! with one extra entry marking the end of the last group
+    integer, allocatable, dimension(:,:) :: group_start
     ! Number of neighbours of each basis atom within the interaction
     ! range and within the ASRO range
     integer, allocatable, dimension(:) :: n_nbrs_energy

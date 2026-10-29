@@ -3008,7 +3008,7 @@ module bw_hamiltonian
     integer(array_int) :: species
     integer, dimension(-setup%tables%max_offset:                       &
                         setup%tables%max_offset) :: w_1, w_2, w_3
-    integer :: d, n
+    integer :: d
 
     species = config(site_b, site_i, site_j, site_k)
 
@@ -3019,19 +3019,68 @@ module bw_hamiltonian
       w_3(d) = modulo(site_k + d - 1, setup%n_grid_3) + 1
     end do
 
-    energy = 0.0_real64
-
-    associate(t => setup%tables)
-      do n=1, t%n_nbrs_energy(site_b)
-        energy = energy + V_ex(species,                                &
-                               config(t%nbrs(1,n,site_b),              &
-                                      w_1(t%nbrs(2,n,site_b)),         &
-                                      w_2(t%nbrs(3,n,site_b)),         &
-                                      w_3(t%nbrs(4,n,site_b))),        &
-                               t%nbr_group(n,site_b))
-      end do
-    end associate
+    ! The lists of this sublattice are passed as contiguous arrays to
+    ! the worker, which sums them group by group
+    energy = hcp_tables_sum(config, species,                           &
+                            setup%tables%nbrs(:,:,site_b),             &
+                            setup%tables%group_start(:,site_b),        &
+                            setup%interaction_range,                   &
+                            w_1, w_2, w_3, setup%tables%max_offset)
 
   end function hcp_energy_tables
+
+  !> @brief   Function to sum the interactions of an atom with the
+  !>          neighbours listed in a contiguous table
+  !>
+  !> @details Worker for hcp_energy_tables. The neighbour list is
+  !>          ordered by group, so the sum runs group by group with the
+  !>          interaction block fixed inside each inner loop, exactly
+  !>          as the hard-coded shell kernels do. The table arguments
+  !>          are assumed-size so that the compiler addresses them with
+  !>          fixed strides rather than through array descriptors.
+  !>
+  !> @author  C. D. Woodgate
+  !> @author  Claude Fable 5.1
+  !> @date    2026
+  !>
+  !> @param  config Current atomic configuration
+  !> @param  species Species of the atom on the central site
+  !> @param  nbrs Neighbour offsets (basis index, di, dj, dk), one
+  !>              column per neighbour
+  !> @param  group_start Index at which each group starts in the list
+  !> @param  n_groups Number of groups (interaction blocks) to include
+  !> @param  w_1 Wrapped cell indices for offsets along a_1
+  !> @param  w_2 Wrapped cell indices for offsets along a_2
+  !> @param  w_3 Wrapped cell indices for offsets along a_3
+  !> @param  max_offset Half-width of the wrapped index arrays
+  !>
+  !> @return The summed interaction energy
+  function hcp_tables_sum(config, species, nbrs, group_start,         &
+                          n_groups, w_1, w_2, w_3, max_offset)         &
+           result(energy)
+
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    integer(array_int), intent(in) :: species
+    integer, intent(in) :: n_groups, max_offset
+    integer, dimension(4,*), intent(in) :: nbrs
+    integer, dimension(*), intent(in) :: group_start
+    integer, dimension(-max_offset:max_offset), intent(in) ::          &
+             w_1, w_2, w_3
+    real(real64) :: energy
+    integer :: g, n
+
+    energy = 0.0_real64
+
+    do g=1, n_groups
+      do n=group_start(g), group_start(g+1) - 1
+        energy = energy + V_ex(species,                                &
+                               config(nbrs(1,n),                       &
+                                      w_1(nbrs(2,n)),                  &
+                                      w_2(nbrs(3,n)),                  &
+                                      w_3(nbrs(4,n))), g)
+      end do
+    end do
+
+  end function hcp_tables_sum
 
 end module bw_hamiltonian
