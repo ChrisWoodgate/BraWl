@@ -99,6 +99,10 @@ module netcdf_io
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'c_over_a', setup%c_over_a))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'EPI indexing', setup%epi_indexing))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Interaction file', setup%interaction_file))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Concentrations', setup%species_concentrations))
@@ -197,6 +201,10 @@ module netcdf_io
                             'Number of Species', setup%n_species))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'c_over_a', setup%c_over_a))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'EPI indexing', setup%epi_indexing))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Interaction file', setup%interaction_file))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
@@ -306,6 +314,10 @@ module netcdf_io
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'c_over_a', setup%c_over_a))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'EPI indexing', setup%epi_indexing))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Interaction file', setup%interaction_file))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Concentrations', setup%species_concentrations))
@@ -410,6 +422,10 @@ module netcdf_io
                             'Number of Species', setup%n_species))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'c_over_a', setup%c_over_a))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'EPI indexing', setup%epi_indexing))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Interaction file', setup%interaction_file))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
@@ -542,6 +558,10 @@ module netcdf_io
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'c_over_a', setup%c_over_a))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'EPI indexing', setup%epi_indexing))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Concentrations', setup%species_concentrations))
 
     ! Define the 4D variables and dimensions !
@@ -646,6 +666,10 @@ module netcdf_io
                             'Number of Species', setup%n_species))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Lattice Type', setup%lattice))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'c_over_a', setup%c_over_a))
+    call check(nf90_put_att(file_id, NF90_GLOBAL, &
+                            'EPI indexing', setup%epi_indexing))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
                             'Interaction file', setup%interaction_file))
     call check(nf90_put_att(file_id, NF90_GLOBAL, &
@@ -1378,6 +1402,10 @@ module netcdf_io
     ! Filename from to which to read
     character(len=20) :: lattice
 
+    ! Axial ratio and interaction indexing recorded in the file
+    real(real64) :: c_over_a
+    character(len=10) :: epi_indexing
+
     ! Variables used in writing process
     integer :: file_id, n_basis, n_1, n_2, n_3
 
@@ -1412,6 +1440,26 @@ module netcdf_io
       stop "n_2 values do not match in ncdf_config_reader()"
     else if (n_3 .ne. setup%n_3) then
       stop "n_3 values do not match in ncdf_config_reader()"
+    end if
+
+    ! Axial ratio and interaction indexing, where the file records
+    ! them (files written before these attributes existed are read)
+    if (nf90_inquire_attribute(file_id, NF90_GLOBAL, "c_over_a")       &
+        .eq. nf90_noerr) then
+      call check(nf90_get_att(file_id, NF90_GLOBAL, "c_over_a",        &
+                              c_over_a))
+      if (abs(c_over_a - setup%c_over_a) .gt.                          &
+          1.0e-12_real64*max(1.0_real64, setup%c_over_a)) then
+        stop "c_over_a values do not match in ncdf_config_reader()"
+      end if
+    end if
+    if (nf90_inquire_attribute(file_id, NF90_GLOBAL, "EPI indexing")   &
+        .eq. nf90_noerr) then
+      call check(nf90_get_att(file_id, NF90_GLOBAL, "EPI indexing",    &
+                              epi_indexing))
+      if (trim(epi_indexing) .ne. trim(setup%epi_indexing)) then
+        stop "EPI indexing does not match in ncdf_config_reader()"
+      end if
     end if
 
     ! Check that the variable ID exists

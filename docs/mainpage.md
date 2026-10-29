@@ -5,6 +5,7 @@ The Fortran package **BraWl** (named after the Bragg-Williams model)  facilitate
 For an overview of the theoretical backgroun and capabilities of the package, you can check out our recent preprint: H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [arXiv:2505.05393](https://doi.org/10.48550/arXiv.2505.05393). You can also checkout the at the following subpage(s):
 
 * @ref theory
+* @ref lattices
 
 
 The latest version of this documentation can be found at: [chriswoodgate.github.io/BraWl/](https://chriswoodgate.github.io/BraWl/)

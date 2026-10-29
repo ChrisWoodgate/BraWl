@@ -1,0 +1,41 @@
+# Mode 301 means run a 3D simulation ('3') using Metropolis-Hastings ('01')
+mode=301
+
+# The hcp lattice with an arbitrary axial ratio, handled by runtime pair tables built at start-up
+lattice = hcp
+
+# Axial ratio c/a (Ti-like; the ideal value is sqrt(8/3) = 1.63299)
+c_over_a = 1.587
+
+# How the blocks of the interaction file are indexed: 'shells' (classes merged by distance) or 'classes'
+epi_indexing = shells
+
+# The lattice parameter (the in-plane spacing a)
+# This only matters for xyz file output. Internally the code works with normalised coordination shells for a given lattice type
+lattice_parameter = 2.95
+
+# Number of primitive cells in directions 1 (a_1), 2 (a_2), and 3 (a_3). Two atoms per cell
+n_1=4
+n_2=4
+n_3=4
+
+# Number of chemical species
+n_species = 3
+
+# The species names and numbers of atoms (128 in total)
+species_names = A B C
+species_numbers = 43 43 42
+
+# The range of the interaction (number of blocks in the file; the groups are printed at start-up) and the interaction file
+# Note: the interactions in hcp_epi.vij are synthetic values for testing, not fitted to a real alloy
+interaction_range = 10
+interaction_file = 'hcp_epi.vij'
+
+# N+1, where N is the distance to which you would like to compute conditional pair probabilities, ASRO parameters
+wc_range = 4
+
+# Swap just nearest-neighbours (if 'true') or any pair of lattice sites (if 'false')
+nbr_swap = .false.
+
+# Use a static seed for the PNRG for testing
+static_seed = .true.

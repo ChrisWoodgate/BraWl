@@ -19,6 +19,7 @@ module initialise
   use c_functions
   use bw_hamiltonian
   use random_site
+  use neighbour_tables
   use comms, only : comms_finalise, my_rank, comms_wait
   use iso_c_binding
   
@@ -163,9 +164,6 @@ module initialise
 
     type(run_params), intent(inout) :: setup
 
-    ! Axial ratio of the ideal hcp lattice
-    real(real64) :: c_over_a
-
     setup%full_energy => total_energy
 
     ! Setup functions used in calculations
@@ -271,37 +269,21 @@ module initialise
       setup%rdm_nbr => fcc_random_nbr
     else if(trim(setup%lattice) == 'ideal_hcp') then
 
-      ! Hexagonal primitive cell with a two-atom basis: one grid point
-      ! per cell, with the basis index distinguishing the two atoms
-      setup%n_basis = 2
-      setup%n_atoms = 2*setup%n_1*setup%n_2*setup%n_3
-      setup%n_grid_1 = setup%n_1
-      setup%n_grid_2 = setup%n_2
-      setup%n_grid_3 = setup%n_3
-
-      ! Primitive lattice vectors in units of the in-plane lattice
-      ! parameter a, with the ideal axial ratio c/a = sqrt(8/3)
-      c_over_a = sqrt(8.0_real64/3.0_real64)
-      setup%lattice_vectors(:,1) = (/  1.0_real64,                     &
-                                       0.0_real64,                     &
-                                       0.0_real64 /)
-      setup%lattice_vectors(:,2) = (/ -0.5_real64,                     &
-                                       0.5_real64*sqrt(3.0_real64),    &
-                                       0.0_real64 /)
-      setup%lattice_vectors(:,3) = (/  0.0_real64,                     &
-                                       0.0_real64,                     &
-                                       c_over_a /)
-
-      ! Cartesian positions of the two basis atoms in units of a,
-      ! corresponding to fractional coordinates (1/3, 2/3, 1/4) and
-      ! (2/3, 1/3, 3/4)
-      allocate(setup%basis_vectors(3,2))
-      setup%basis_vectors(:,1) = (/ 0.0_real64,                        &
-                                    1.0_real64/sqrt(3.0_real64),       &
-                                    0.25_real64*c_over_a /)
-      setup%basis_vectors(:,2) = (/ 0.5_real64,                        &
-                                    0.5_real64/sqrt(3.0_real64),       &
-                                    0.75_real64*c_over_a /)
+      ! The axial ratio is fixed at the ideal value; the pair tables
+      ! are built at that ratio with distance-shell indexing and serve
+      ! the ASRO analysis, while the energy uses the hard-coded kernels
+      if (setup%c_over_a .gt. 0.0_real64) then
+        call comms_finalise()
+        stop "c_over_a cannot be set for 'ideal_hcp'; use lattice 'hcp'"
+      end if
+      if (trim(setup%epi_indexing) .ne. 'shells') then
+        call comms_finalise()
+        stop "epi_indexing must be 'shells' for 'ideal_hcp'"
+      end if
+      setup%c_over_a = ideal_hcp_axial_ratio
+      call set_hcp_geometry(setup)
+      call build_hcp_tables(setup, max(setup%interaction_range,        &
+                                       setup%wc_range - 1))
 
       if (setup%interaction_range .eq. 1) then
         setup%nbr_energy => ideal_hcp_energy_1shells
@@ -329,6 +311,25 @@ module initialise
       end if
       setup%rdm_site => ideal_hcp_random_site
       setup%rdm_nbr => ideal_hcp_random_nbr
+      call print_pair_tables(setup)
+    else if(trim(setup%lattice) == 'hcp') then
+
+      ! General axial ratio: the energy, the ASRO analysis and the
+      ! indexing of the interaction file all follow the runtime pair
+      ! tables built for this ratio
+      if (setup%c_over_a .le. 0.0_real64) then
+        call comms_finalise()
+        stop "Lattice 'hcp' requires c_over_a in the input file"
+      end if
+      call set_hcp_geometry(setup)
+      call build_hcp_tables(setup, max(setup%interaction_range,        &
+                                       setup%wc_range - 1))
+      setup%nbr_energy => hcp_energy_tables
+      ! Swaps of 'nearest neighbours' use the twelve topological
+      ! nearest neighbours of the hcp lattice whatever the axial ratio
+      setup%rdm_site => ideal_hcp_random_site
+      setup%rdm_nbr => ideal_hcp_random_nbr
+      call print_pair_tables(setup)
     else
       call comms_finalise()
       stop 'Lattice type not yet implemented!'
@@ -344,6 +345,64 @@ module initialise
     end if
 
   end subroutine initialise_function_pointers
+
+  !> @brief   Subroutine to set the sizes, lattice vectors and basis
+  !>          positions of the hcp lattice for the axial ratio in
+  !>          setup%c_over_a
+  !>
+  !> @details The hcp lattice is stored on a hexagonal primitive cell
+  !>          with a two-atom basis: one grid point per cell, with the
+  !>          basis index distinguishing the two atoms. Lattice vectors
+  !>          are a_1 = (1, 0, 0), a_2 = (-1/2, sqrt(3)/2, 0) and
+  !>          a_3 = (0, 0, c/a) in units of the in-plane lattice
+  !>          parameter a, and the basis atoms sit at fractional
+  !>          coordinates (1/3, 2/3, 1/4) and (2/3, 1/3, 3/4).
+  !>
+  !> @author  C. D. Woodgate
+  !> @author  Claude Fable 5.1
+  !> @date    2026
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return None
+  subroutine set_hcp_geometry(setup)
+
+    type(run_params), intent(inout) :: setup
+    real(real64) :: c_over_a
+
+    c_over_a = setup%c_over_a
+
+    setup%n_basis = 2
+    setup%n_atoms = 2*setup%n_1*setup%n_2*setup%n_3
+    setup%n_grid_1 = setup%n_1
+    setup%n_grid_2 = setup%n_2
+    setup%n_grid_3 = setup%n_3
+
+    ! Primitive lattice vectors in units of the in-plane lattice
+    ! parameter a
+    setup%lattice_vectors(:,1) = (/  1.0_real64,                       &
+                                     0.0_real64,                       &
+                                     0.0_real64 /)
+    setup%lattice_vectors(:,2) = (/ -0.5_real64,                       &
+                                     0.5_real64*sqrt(3.0_real64),      &
+                                     0.0_real64 /)
+    setup%lattice_vectors(:,3) = (/  0.0_real64,                       &
+                                     0.0_real64,                       &
+                                     c_over_a /)
+
+    ! Cartesian positions of the two basis atoms in units of a,
+    ! corresponding to fractional coordinates (1/3, 2/3, 1/4) and
+    ! (2/3, 1/3, 3/4)
+    if (allocated(setup%basis_vectors)) deallocate(setup%basis_vectors)
+    allocate(setup%basis_vectors(3,2))
+    setup%basis_vectors(:,1) = (/ 0.0_real64,                          &
+                                  1.0_real64/sqrt(3.0_real64),         &
+                                  0.25_real64*c_over_a /)
+    setup%basis_vectors(:,2) = (/ 0.5_real64,                          &
+                                  0.5_real64/sqrt(3.0_real64),         &
+                                  0.75_real64*c_over_a /)
+
+  end subroutine set_hcp_geometry
 
   !> @brief   Subroutine to allocate memory for storing effective pair
   !>          interactions
@@ -463,6 +522,7 @@ module initialise
 
     type(run_params), intent(inout) :: setup
 
+    call clean_up_tables(setup)
     if (allocated(setup%basis_vectors)) deallocate(setup%basis_vectors)
     if (allocated(shells)) deallocate(shells)
     if (allocated(config)) deallocate(config)
@@ -542,7 +602,8 @@ module initialise
       n_sites = setup%n_1*setup%n_2*setup%n_3*2
     else if (setup%lattice == 'fcc') then
       n_sites = setup%n_1*setup%n_2*setup%n_3*4
-    else if (setup%lattice == 'ideal_hcp') then
+    else if ((setup%lattice == 'ideal_hcp') .or.                      &
+             (setup%lattice == 'hcp')) then
       n_sites = setup%n_1*setup%n_2*setup%n_3*2
     else
       call comms_finalise()
@@ -703,8 +764,9 @@ module initialise
           end do ! i
         end do ! j
       end do ! k
-    ! Deal with ideal hcp case: every grid point is a lattice site
-    else if(trim(setup%lattice) == 'ideal_hcp') then
+    ! Deal with the hcp cases: every grid point is a lattice site
+    else if((trim(setup%lattice) == 'ideal_hcp') .or.                  &
+            (trim(setup%lattice) == 'hcp')) then
       ! Loop over lattice sites
       do k=1, grid_dims(4)
         do j=1, grid_dims(3)
