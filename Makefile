@@ -150,3 +150,8 @@ metropolis.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o
 initialise.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o comms.o constants.o derived_types.o comms.o
 main.o: initialise.o shared_data.o kinds.o c_functions.o netcdf_io.o\
 	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o derived_types.o
+howto_examples.o: initialise.o kinds.o shared_data.o io.o comms.o display.o c_functions.o\
+	bw_hamiltonian.o random_site.o analytics.o netcdf_io.o write_xyz.o metropolis_output.o\
+	derived_types.o metropolis.o
+example.o: howto_examples.o initialise.o comms.o shared_data.o metropolis.o io.o kinds.o\
+	c_functions.o netcdf_io.o write_xyz.o metropolis_output.o display.o
