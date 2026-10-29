@@ -32,6 +32,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Check the ideal hcp neighbour tables against brute force
+        run: |
+          python tests/ideal_hcp_neighbour_tables.py --check src/random_site.f90 src/bw_hamiltonian.f90
+
       - name: Run serial compilation with gfortran
         run: |
           make clean
@@ -40,6 +44,12 @@ jobs:
       - name: Run serial Metropolis test
         run: |
           cd tests/01_serial_metropolis
+          ../../brawl.run
+          python ../ci_test.py
+
+      - name: Run serial Metropolis test on the ideal hcp lattice
+        run: |
+          cd tests/05_serial_metropolis_hcp
           ../../brawl.run
           python ../ci_test.py
 

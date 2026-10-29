@@ -106,6 +106,26 @@ By default, the code will look for input files named `brawl.inp` (defining the m
 mpirun -np <num_processors> /path/to/BraWl/brawl.run input=<brawl_input_name> metropolis=<metropolis_input_name>
 ```
 
+## Lattice types
+The `lattice` keyword in `brawl.inp` selects one of the hard-coded lattice types. In every case `n_1`, `n_2`, and `n_3` give the number of unit cells in each direction and `lattice_parameter` is only used when writing xyz files.
+- `simple_cubic`, `bcc`, and `fcc` use the conventional cubic cell, so `n_1`, `n_2`, and `n_3` count cubic cells containing 1, 2, and 4 atoms respectively, and `lattice_parameter` is the cubic lattice constant. (For `simple_cubic`, each "cell" is a block of 2x2x2 lattice sites, i.e. 8 atoms.) Interactions are supported out to 2 (`simple_cubic`), 10 (`bcc`), and 6 (`fcc`) coordination shells.
+- `ideal_hcp` is the hexagonal close-packed lattice with the ideal axial ratio $c/a = \sqrt{8/3}$, represented by the hexagonal primitive cell with lattice vectors $\mathbf{a}_1 = (1, 0, 0)$, $\mathbf{a}_2 = (-1/2, \sqrt{3}/2, 0)$, $\mathbf{a}_3 = (0, 0, \sqrt{8/3})$ in units of $a$, and a two-atom basis at fractional coordinates $(1/3, 2/3, 1/4)$ and $(2/3, 1/3, 3/4)$. Here `n_1`, `n_2`, and `n_3` count primitive cells of two atoms each, and `lattice_parameter` is the in-plane spacing $a$. Interactions are supported out to 10 coordination shells, which for the ideal lattice are:
+
+| Shell | Distance | Coordination |
+|---|---|---|
+| 1 | $a$ | 12 |
+| 2 | $\sqrt{2}\,a$ | 6 |
+| 3 | $\sqrt{8/3}\,a$ | 2 |
+| 4 | $\sqrt{3}\,a$ | 18 |
+| 5 | $\sqrt{11/3}\,a$ | 12 |
+| 6 | $2a$ | 6 |
+| 7 | $\sqrt{5}\,a$ | 12 |
+| 8 | $\sqrt{17/3}\,a$ | 12 |
+| 9 | $\sqrt{6}\,a$ | 6 |
+| 10 | $\sqrt{19/3}\,a$ | 6 |
+
+The effective pair interactions in the interaction file must be listed in this shell order, and the conditional pair probabilities controlled by `wc_range` are reported on the same shells (with the first entry being the on-site term). The per-sublattice neighbour tables used by the hcp energy kernels are generated, and checked against a brute-force enumeration, by `tests/ideal_hcp_neighbour_tables.py`.
+
 ## Examples
 If you navigate to the `examples` subdirectory, you should find various further subdirectories containing some example input files demonstrating the code's usage, which can be run inside those directories. These input files are commented to explain what the various parameters mean and do.
 

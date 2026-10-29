@@ -27,21 +27,39 @@ module derived_types
   !>          parameters which are common to all sampling methods
   !>
   !> @author  C. D. Woodgate
+  !> @author  Claude Fable 5.1
   !>
-  !> @date    2020-2025
+  !> @date    2020-2026
   !>
   !> @param mode Paramater defining the mode of operation
-  !> @param n_1 Number of atoms in direction 1 (x, for orthorhombic systems)
-  !> @param n_2 Number of atoms in direction 1 (x, for orthorhombic systems)
-  !> @param n_3 Number of atoms in direction 1 (x, for orthorhombic systems)
+  !> @param n_1 Number of unit cells in direction 1 (x, for orthorhombic
+  !>            systems)
+  !> @param n_2 Number of unit cells in direction 2 (y, for orthorhombic
+  !>            systems)
+  !> @param n_3 Number of unit cells in direction 3 (z, for orthorhombic
+  !>            systems)
   !> @param n_basis Number of atoms in basis (Note: not user-specified, determined based on lattice type)
+  !> @param n_grid_1 Extent of the configuration array in direction 1
+  !>                 (Note: not user-specified, determined based on
+  !>                 lattice type)
+  !> @param n_grid_2 Extent of the configuration array in direction 2
+  !>                 (Note: not user-specified, determined based on
+  !>                 lattice type)
+  !> @param n_grid_3 Extent of the configuration array in direction 3
+  !>                 (Note: not user-specified, determined based on
+  !>                 lattice type)
   !> @param n_species Number of chemical species
   !> @param n_atoms Number of atoms in the cell (Note: not user-specified, determined based on size and lattice type)
   !> @param static_seed Whether to use a static PRNG seed (for testing)
-  !> @param lattice String naming the lattice type. Currently 'fcc', 'bcc', and 'simple_cubic' are supported.
+  !> @param lattice String naming the lattice type. Currently 'fcc',
+  !>                'bcc', 'simple_cubic', and 'ideal_hcp' are
+  !>                supported.
   !> @param lattice_parameter Lattice constant (Note: only used for i/o of xyz files. Does not affect calculations internally)
-  !> @param lattice_vectors (Developmental.) Vectors specifying the underlying lattice
-  !> @param basis_vectors (Developmental.) Set of basis vectors
+  !> @param lattice_vectors Vectors between neighbouring points of the
+  !>                        simulation grid, one per column, in units
+  !>                        of the lattice parameter
+  !> @param basis_vectors Cartesian positions of the basis atoms, one
+  !>                      per column, in units of the lattice parameter
   !> @param species_names Set of names of chemical species (elements)
   !> @param species_concentrations Concentrations of each chemical species (cannot specify this and species_numbers)
   !> @param species_numbers Number of atoms of each chemical species (cannot specify this and species_concentrations)
@@ -60,6 +78,14 @@ module derived_types
     ! Number of unit cells in each direction and
     ! number of atoms in the basis
     integer :: n_1, n_2, n_3, n_basis
+    ! Extent of the configuration array in each direction. This is
+    ! determined by the lattice type. For the cubic lattices (simple
+    ! cubic, bcc, fcc) the simulation grid is a simple cubic grid of
+    ! spacing a/2 spanning 2*n_i points in each direction, with grid
+    ! points not belonging to the lattice left empty. Lattices with a
+    ! multi-atom basis (e.g. ideal_hcp) use one grid point per unit
+    ! cell, with the basis index distinguishing the atoms in the cell.
+    integer :: n_grid_1, n_grid_2, n_grid_3
     ! Number of chemical species
     integer :: n_species
     ! Number of atoms
@@ -70,9 +96,13 @@ module derived_types
     character(len=20) :: lattice
     ! Lattice parameter (for writing xyz file)
     real(real64) :: lattice_parameter
-    ! Lattice vectors (for writing xyz file)
+    ! Vectors between neighbouring points of the simulation grid, one
+    ! per column, in units of the lattice parameter. For the cubic
+    ! lattices these are half the conventional cell vectors; for
+    ! ideal_hcp they are the primitive hexagonal cell vectors.
     real(real64), dimension(3,3) :: lattice_vectors
-    ! Vector to second basis atom (for writing xyz file)
+    ! Cartesian positions of the basis atoms, one per column, in units
+    ! of the lattice parameter
     real(real64), dimension(:,:), allocatable :: basis_vectors
     ! Names of the chemical species
     character(len=2), dimension(:), allocatable :: species_names

@@ -133,8 +133,9 @@ module initialise
 
     if (metropolis%calculate_alro) then
       ! Radial densities as a function of temperature
-      allocate(av_order_of_T(setup%n_species, setup%n_basis, 2*setup%n_1,&
-                             2*setup%n_2, 2*setup%n_3, metropolis%T_steps))
+      allocate(av_order_of_T(setup%n_species, setup%n_basis,           &
+                             setup%n_grid_1, setup%n_grid_2,           &
+                             setup%n_grid_3, metropolis%T_steps))
       av_order_of_T = 0.0_real64
     end if
 
@@ -142,10 +143,18 @@ module initialise
 
 #endif
 
-  !> @brief   Subroutine to initalise function pointers
+  !> @brief   Subroutine to initalise function pointers and the
+  !>          lattice-dependent sizes of the simulation cell
+  !>
+  !> @details Sets the number of atoms in the basis, the total number of
+  !>          atoms, and the extent of the configuration array in each
+  !>          direction for the requested lattice type, then points the
+  !>          energy, random site, and random neighbour function
+  !>          pointers at the relevant hard-coded implementations.
   !>
   !> @author  C. D. Woodgate
-  !> @date    2019-2025
+  !> @author  Claude Fable 5.1
+  !> @date    2019-2026
   !>
   !> @param  setup Derived type containing simulation parameters
   !>
@@ -154,12 +163,25 @@ module initialise
 
     type(run_params), intent(inout) :: setup
 
+    ! Axial ratio of the ideal hcp lattice
+    real(real64) :: c_over_a
+
     setup%full_energy => total_energy
 
     ! Setup functions used in calculations
     if(trim(setup%lattice) == 'simple_cubic') then
       setup%n_basis = 1
       setup%n_atoms = 8*setup%n_1*setup%n_2*setup%n_3
+      setup%n_grid_1 = 2*setup%n_1
+      setup%n_grid_2 = 2*setup%n_2
+      setup%n_grid_3 = 2*setup%n_3
+      ! Every grid point is a lattice site, one lattice parameter apart
+      setup%lattice_vectors = reshape( (/ 1.0, 0.0, 0.0,     &
+                                          0.0, 1.0, 0.0,     &
+                                          0.0, 0.0, 1.0  /), &
+                                       (/ 3, 3 /))
+      allocate(setup%basis_vectors(3,1))
+      setup%basis_vectors(:,1)   = (/ 0.0, 0.0, 0.0 /)
       if (setup%interaction_range .eq. 1) then
         setup%nbr_energy => simple_cubic_energy_1shells
       else if (setup%interaction_range .eq. 2) then
@@ -173,6 +195,9 @@ module initialise
     else if(trim(setup%lattice) == 'bcc') then
       setup%n_basis = 1
       setup%n_atoms = 2*setup%n_1*setup%n_2*setup%n_3
+      setup%n_grid_1 = 2*setup%n_1
+      setup%n_grid_2 = 2*setup%n_2
+      setup%n_grid_3 = 2*setup%n_3
       setup%lattice_vectors = reshape( (/ 0.5, 0.0, 0.0,     &
                                           0.0, 0.5, 0.0,     &
                                           0.0, 0.0, 0.5  /), &
@@ -213,6 +238,9 @@ module initialise
 
       setup%n_basis = 1
       setup%n_atoms = 4*setup%n_1*setup%n_2*setup%n_3
+      setup%n_grid_1 = 2*setup%n_1
+      setup%n_grid_2 = 2*setup%n_2
+      setup%n_grid_3 = 2*setup%n_3
       setup%lattice_vectors = reshape( (/ 0.5, 0.0, 0.0,     &
                                           0.0, 0.5, 0.0,     &
                                           0.0, 0.0, 0.5  /), &
@@ -241,11 +269,19 @@ module initialise
       end if
       setup%rdm_site => fcc_random_site
       setup%rdm_nbr => fcc_random_nbr
-    else if(trim(setup%lattice) == 'hcp_ideal') then
+    else if(trim(setup%lattice) == 'ideal_hcp') then
 
-      setup%n_basis = 1
-      setup%n_atoms = 4*setup%n_1*setup%n_2*setup%n_3
+      ! Hexagonal primitive cell with a two-atom basis: one grid point
+      ! per cell, with the basis index distinguishing the two atoms
+      setup%n_basis = 2
+      setup%n_atoms = 2*setup%n_1*setup%n_2*setup%n_3
+      setup%n_grid_1 = setup%n_1
+      setup%n_grid_2 = setup%n_2
+      setup%n_grid_3 = setup%n_3
 
+      ! Primitive lattice vectors in units of the in-plane lattice
+      ! parameter a, with the ideal axial ratio c/a = sqrt(8/3)
+      c_over_a = sqrt(8.0_real64/3.0_real64)
       setup%lattice_vectors(:,1) = (/  1.0_real64,                     &
                                        0.0_real64,                     &
                                        0.0_real64 /)
@@ -254,18 +290,45 @@ module initialise
                                        0.0_real64 /)
       setup%lattice_vectors(:,3) = (/  0.0_real64,                     &
                                        0.0_real64,                     &
-                                       sqrt(8.0_real64/3.0_real64) /)
+                                       c_over_a /)
 
+      ! Cartesian positions of the two basis atoms in units of a,
+      ! corresponding to fractional coordinates (1/3, 2/3, 1/4) and
+      ! (2/3, 1/3, 3/4)
       allocate(setup%basis_vectors(3,2))
-      setup%basis_vectors(:,1) = (/ 1.0_real64/3.0_real64, &
-                                    2.0_real64/3.0_real64, &
-                                    0.25_real64 /)
-      setup%basis_vectors(:,2) = (/ 2.0_real64/3.0_real64, &
-                                    1.0_real64/3.0_real64, &
-                                    0.75_real64 /)
+      setup%basis_vectors(:,1) = (/ 0.0_real64,                        &
+                                    1.0_real64/sqrt(3.0_real64),       &
+                                    0.25_real64*c_over_a /)
+      setup%basis_vectors(:,2) = (/ 0.5_real64,                        &
+                                    0.5_real64/sqrt(3.0_real64),       &
+                                    0.75_real64*c_over_a /)
 
-      call comms_finalise()
-      stop 'HCP implementation not finished yet!'
+      if (setup%interaction_range .eq. 1) then
+        setup%nbr_energy => ideal_hcp_energy_1shells
+      else if (setup%interaction_range .eq. 2) then
+        setup%nbr_energy => ideal_hcp_energy_2shells
+      else if (setup%interaction_range .eq. 3) then
+        setup%nbr_energy => ideal_hcp_energy_3shells
+      else if (setup%interaction_range .eq. 4) then
+        setup%nbr_energy => ideal_hcp_energy_4shells
+      else if (setup%interaction_range .eq. 5) then
+        setup%nbr_energy => ideal_hcp_energy_5shells
+      else if (setup%interaction_range .eq. 6) then
+        setup%nbr_energy => ideal_hcp_energy_6shells
+      else if (setup%interaction_range .eq. 7) then
+        setup%nbr_energy => ideal_hcp_energy_7shells
+      else if (setup%interaction_range .eq. 8) then
+        setup%nbr_energy => ideal_hcp_energy_8shells
+      else if (setup%interaction_range .eq. 9) then
+        setup%nbr_energy => ideal_hcp_energy_9shells
+      else if (setup%interaction_range .eq. 10) then
+        setup%nbr_energy => ideal_hcp_energy_10shells
+      else
+        call comms_finalise()
+        stop 'Unsupported number of shells'
+      end if
+      setup%rdm_site => ideal_hcp_random_site
+      setup%rdm_nbr => ideal_hcp_random_nbr
     else
       call comms_finalise()
       stop 'Lattice type not yet implemented!'
@@ -318,7 +381,8 @@ module initialise
     shells = 0.0_real64
 
     ! Allocate array for storing configuration
-    allocate(config(setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3))
+    allocate(config(setup%n_basis, setup%n_grid_1, setup%n_grid_2,     &
+                    setup%n_grid_3))
     config = 0_array_int
 
   end subroutine initialise_local_arrays
@@ -361,8 +425,9 @@ module initialise
 
     if (metropolis%calculate_alro) then
       ! Radial densities as a function of temperature
-      allocate(order_of_T(setup%n_species, setup%n_basis, 2*setup%n_1,  &
-                          2*setup%n_2, 2*setup%n_3, metropolis%T_steps))
+      allocate(order_of_T(setup%n_species, setup%n_basis,              &
+                          setup%n_grid_1, setup%n_grid_2,              &
+                          setup%n_grid_3, metropolis%T_steps))
       order_of_T = 0.0_real64
     end if
 
@@ -452,7 +517,8 @@ module initialise
   !>          (or numbers of particles of) each species
   !>
   !> @author  C. D. Woodgate
-  !> @date    2019-2025
+  !> @author  Claude Fable 5.1
+  !> @date    2019-2026
   !>
   !> @param  setup Derived type containing simulation parameters
   !> @param  config Array for simulation configuration
@@ -476,6 +542,8 @@ module initialise
       n_sites = setup%n_1*setup%n_2*setup%n_3*2
     else if (setup%lattice == 'fcc') then
       n_sites = setup%n_1*setup%n_2*setup%n_3*4
+    else if (setup%lattice == 'ideal_hcp') then
+      n_sites = setup%n_1*setup%n_2*setup%n_3*2
     else
       call comms_finalise()
       stop 'Lattice type not supported!'
@@ -635,13 +703,14 @@ module initialise
           end do ! i
         end do ! j
       end do ! k
+    ! Deal with ideal hcp case: every grid point is a lattice site
     else if(trim(setup%lattice) == 'ideal_hcp') then
       ! Loop over lattice sites
       do k=1, grid_dims(4)
         do j=1, grid_dims(3)
           do i=1, grid_dims(2)
             do b=1, grid_dims(1)
-              do while (config(i,j,k,b) .eq. 0_int32)
+              do while (config(b,i,j,k) .eq. 0_int32)
                 ! Get a random number
                 rand = genrand()
                 ! Loop over species
@@ -650,7 +719,7 @@ module initialise
                   if ((rand .ge. sum(setup%species_concentrations(0:(l-1)))) .and. &
                       (rand .le. sum(setup%species_concentrations(0:l)))) then
                     if (check(l) .lt. species_count(l)) then
-                      config(i,j,k,b) = l
+                      config(b,i,j,k) = l
                       check(l) = check(l) + 1
                     end if
                   end if

@@ -156,6 +156,9 @@ module io
     parameters%n_2 = 4
     parameters%n_3 = 4
     parameters%n_basis = 1
+    parameters%n_grid_1 = 8
+    parameters%n_grid_2 = 8
+    parameters%n_grid_3 = 8
     parameters%n_species = 4
     parameters%interaction_file = 'V_ijs.txt'
     parameters%wc_range = 2
