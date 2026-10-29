@@ -109,7 +109,7 @@ def fortran_table(name, shell, offsets, shell_d2, indent="  "):
     else:
         dist = f"sqrt({d2.numerator}/{d2.denominator})*a"
     lines.append(f"{indent}! Shell {shell} of the ideal hcp lattice: {n} "
-                 f"neighbours at distance {dist}.")
+                 f"neighbours at {dist}.")
     lines.append(f"{indent}! Entries are (basis index of the neighbour, "
                  "offset along a_1,")
     lines.append(f"{indent}! offset along a_2, offset along a_3), listed "

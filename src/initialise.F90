@@ -296,12 +296,32 @@ module initialise
                                     0.5_real64/sqrt(3.0_real64),       &
                                     0.75_real64*c_over_a /)
 
+      if (setup%interaction_range .eq. 1) then
+        setup%nbr_energy => ideal_hcp_energy_1shells
+      else if (setup%interaction_range .eq. 2) then
+        setup%nbr_energy => ideal_hcp_energy_2shells
+      else if (setup%interaction_range .eq. 3) then
+        setup%nbr_energy => ideal_hcp_energy_3shells
+      else if (setup%interaction_range .eq. 4) then
+        setup%nbr_energy => ideal_hcp_energy_4shells
+      else if (setup%interaction_range .eq. 5) then
+        setup%nbr_energy => ideal_hcp_energy_5shells
+      else if (setup%interaction_range .eq. 6) then
+        setup%nbr_energy => ideal_hcp_energy_6shells
+      else if (setup%interaction_range .eq. 7) then
+        setup%nbr_energy => ideal_hcp_energy_7shells
+      else if (setup%interaction_range .eq. 8) then
+        setup%nbr_energy => ideal_hcp_energy_8shells
+      else if (setup%interaction_range .eq. 9) then
+        setup%nbr_energy => ideal_hcp_energy_9shells
+      else if (setup%interaction_range .eq. 10) then
+        setup%nbr_energy => ideal_hcp_energy_10shells
+      else
+        call comms_finalise()
+        stop 'Unsupported number of shells'
+      end if
       setup%rdm_site => ideal_hcp_random_site
       setup%rdm_nbr => ideal_hcp_random_nbr
-
-      ! Energy kernels for this lattice are not yet implemented
-      call comms_finalise()
-      stop 'ideal_hcp energy kernels not yet implemented'
     else
       call comms_finalise()
       stop 'Lattice type not yet implemented!'
