@@ -64,9 +64,9 @@ module bw_hamiltonian
 
     energy=0.0_real64
 
-    do l=1, 2*setup%n_3
-      do k=1, 2*setup%n_2
-        do j=1, 2*setup%n_1
+    do l=1, setup%n_grid_3
+      do k=1, setup%n_grid_2
+        do j=1, setup%n_grid_1
           do i=1, setup%n_basis
             if (config(i,j,k,l) .eq. 0_array_int) cycle
             energy = energy + setup%nbr_energy(config, i, j, k, l)

@@ -1039,7 +1039,8 @@ module wang_landau
     allocate(bin_energy(bins))
     allocate(mean_energy(300,2))
     allocate(prob(bins))
-    allocate(config_per_bin(bins, setup_internal%n_basis, 2*setup_internal%n_1, 2*setup_internal%n_2, 2*setup_internal%n_3))
+    allocate(config_per_bin(bins, setup_internal%n_basis, setup_internal%n_grid_1, &
+                            setup_internal%n_grid_2, setup_internal%n_grid_3))
     allocate(config_store(bins))
   end subroutine primary_array_allocation
 
@@ -1559,7 +1560,8 @@ module wang_landau
     real(real64) :: rand_val
     integer, allocatable :: ranks_with_config(:)
     integer :: pick_rank
-    integer(array_int) :: config_buf(setup_internal%n_basis, 2*setup_internal%n_1, 2*setup_internal%n_2, 2*setup_internal%n_3)
+    integer(array_int) :: config_buf(setup_internal%n_basis, setup_internal%n_grid_1, &
+                                     setup_internal%n_grid_2, setup_internal%n_grid_3)
 
     allocate(all_stores(bins, mpi_processes))
 

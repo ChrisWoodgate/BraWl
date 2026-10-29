@@ -47,9 +47,9 @@ module analytics
     real(real64), dimension(:,:,:,:,:), intent(inout), allocatable :: averages
     integer :: i,j,k,l,m
 
-    do m=1, 2*setup%n_3
-      do l=1, 2*setup%n_2
-        do k=1, 2*setup%n_1
+    do m=1, setup%n_grid_3
+      do l=1, setup%n_grid_2
+        do k=1, setup%n_grid_1
           do j=1, setup%n_basis
             do i=1, setup%n_species
               if (config(j,k,l,m) == i) then
@@ -110,9 +110,9 @@ module analytics
     total_count = 0
 
     do b=1, setup%n_basis
-      do k=1, 2*setup%n_3
-        do j=1, 2*setup%n_2
-          do i=1, 2*setup%n_1
+      do k=1, setup%n_grid_3
+        do j=1, setup%n_grid_2
+          do i=1, setup%n_grid_1
             if (config(b,i,j,k) .ne. 0_array_int) then
               total_count = total_count + 1
             end if
@@ -211,9 +211,9 @@ module analytics
     !real(real64), dimension(3) :: r_vec
     real(real64), dimension(:), allocatable :: all_shells, shells
 
-    ! Factor of eight to account for the fact that simulation
-    ! doubles number of cells in each direction to build lattice
-    allocate(all_shells(8*setup%n_1*setup%n_2*setup%n_3*setup%n_basis+1))
+    ! One entry for every point of the simulation grid (plus one)
+    allocate(all_shells(setup%n_grid_1*setup%n_grid_2*setup%n_grid_3    &
+                        *setup%n_basis+1))
 
     all_shells = 0.0_real64
     shells = 0.0_real64
@@ -238,9 +238,9 @@ module analytics
 !    end do
 
     ! Loop over all lattice sites
-    do k=1, 2*setup%n_3
-      do j=1, 2*setup%n_2
-        do i=1, 2*setup%n_1
+    do k=1, setup%n_grid_3
+      do j=1, setup%n_grid_2
+        do i=1, setup%n_grid_1
           do b=1, setup%n_basis
             ! Cycle if this lattice site is empty
             if (configuration(b,i,j,k) .eq. 0_array_int) cycle
@@ -313,9 +313,9 @@ module analytics
     r_densities = 0.0_real64
 
     ! Count how many of each species there are
-    do i_3=1, setup%n_3*2
-      do i_2=1, setup%n_2*2
-        do i_1=1, setup%n_1*2
+    do i_3=1, setup%n_grid_3
+      do i_2=1, setup%n_grid_2
+        do i_1=1, setup%n_grid_1
           do i_b=1, setup%n_basis
             do l=1, setup%n_species
               if (configuration(i_b, i_1, i_2, i_3) .eq.              &
@@ -341,20 +341,20 @@ module analytics
     loop_3 = min(setup%n_3, 5)
 
     ! Loop over all lattice sites
-    do i_3=1, 2*setup%n_3
-      do i_2=1, 2*setup%n_2
-        do i_1=1, 2*setup%n_1
+    do i_3=1, setup%n_grid_3
+      do i_2=1, setup%n_grid_2
+        do i_1=1, setup%n_grid_1
           do i_b=1, setup%n_basis
           ! Cycle if this site is empty
           if (configuration(i_b, i_1, i_2, i_3) .eq. 0_array_int) cycle
             ! Loop over neighbouring sites, accounting for
             ! P.B.C.s
             do jj_3=i_3-loop_3, i_3+loop_3, 1
-              j_3 = modulo(jj_3-1, 2*setup%n_3) + 1
+              j_3 = modulo(jj_3-1, setup%n_grid_3) + 1
               do jj_2=i_2-loop_2, i_2+loop_2, 1
-                j_2 = modulo(jj_2-1, 2*setup%n_2) + 1
+                j_2 = modulo(jj_2-1, setup%n_grid_2) + 1
                 do jj_1=i_1-loop_1, i_1+loop_1, 1
-                  j_1 = modulo(jj_1-1, 2*setup%n_1) + 1
+                  j_1 = modulo(jj_1-1, setup%n_grid_1) + 1
                   do j_b=1, setup%n_basis
                     if (configuration(j_b, j_1, j_2, j_3) .eq. 0_array_int) cycle
                     ! Compute the distance to this site, accounting
@@ -363,12 +363,12 @@ module analytics
                     d_y = real(i_2-j_2)
                     d_z = real(i_3-j_3)
 
-                    d_x = d_x - float(2*setup%n_1)* &
-                                nint(d_x/float(2*setup%n_1))
-                    d_y = d_y - float(2*setup%n_2)* &
-                                nint(d_y/float(2*setup%n_2))
-                    d_z = d_z - float(2*setup%n_3)* &
-                                nint(d_z/float(2*setup%n_3))
+                    d_x = d_x - float(setup%n_grid_1)* &
+                                nint(d_x/float(setup%n_grid_1))
+                    d_y = d_y - float(setup%n_grid_2)* &
+                                nint(d_y/float(setup%n_grid_2))
+                    d_z = d_z - float(setup%n_grid_3)* &
+                                nint(d_z/float(setup%n_grid_3))
 
                     distance = sqrt(d_x**2 + d_y**2 + d_z**2)
 

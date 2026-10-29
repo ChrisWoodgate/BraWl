@@ -133,8 +133,9 @@ module initialise
 
     if (metropolis%calculate_alro) then
       ! Radial densities as a function of temperature
-      allocate(av_order_of_T(setup%n_species, setup%n_basis, 2*setup%n_1,&
-                             2*setup%n_2, 2*setup%n_3, metropolis%T_steps))
+      allocate(av_order_of_T(setup%n_species, setup%n_basis,             &
+                             setup%n_grid_1, setup%n_grid_2,             &
+                             setup%n_grid_3, metropolis%T_steps))
       av_order_of_T = 0.0_real64
     end if
 
@@ -142,10 +143,18 @@ module initialise
 
 #endif
 
-  !> @brief   Subroutine to initalise function pointers
+  !> @brief   Subroutine to initalise function pointers and the
+  !>          lattice-dependent sizes of the simulation cell
+  !>
+  !> @details Sets the number of atoms in the basis, the total number of
+  !>          atoms, and the extent of the configuration array in each
+  !>          direction for the requested lattice type, then points the
+  !>          energy, random site, and random neighbour function
+  !>          pointers at the relevant hard-coded implementations.
   !>
   !> @author  C. D. Woodgate
-  !> @date    2019-2025
+  !> @author  Claude Fable 5.1
+  !> @date    2019-2026
   !>
   !> @param  setup Derived type containing simulation parameters
   !>
@@ -160,6 +169,9 @@ module initialise
     if(trim(setup%lattice) == 'simple_cubic') then
       setup%n_basis = 1
       setup%n_atoms = 8*setup%n_1*setup%n_2*setup%n_3
+      setup%n_grid_1 = 2*setup%n_1
+      setup%n_grid_2 = 2*setup%n_2
+      setup%n_grid_3 = 2*setup%n_3
       if (setup%interaction_range .eq. 1) then
         setup%nbr_energy => simple_cubic_energy_1shells
       else if (setup%interaction_range .eq. 2) then
@@ -173,6 +185,9 @@ module initialise
     else if(trim(setup%lattice) == 'bcc') then
       setup%n_basis = 1
       setup%n_atoms = 2*setup%n_1*setup%n_2*setup%n_3
+      setup%n_grid_1 = 2*setup%n_1
+      setup%n_grid_2 = 2*setup%n_2
+      setup%n_grid_3 = 2*setup%n_3
       setup%lattice_vectors = reshape( (/ 0.5, 0.0, 0.0,     &
                                           0.0, 0.5, 0.0,     &
                                           0.0, 0.0, 0.5  /), &
@@ -213,6 +228,9 @@ module initialise
 
       setup%n_basis = 1
       setup%n_atoms = 4*setup%n_1*setup%n_2*setup%n_3
+      setup%n_grid_1 = 2*setup%n_1
+      setup%n_grid_2 = 2*setup%n_2
+      setup%n_grid_3 = 2*setup%n_3
       setup%lattice_vectors = reshape( (/ 0.5, 0.0, 0.0,     &
                                           0.0, 0.5, 0.0,     &
                                           0.0, 0.0, 0.5  /), &
@@ -318,7 +336,8 @@ module initialise
     shells = 0.0_real64
 
     ! Allocate array for storing configuration
-    allocate(config(setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3))
+    allocate(config(setup%n_basis, setup%n_grid_1, setup%n_grid_2,       &
+                    setup%n_grid_3))
     config = 0_array_int
 
   end subroutine initialise_local_arrays
@@ -361,8 +380,9 @@ module initialise
 
     if (metropolis%calculate_alro) then
       ! Radial densities as a function of temperature
-      allocate(order_of_T(setup%n_species, setup%n_basis, 2*setup%n_1,  &
-                          2*setup%n_2, 2*setup%n_3, metropolis%T_steps))
+      allocate(order_of_T(setup%n_species, setup%n_basis,                &
+                          setup%n_grid_1, setup%n_grid_2,                &
+                          setup%n_grid_3, metropolis%T_steps))
       order_of_T = 0.0_real64
     end if
 

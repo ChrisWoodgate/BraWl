@@ -182,7 +182,7 @@ module metropolis
 
     !if (metropolis%calculate_alro) then
       ! Allocate memory for order_parameters
-      allocate(order(setup%n_species, setup%n_basis, 2*setup%n_1, 2*setup%n_2, 2*setup%n_3))
+      allocate(order(setup%n_species, setup%n_basis, setup%n_grid_1, setup%n_grid_2, setup%n_grid_3))
     !end if
 
     if(my_rank == 0) then

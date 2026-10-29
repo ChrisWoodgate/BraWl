@@ -27,14 +27,18 @@ module derived_types
   !>          parameters which are common to all sampling methods
   !>
   !> @author  C. D. Woodgate
+  !> @author  Claude Fable 5.1
   !>
-  !> @date    2020-2025
+  !> @date    2020-2026
   !>
   !> @param mode Paramater defining the mode of operation
-  !> @param n_1 Number of atoms in direction 1 (x, for orthorhombic systems)
-  !> @param n_2 Number of atoms in direction 1 (x, for orthorhombic systems)
-  !> @param n_3 Number of atoms in direction 1 (x, for orthorhombic systems)
+  !> @param n_1 Number of unit cells in direction 1 (x, for orthorhombic systems)
+  !> @param n_2 Number of unit cells in direction 2 (y, for orthorhombic systems)
+  !> @param n_3 Number of unit cells in direction 3 (z, for orthorhombic systems)
   !> @param n_basis Number of atoms in basis (Note: not user-specified, determined based on lattice type)
+  !> @param n_grid_1 Extent of the configuration array in direction 1 (Note: not user-specified, determined based on lattice type)
+  !> @param n_grid_2 Extent of the configuration array in direction 2 (Note: not user-specified, determined based on lattice type)
+  !> @param n_grid_3 Extent of the configuration array in direction 3 (Note: not user-specified, determined based on lattice type)
   !> @param n_species Number of chemical species
   !> @param n_atoms Number of atoms in the cell (Note: not user-specified, determined based on size and lattice type)
   !> @param static_seed Whether to use a static PRNG seed (for testing)
@@ -60,6 +64,14 @@ module derived_types
     ! Number of unit cells in each direction and
     ! number of atoms in the basis
     integer :: n_1, n_2, n_3, n_basis
+    ! Extent of the configuration array in each direction. This is
+    ! determined by the lattice type. For the cubic lattices (simple
+    ! cubic, bcc, fcc) the simulation grid is a simple cubic grid of
+    ! spacing a/2 spanning 2*n_i points in each direction, with grid
+    ! points not belonging to the lattice left empty. Lattices with a
+    ! multi-atom basis (e.g. ideal_hcp) use one grid point per unit
+    ! cell, with the basis index distinguishing the atoms in the cell.
+    integer :: n_grid_1, n_grid_2, n_grid_3
     ! Number of chemical species
     integer :: n_species
     ! Number of atoms
