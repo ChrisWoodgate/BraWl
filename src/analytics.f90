@@ -126,7 +126,8 @@ module analytics
   !> @brief   Subroutine to print the number of atoms of each species
   !>
   !> @author  C. D. Woodgate
-  !> @date    2019-2023
+  !> @author  Claude Fable 5.1
+  !> @date    2019-2026
   !>
   !> @param  setup Derived type containing simulation parameters
   !> @param  config Current atomic configuration
@@ -138,7 +139,7 @@ module analytics
     type(run_params) :: setup
     integer, dimension(4) :: sizes
     integer, dimension(:), allocatable :: species_count
-    integer :: i,j,k, n, my_rank
+    integer :: i,j,k,b, n, my_rank
 
     if(my_rank == 0) then
       write(6,'(16("-"),x,"Checking contents of simulation cell(s)",x, 15("-"),/)')
@@ -154,11 +155,13 @@ module analytics
     do k=1, sizes(4)
       do j=1, sizes(3)
         do i=1, sizes(2)
-          if (config(1,i,j,k) .ne. 0_array_int) then
-            n = n+1
-            species_count(config(1,i,j,k)) = &
-              species_count(config(1,i,j,k)) + 1
-          end if
+          do b=1, sizes(1)
+            if (config(b,i,j,k) .ne. 0_array_int) then
+              n = n+1
+              species_count(config(b,i,j,k)) = &
+                species_count(config(b,i,j,k)) + 1
+            end if
+          end do
         end do
       end do
     end do

@@ -163,6 +163,9 @@ module initialise
 
     type(run_params), intent(inout) :: setup
 
+    ! Axial ratio of the ideal hcp lattice
+    real(real64) :: c_over_a
+
     setup%full_energy => total_energy
 
     ! Setup functions used in calculations
@@ -259,11 +262,19 @@ module initialise
       end if
       setup%rdm_site => fcc_random_site
       setup%rdm_nbr => fcc_random_nbr
-    else if(trim(setup%lattice) == 'hcp_ideal') then
+    else if(trim(setup%lattice) == 'ideal_hcp') then
 
-      setup%n_basis = 1
-      setup%n_atoms = 4*setup%n_1*setup%n_2*setup%n_3
+      ! Hexagonal primitive cell with a two-atom basis: one grid point
+      ! per cell, with the basis index distinguishing the two atoms
+      setup%n_basis = 2
+      setup%n_atoms = 2*setup%n_1*setup%n_2*setup%n_3
+      setup%n_grid_1 = setup%n_1
+      setup%n_grid_2 = setup%n_2
+      setup%n_grid_3 = setup%n_3
 
+      ! Primitive lattice vectors in units of the in-plane lattice
+      ! parameter a, with the ideal axial ratio c/a = sqrt(8/3)
+      c_over_a = sqrt(8.0_real64/3.0_real64)
       setup%lattice_vectors(:,1) = (/  1.0_real64,                     &
                                        0.0_real64,                     &
                                        0.0_real64 /)
@@ -272,18 +283,25 @@ module initialise
                                        0.0_real64 /)
       setup%lattice_vectors(:,3) = (/  0.0_real64,                     &
                                        0.0_real64,                     &
-                                       sqrt(8.0_real64/3.0_real64) /)
+                                       c_over_a /)
 
+      ! Cartesian positions of the two basis atoms in units of a,
+      ! corresponding to fractional coordinates (1/3, 2/3, 1/4) and
+      ! (2/3, 1/3, 3/4)
       allocate(setup%basis_vectors(3,2))
-      setup%basis_vectors(:,1) = (/ 1.0_real64/3.0_real64, &
-                                    2.0_real64/3.0_real64, &
-                                    0.25_real64 /)
-      setup%basis_vectors(:,2) = (/ 2.0_real64/3.0_real64, &
-                                    1.0_real64/3.0_real64, &
-                                    0.75_real64 /)
+      setup%basis_vectors(:,1) = (/ 0.0_real64,                        &
+                                    1.0_real64/sqrt(3.0_real64),       &
+                                    0.25_real64*c_over_a /)
+      setup%basis_vectors(:,2) = (/ 0.5_real64,                        &
+                                    0.5_real64/sqrt(3.0_real64),       &
+                                    0.75_real64*c_over_a /)
 
+      setup%rdm_site => ideal_hcp_random_site
+      setup%rdm_nbr => ideal_hcp_random_nbr
+
+      ! Energy kernels for this lattice are not yet implemented
       call comms_finalise()
-      stop 'HCP implementation not finished yet!'
+      stop 'ideal_hcp energy kernels not yet implemented'
     else
       call comms_finalise()
       stop 'Lattice type not yet implemented!'
@@ -472,7 +490,8 @@ module initialise
   !>          (or numbers of particles of) each species
   !>
   !> @author  C. D. Woodgate
-  !> @date    2019-2025
+  !> @author  Claude Fable 5.1
+  !> @date    2019-2026
   !>
   !> @param  setup Derived type containing simulation parameters
   !> @param  config Array for simulation configuration
@@ -496,6 +515,8 @@ module initialise
       n_sites = setup%n_1*setup%n_2*setup%n_3*2
     else if (setup%lattice == 'fcc') then
       n_sites = setup%n_1*setup%n_2*setup%n_3*4
+    else if (setup%lattice == 'ideal_hcp') then
+      n_sites = setup%n_1*setup%n_2*setup%n_3*2
     else
       call comms_finalise()
       stop 'Lattice type not supported!'
@@ -655,13 +676,14 @@ module initialise
           end do ! i
         end do ! j
       end do ! k
+    ! Deal with ideal hcp case: every grid point is a lattice site
     else if(trim(setup%lattice) == 'ideal_hcp') then
       ! Loop over lattice sites
       do k=1, grid_dims(4)
         do j=1, grid_dims(3)
           do i=1, grid_dims(2)
             do b=1, grid_dims(1)
-              do while (config(i,j,k,b) .eq. 0_int32)
+              do while (config(b,i,j,k) .eq. 0_int32)
                 ! Get a random number
                 rand = genrand()
                 ! Loop over species
@@ -670,7 +692,7 @@ module initialise
                   if ((rand .ge. sum(setup%species_concentrations(0:(l-1)))) .and. &
                       (rand .le. sum(setup%species_concentrations(0:l)))) then
                     if (check(l) .lt. species_count(l)) then
-                      config(i,j,k,b) = l
+                      config(b,i,j,k) = l
                       check(l) = check(l) + 1
                     end if
                   end if

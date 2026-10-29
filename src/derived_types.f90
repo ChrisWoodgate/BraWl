@@ -51,10 +51,15 @@ module derived_types
   !> @param n_species Number of chemical species
   !> @param n_atoms Number of atoms in the cell (Note: not user-specified, determined based on size and lattice type)
   !> @param static_seed Whether to use a static PRNG seed (for testing)
-  !> @param lattice String naming the lattice type. Currently 'fcc', 'bcc', and 'simple_cubic' are supported.
+  !> @param lattice String naming the lattice type. Currently 'fcc',
+  !>                'bcc', 'simple_cubic', and 'ideal_hcp' are
+  !>                supported.
   !> @param lattice_parameter Lattice constant (Note: only used for i/o of xyz files. Does not affect calculations internally)
-  !> @param lattice_vectors (Developmental.) Vectors specifying the underlying lattice
-  !> @param basis_vectors (Developmental.) Set of basis vectors
+  !> @param lattice_vectors Vectors between neighbouring points of the
+  !>                        simulation grid, one per column, in units
+  !>                        of the lattice parameter
+  !> @param basis_vectors Cartesian positions of the basis atoms, one
+  !>                      per column, in units of the lattice parameter
   !> @param species_names Set of names of chemical species (elements)
   !> @param species_concentrations Concentrations of each chemical species (cannot specify this and species_numbers)
   !> @param species_numbers Number of atoms of each chemical species (cannot specify this and species_concentrations)
@@ -91,9 +96,13 @@ module derived_types
     character(len=20) :: lattice
     ! Lattice parameter (for writing xyz file)
     real(real64) :: lattice_parameter
-    ! Lattice vectors (for writing xyz file)
+    ! Vectors between neighbouring points of the simulation grid, one
+    ! per column, in units of the lattice parameter. For the cubic
+    ! lattices these are half the conventional cell vectors; for
+    ! ideal_hcp they are the primitive hexagonal cell vectors.
     real(real64), dimension(3,3) :: lattice_vectors
-    ! Vector to second basis atom (for writing xyz file)
+    ! Cartesian positions of the basis atoms, one per column, in units
+    ! of the lattice parameter
     real(real64), dimension(:,:), allocatable :: basis_vectors
     ! Names of the chemical species
     character(len=2), dimension(:), allocatable :: species_names
