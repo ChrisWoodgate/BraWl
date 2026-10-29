@@ -71,7 +71,8 @@ ifeq ($(SYSTEM),Darwin)
   FFLAGS += $(shell nf-config --fflags)
   LDFLAGS += $(shell nf-config --flibs) $(shell nc-config --libs) -lnetcdf -lnetcdff
   ifeq ($(strip $(compiler)),mpifort)
-    LDFLAGS += -L/opt/homebrew/Cellar/openblas/0.3.32/lib
+    OPENBLAS_PREFIX ?= $(shell brew --prefix openblas)
+    LDFLAGS  += -L$(OPENBLAS_PREFIX)/lib -Wl,-rpath,$(OPENBLAS_PREFIX)/lib
   endif
 else
   ifeq ($(strip $(compiler)),gfortran)
@@ -149,3 +150,8 @@ metropolis.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o
 initialise.o: kinds.o shared_data.o c_functions.o bw_hamiltonian.o random_site.o comms.o constants.o derived_types.o comms.o
 main.o: initialise.o shared_data.o kinds.o c_functions.o netcdf_io.o\
 	write_xyz.o metropolis_output.o command_line.o display.o metropolis.o constants.o derived_types.o
+howto_examples.o: initialise.o kinds.o shared_data.o io.o comms.o display.o c_functions.o\
+	bw_hamiltonian.o random_site.o analytics.o netcdf_io.o write_xyz.o metropolis_output.o\
+	derived_types.o metropolis.o
+example.o: howto_examples.o initialise.o comms.o shared_data.o metropolis.o io.o kinds.o\
+	c_functions.o netcdf_io.o write_xyz.o metropolis_output.o display.o
