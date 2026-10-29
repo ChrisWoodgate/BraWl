@@ -26,13 +26,6 @@ module analytics
   public :: store_state, average_state, total_particle_count,          &
             print_particle_count, lattice_shells, radial_densities
 
-  ! Half-width, in cells, of the window of neighbouring cells scanned
-  ! by lattice_shells() and radial_densities() for the ideal hcp
-  ! lattice. Offsets of up to five cells cover every coordination
-  ! shell closer than about 4a, well beyond the ten shells for which
-  ! energy kernels exist.
-  integer, parameter :: ideal_hcp_asro_window = 5
-
   contains
 
   !> @brief   Subroutine to add this configuration to the average
@@ -205,13 +198,12 @@ module analytics
   !> @details For the cubic lattices, distances are measured in units
   !>          of the simulation grid spacing (half the conventional
   !>          lattice parameter) from the first grid point to every
-  !>          occupied grid point. For ideal_hcp, real-space distances
-  !>          in units of the lattice parameter are computed from the
-  !>          lattice and basis vectors, from a basis-1 site to every
-  !>          site within the same window of cell offsets scanned by
-  !>          radial_densities(), so that the two routines agree by
-  !>          construction. In both cases the first shell is the
-  !>          on-site distance of zero.
+  !>          occupied grid point. For lattices with runtime pair
+  !>          tables (hcp, ideal_hcp) the shells are the groups of the
+  !>          tables, in units of the lattice parameter, so that the
+  !>          ASRO analysis and the energy kernel share one definition
+  !>          of which pairs belong to which shell. In both cases the
+  !>          first shell is the on-site distance of zero.
   !>
   !> @author  C. D. Woodgate
   !> @author  Claude Fable 5.1
@@ -227,64 +219,42 @@ module analytics
     integer(array_int), dimension(:,:,:,:) :: configuration
     type(run_params), intent(in) :: setup
     integer :: i,j,k,b,l
-    integer :: loop_1, loop_2, loop_3
     real(real64) :: dist
     real(real64), dimension(:), allocatable :: all_shells, shells
 
     shells = 0.0_real64
 
+    ! Lattices with pair tables: the shells are the groups
+    if (setup%tables%built) then
+      do l=2, min(setup%wc_range, setup%tables%n_groups + 1)
+        shells(l) = setup%tables%group_distance(l-1)
+      end do
+      return
+    end if
+
+    ! One entry for every point of the simulation grid (plus one)
+    allocate(all_shells(setup%n_grid_1*setup%n_grid_2                  &
+                        *setup%n_grid_3*setup%n_basis+1))
+    all_shells = 0.0_real64
+
     l = 1
 
-    if (trim(setup%lattice) == 'ideal_hcp') then
-
-      ! Window of cell offsets to scan (same as radial_densities)
-      loop_1 = min(setup%n_grid_1, ideal_hcp_asro_window)
-      loop_2 = min(setup%n_grid_2, ideal_hcp_asro_window)
-      loop_3 = min(setup%n_grid_3, ideal_hcp_asro_window)
-
-      allocate(all_shells(setup%n_basis*(2*loop_1+1)*(2*loop_2+1)      &
-                          *(2*loop_3+1)))
-      all_shells = 0.0_real64
-
-      ! Real-space distances from a basis-1 site to every site in the
-      ! window
-      do k=-loop_3, loop_3
-        do j=-loop_2, loop_2
-          do i=-loop_1, loop_1
-            do b=1, setup%n_basis
-              all_shells(l) = basis_site_separation(setup, 1, b,       &
-                                                    i, j, k)
-              l=l+1
-            end do
+    ! Loop over all lattice sites
+    do k=1, setup%n_grid_3
+      do j=1, setup%n_grid_2
+        do i=1, setup%n_grid_1
+          do b=1, setup%n_basis
+            ! Cycle if this lattice site is empty
+            if (configuration(b,i,j,k) .eq. 0_array_int) cycle
+            dist     = sqrt(real((k-1)**2) + &
+                            real((j-1)**2) + &
+                            real((i-1)**2))
+            all_shells(l) = dist
+            l=l+1
           end do
         end do
       end do
-
-    else
-
-      ! One entry for every point of the simulation grid (plus one)
-      allocate(all_shells(setup%n_grid_1*setup%n_grid_2                &
-                          *setup%n_grid_3*setup%n_basis+1))
-      all_shells = 0.0_real64
-
-      ! Loop over all lattice sites
-      do k=1, setup%n_grid_3
-        do j=1, setup%n_grid_2
-          do i=1, setup%n_grid_1
-            do b=1, setup%n_basis
-              ! Cycle if this lattice site is empty
-              if (configuration(b,i,j,k) .eq. 0_array_int) cycle
-              dist     = sqrt(real((k-1)**2) + &
-                              real((j-1)**2) + &
-                              real((i-1)**2))
-              all_shells(l) = dist
-              l=l+1
-            end do
-          end do
-        end do
-      end do
-
-    end if
+    end do
 
     ! Order the list
     call quicksort(all_shells)
@@ -311,11 +281,13 @@ module analytics
   !> @details This routine computes the conditional probabilities of
   !>          one type of atom neighbouring another type of atom. These
   !>          are *not* the Warren-Cowley ASRO parameters, but you can
-  !>          convert to them using a simple rescaling. Pairs are
-  !>          assigned to shells by distance: in units of the grid
-  !>          spacing for the cubic lattices, and in real space from the
-  !>          lattice and basis vectors for ideal_hcp (see
-  !>          lattice_shells()).
+  !>          convert to them using a simple rescaling. For the cubic
+  !>          lattices pairs are assigned to shells by their distance
+  !>          in units of the grid spacing. For lattices with runtime
+  !>          pair tables (hcp, ideal_hcp) the neighbours of each site
+  !>          and the shell (group) of each neighbour are read from
+  !>          the tables, which is exact and uses the same definition
+  !>          of pair membership as the energy kernel.
   !>
   !> @author  C. D. Woodgate
   !> @author  Claude Fable 5.1
@@ -337,13 +309,9 @@ module analytics
     integer, intent(in) :: n_shells
     integer :: i_1,i_2,i_3,j_1,j_2,j_3,j_b,jj_1,jj_2,jj_3, &
                l, species_i, species_j, i,j, i_b
-    integer :: loop_1, loop_2, loop_3
+    integer :: loop_1, loop_2, loop_3, n
     integer, dimension(setup%n_species) :: particle_counts
     real(real64) :: distance, d_x, d_y, d_z
-    logical :: hcp
-
-    ! Does this lattice use real-space distances?
-    hcp = (trim(setup%lattice) == 'ideal_hcp')
 
     ! Array for counting the number of each species
     ! Initialise it to zero
@@ -376,16 +344,62 @@ module analytics
       end if
     end do
 
-    ! For small systems, limit loop size to prevent double counting
-    if (hcp) then
-      loop_1 = min(setup%n_grid_1, ideal_hcp_asro_window)
-      loop_2 = min(setup%n_grid_2, ideal_hcp_asro_window)
-      loop_3 = min(setup%n_grid_3, ideal_hcp_asro_window)
-    else
-      loop_1 = min(setup%n_1, 5)
-      loop_2 = min(setup%n_2, 5)
-      loop_3 = min(setup%n_3, 5)
+    !------------------------------------------------------------------!
+    ! Lattices with pair tables: count the tabulated neighbours        !
+    !------------------------------------------------------------------!
+    if (setup%tables%built) then
+
+      do i_3=1, setup%n_grid_3
+        do i_2=1, setup%n_grid_2
+          do i_1=1, setup%n_grid_1
+            do i_b=1, setup%n_basis
+              species_i = configuration(i_b, i_1, i_2, i_3)
+              if (species_i .eq. 0) cycle
+
+              ! On-site term
+              r_densities(species_i, species_i, 1) =                   &
+                r_densities(species_i, species_i, 1) + 1.0_real64
+
+              ! Neighbours within the ASRO range, in order of group
+              do n=1, setup%tables%n_nbrs_asro(i_b)
+                l = setup%tables%nbr_group(n, i_b) + 1
+                if (l .gt. n_shells) exit
+                j_b = setup%tables%nbrs(1, n, i_b)
+                j_1 = modulo(i_1 + setup%tables%nbrs(2, n, i_b) - 1,   &
+                             setup%n_grid_1) + 1
+                j_2 = modulo(i_2 + setup%tables%nbrs(3, n, i_b) - 1,   &
+                             setup%n_grid_2) + 1
+                j_3 = modulo(i_3 + setup%tables%nbrs(4, n, i_b) - 1,   &
+                             setup%n_grid_3) + 1
+                species_j = configuration(j_b, j_1, j_2, j_3)
+                if (species_j .eq. 0) cycle
+                r_densities(species_i, species_j, l) =                 &
+                  r_densities(species_i, species_j, l) + 1.0_real64
+              end do
+            end do
+          end do
+        end do
+      end do
+
+      ! Average them
+      do i=1, n_shells
+        do j=1, setup%n_species
+          r_densities(j,:,i) = r_densities(j,:,i)/particle_counts(j)
+        end do
+      end do
+
+      return
+
     end if
+
+    !------------------------------------------------------------------!
+    ! Cubic lattices: assign pairs to shells by grid distance          !
+    !------------------------------------------------------------------!
+
+    ! For small systems, limit loop size to prevent double counting
+    loop_1 = min(setup%n_1, 5)
+    loop_2 = min(setup%n_2, 5)
+    loop_3 = min(setup%n_3, 5)
 
     ! Loop over all lattice sites
     do i_3=1, setup%n_grid_3
@@ -404,27 +418,20 @@ module analytics
                   j_1 = modulo(jj_1-1, setup%n_grid_1) + 1
                   do j_b=1, setup%n_basis
                     if (configuration(j_b, j_1, j_2, j_3) .eq. 0_array_int) cycle
-                    if (hcp) then
-                      ! Real-space distance from the (unwrapped) cell
-                      ! offset and the basis positions
-                      distance = basis_site_separation(setup, i_b,     &
-                                   j_b, jj_1-i_1, jj_2-i_2, jj_3-i_3)
-                    else
-                      ! Compute the distance to this site, accounting
-                      ! for PBCs
-                      d_x = real(i_1-j_1)
-                      d_y = real(i_2-j_2)
-                      d_z = real(i_3-j_3)
+                    ! Compute the distance to this site, accounting
+                    ! for PBCs
+                    d_x = real(i_1-j_1)
+                    d_y = real(i_2-j_2)
+                    d_z = real(i_3-j_3)
 
-                      d_x = d_x - float(setup%n_grid_1)* &
-                                  nint(d_x/float(setup%n_grid_1))
-                      d_y = d_y - float(setup%n_grid_2)* &
-                                  nint(d_y/float(setup%n_grid_2))
-                      d_z = d_z - float(setup%n_grid_3)* &
-                                  nint(d_z/float(setup%n_grid_3))
+                    d_x = d_x - float(setup%n_grid_1)* &
+                                nint(d_x/float(setup%n_grid_1))
+                    d_y = d_y - float(setup%n_grid_2)* &
+                                nint(d_y/float(setup%n_grid_2))
+                    d_z = d_z - float(setup%n_grid_3)* &
+                                nint(d_z/float(setup%n_grid_3))
 
-                      distance = sqrt(d_x**2 + d_y**2 + d_z**2)
-                    end if
+                    distance = sqrt(d_x**2 + d_y**2 + d_z**2)
 
                     ! Loop over and find which shell this sits in
                     do l=1, n_shells
@@ -457,44 +464,6 @@ module analytics
     
   end function radial_densities
 
-
-  !> @brief   Function to compute the real-space separation of two
-  !>          sites of a lattice with a multi-atom basis
-  !>
-  !> @details The second site is specified relative to the first by the
-  !>          offset between their cells, which is used as given (no
-  !>          periodic wrapping), together with the basis index of each
-  !>          site. The separation is formed from the lattice and
-  !>          basis vectors stored in setup.
-  !>
-  !> @author  C. D. Woodgate
-  !> @author  Claude Fable 5.1
-  !> @date    2026
-  !>
-  !> @param  setup Derived type containing simulation parameters
-  !> @param  b_i Basis index of the first site
-  !> @param  b_j Basis index of the second site
-  !> @param  d_1 Cell offset of the second site along a_1
-  !> @param  d_2 Cell offset of the second site along a_2
-  !> @param  d_3 Cell offset of the second site along a_3
-  !>
-  !> @return The separation in units of the lattice parameter
-  pure function basis_site_separation(setup, b_i, b_j, d_1, d_2,      &
-                                      d_3) result(dist)
-
-    type(run_params), intent(in) :: setup
-    integer, intent(in) :: b_i, b_j, d_1, d_2, d_3
-    real(real64) :: dist
-    real(real64), dimension(3) :: r_vec
-
-    r_vec = real(d_1, real64)*setup%lattice_vectors(:,1)               &
-          + real(d_2, real64)*setup%lattice_vectors(:,2)               &
-          + real(d_3, real64)*setup%lattice_vectors(:,3)               &
-          + setup%basis_vectors(:,b_j) - setup%basis_vectors(:,b_i)
-
-    dist = norm2(r_vec)
-
-  end function basis_site_separation
 
   !> @brief   Implementation of the quicksort algorithm for arrays
   !>
