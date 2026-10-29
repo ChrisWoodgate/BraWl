@@ -224,6 +224,27 @@ module random_site
 
   end function fcc_random_nbr
 
+  !> @brief   Function to get a random site on the ideal hcp lattice
+  !>
+  !> @author  C. D. Woodgate
+  !>
+  !> @date    2019-2026
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !>
+  !> @return Indices of a random site on the simple cubic lattice
+  pure function ideal_hcp_random_site(setup) result(site)
+
+    class(run_params), intent(in) :: setup
+    integer, dimension(4) :: site
+
+    site(1) = floor(genrand()*2.0_real64) +1
+    site(2) = floor(genrand()*2.0_real64*real(setup%n_1)) +1
+    site(3) = floor(genrand()*2.0_real64*real(setup%n_2)) +1
+    site(4) = floor(genrand()*2.0_real64*real(setup%n_3)) +1
+
+  end function ideal_hcp_random_site
+
   !> @brief   Function to swap a pair of lattice site occupancies
   !>
   !> @author  C. D. Woodgate
