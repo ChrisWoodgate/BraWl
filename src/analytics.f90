@@ -228,7 +228,7 @@ module analytics
 !            r_vec = real(i)*setup%lattice_vectors(:,1) + &
 !                    real(j)*setup%lattice_vectors(:,2) + &
 !                    real(k)*setup%lattice_vectors(:,3) + &
-!                    real(b)*setup%basis_vectors
+!                    real(b)*setup%basis_vectors(:,b)
 !            dist = norm2(r_vec)
 !            all_shells(l) = dist
 !            l=l+1

@@ -181,7 +181,8 @@ module initialise
 !                                          0.5,-0.5, 0.5,     &
 !                                          0.5, 0.5,-0.5  /), &
 !                                       (/ 3, 3 /))
-      setup%basis_vectors   = (/ 0.0, 0.0, 0.0 /)
+      allocate(setup%basis_vectors(3,1))
+      setup%basis_vectors(:,1)   = (/ 0.0, 0.0, 0.0 /)
       if (setup%interaction_range .eq. 1) then
         setup%nbr_energy => bcc_energy_1shells
       else if (setup%interaction_range .eq. 2) then
@@ -220,7 +221,8 @@ module initialise
 !                                          0.5, 0.0, 0.5,     &
 !                                          0.5, 0.5, 0.0  /), &
 !                                       (/ 3, 3 /))
-      setup%basis_vectors   = (/ 0.0, 0.0, 0.0 /)
+      allocate(setup%basis_vectors(3,1))
+      setup%basis_vectors(:,1)   = (/ 0.0, 0.0, 0.0 /)
       if (setup%interaction_range .eq. 1) then
         setup%nbr_energy => fcc_energy_1shells
       else if (setup%interaction_range .eq. 2) then
@@ -239,7 +241,31 @@ module initialise
       end if
       setup%rdm_site => fcc_random_site
       setup%rdm_nbr => fcc_random_nbr
-    ! Bomb if we ask for a lattice type we don't have!
+    else if(trim(setup%lattice) == 'hcp_ideal') then
+
+      setup%n_basis = 1
+      setup%n_atoms = 4*setup%n_1*setup%n_2*setup%n_3
+
+      setup%lattice_vectors(:,1) = (/  1.0_real64,                     &
+                                       0.0_real64,                     &
+                                       0.0_real64 /)
+      setup%lattice_vectors(:,2) = (/ -0.5_real64,                     &
+                                       0.5_real64*sqrt(3.0_real64),    &
+                                       0.0_real64 /)
+      setup%lattice_vectors(:,3) = (/  0.0_real64,                     &
+                                       0.0_real64,                     &
+                                       sqrt(8.0_real64/3.0_real64) /)
+
+      allocate(setup%basis_vectors(3,2))
+      setup%basis_vectors(:,1) = (/ 1.0_real64/3.0_real64, &
+                                    2.0_real64/3.0_real64, &
+                                    0.25_real64 /)
+      setup%basis_vectors(:,2) = (/ 2.0_real64/3.0_real64, &
+                                    1.0_real64/3.0_real64, &
+                                    0.75_real64 /)
+
+      call comms_finalise()
+      stop 'HCP implementation not finished yet!'
     else
       call comms_finalise()
       stop 'Lattice type not yet implemented!'
@@ -372,6 +398,7 @@ module initialise
 
     type(run_params), intent(inout) :: setup
 
+    if (allocated(setup%basis_vectors)) deallocate(setup%basis_vectors)
     if (allocated(shells)) deallocate(shells)
     if (allocated(config)) deallocate(config)
     if (allocated(setup%species_names)) deallocate(setup%species_names)

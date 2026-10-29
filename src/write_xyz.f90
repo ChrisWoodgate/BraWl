@@ -101,10 +101,10 @@ module write_xyz
         do k=1, grid_sizes(3)
           do l=1, grid_sizes(4)
             if (configuration(i,j,k,l) .eq. 0) cycle
-            pos = real(j-1)*setup%lattice_vectors(1,:) + &
-                  real(k-1)*setup%lattice_vectors(2,:) + &
-                  real(l-1)*setup%lattice_vectors(3,:) + &
-                  real(i)*setup%basis_vectors
+            pos = real(j-1)*setup%lattice_vectors(:,1) + &
+                  real(k-1)*setup%lattice_vectors(:,2) + &
+                  real(l-1)*setup%lattice_vectors(:,3) + &
+                  real(i)*setup%basis_vectors(:,i)
             pos = pos*setup%lattice_parameter
             write(7,*) setup%species_names(configuration(i,j,k,l)), pos(1),pos(2),pos(3)
           end do

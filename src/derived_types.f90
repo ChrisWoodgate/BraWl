@@ -73,7 +73,7 @@ module derived_types
     ! Lattice vectors (for writing xyz file)
     real(real64), dimension(3,3) :: lattice_vectors
     ! Vector to second basis atom (for writing xyz file)
-    real(real64), dimension(3) :: basis_vectors
+    real(real64), dimension(:,:), allocatable :: basis_vectors
     ! Names of the chemical species
     character(len=2), dimension(:), allocatable :: species_names
     ! Concentrations of the chemical species
