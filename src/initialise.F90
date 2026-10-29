@@ -463,7 +463,7 @@ module initialise
     type(run_params) :: setup
     integer(array_int), allocatable, dimension(:,:,:,:) :: config
     integer(int32), dimension(4) :: grid_dims
-    integer :: i, j, k, n_sites, idx
+    integer :: i, j, k, b, n_sites, idx
     integer(int64) :: round_err, round_check, inc
     integer(array_int) :: l, n_species
     real(real64) :: rand
@@ -637,11 +637,11 @@ module initialise
       end do ! k
     else if(trim(setup%lattice) == 'ideal_hcp') then
       ! Loop over lattice sites
-      do l=1, grid_dims(4)
-        do k=1, grid_dims(3)
-          do j=1, grid_dims(2)
-            do i=1, grid_dims(1)
-              do while (config(i,j,k,l) .eq. 0_int32)
+      do k=1, grid_dims(4)
+        do j=1, grid_dims(3)
+          do i=1, grid_dims(2)
+            do b=1, grid_dims(1)
+              do while (config(i,j,k,b) .eq. 0_int32)
                 ! Get a random number
                 rand = genrand()
                 ! Loop over species
@@ -650,16 +650,16 @@ module initialise
                   if ((rand .ge. sum(setup%species_concentrations(0:(l-1)))) .and. &
                       (rand .le. sum(setup%species_concentrations(0:l)))) then
                     if (check(l) .lt. species_count(l)) then
-                      config(i,j,k,l) = l
+                      config(i,j,k,b) = l
                       check(l) = check(l) + 1
                     end if
                   end if
-                end do ! Species
+                end do ! Species, l
               end do ! While
-            end do ! i
-          end do ! j
-        end do ! k
-      end do ! l
+            end do ! b
+          end do ! i
+        end do ! j
+      end do ! k
     else
       call comms_finalise()
       print*, 'Lattice type: ', setup%lattice, ' not yet implemented'
