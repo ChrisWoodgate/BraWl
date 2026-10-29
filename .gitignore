@@ -64,6 +64,7 @@ tests/*
 !tests/99_ref
 !tests/ci_test.py
 !tests/ideal_hcp_neighbour_tables.py
+!tests/hcp_brute_force_check.py
 
 tests/01_serial_metropolis/*
 !tests/01_serial_metropolis/fcc_epi.vij

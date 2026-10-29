@@ -46,6 +46,9 @@ module bw_hamiltonian
   public :: ideal_hcp_energy_7shells, ideal_hcp_energy_8shells
   public :: ideal_hcp_energy_9shells, ideal_hcp_energy_10shells
 
+  ! General hcp routine driven by the runtime pair tables
+  public :: hcp_energy_tables
+
   !--------------------------------------------------------------------!
   ! Neighbour tables for the ideal hcp lattice.                        !
   !                                                                    !
@@ -2966,5 +2969,69 @@ module bw_hamiltonian
                ideal_hcp_shell10_nbrs, 10, site_b, w_1, w_2, w_3)
 
   end function ideal_hcp_energy_10shells
+
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its neighbours
+  !>          on the hcp lattice, using the runtime pair tables
+  !>
+  !> @details Serves lattice 'hcp' for any axial ratio and either
+  !>          indexing of the interaction file (see
+  !>          neighbour_tables.f90). The neighbour list of the
+  !>          sublattice of the central atom is ordered by group, so
+  !>          the first n_nbrs_energy entries are exactly those within
+  !>          the interaction range, and each entry carries the index
+  !>          of its interaction block. Cell indices are wrapped once
+  !>          per site for every offset up to max_offset, as in
+  !>          ideal_hcp_wrap.
+  !>
+  !> @author  C. D. Woodgate
+  !> @author  Claude Fable 5.1
+  !> @date    2026
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  config Current atomic configuration
+  !> @param  site_b Basis index (1 or 2)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms within the interaction range on
+  !>         the hcp lattice
+  function hcp_energy_tables(setup, config, site_b, site_i, site_j,   &
+                             site_k) result(energy)
+
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int) :: species
+    integer, dimension(-setup%tables%max_offset:                       &
+                        setup%tables%max_offset) :: w_1, w_2, w_3
+    integer :: d, n
+
+    species = config(site_b, site_i, site_j, site_k)
+
+    ! Wrapped cell indices for every offset in the tables
+    do d=-setup%tables%max_offset, setup%tables%max_offset
+      w_1(d) = modulo(site_i + d - 1, setup%n_grid_1) + 1
+      w_2(d) = modulo(site_j + d - 1, setup%n_grid_2) + 1
+      w_3(d) = modulo(site_k + d - 1, setup%n_grid_3) + 1
+    end do
+
+    energy = 0.0_real64
+
+    associate(t => setup%tables)
+      do n=1, t%n_nbrs_energy(site_b)
+        energy = energy + V_ex(species,                                &
+                               config(t%nbrs(1,n,site_b),              &
+                                      w_1(t%nbrs(2,n,site_b)),         &
+                                      w_2(t%nbrs(3,n,site_b)),         &
+                                      w_3(t%nbrs(4,n,site_b))),        &
+                               t%nbr_group(n,site_b))
+      end do
+    end associate
+
+  end function hcp_energy_tables
 
 end module bw_hamiltonian

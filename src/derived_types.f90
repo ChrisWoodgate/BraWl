@@ -18,7 +18,78 @@ module derived_types
 
   private
 
-  public :: run_params, metropolis_params, ns_params, tmmc_params, wl_params
+  public :: run_params, metropolis_params, ns_params, tmmc_params,     &
+            wl_params, pair_tables
+
+  !> @brief   Derived type holding the runtime pair classes and
+  !>          neighbour lists of a lattice with a multi-atom basis
+  !>
+  !> @details Built once at start-up by build_hcp_tables (see
+  !>          neighbour_tables.f90). A pair class is a set of neighbour
+  !>          offsets equivalent under the crystal symmetry, identified
+  !>          for hcp by the exact key (9 rho^2, layers apart in c/2),
+  !>          where rho is the in-plane separation in units of a. The
+  !>          classes are ranked by distance and assigned to groups,
+  !>          which are the blocks of the interaction file and the
+  !>          shells of the ASRO analysis. The neighbour list of each
+  !>          basis atom is ordered by group, so the first
+  !>          n_nbrs_energy entries lie within the interaction range and
+  !>          the first n_nbrs_asro entries within the ASRO range.
+  !>
+  !> @author  C. D. Woodgate
+  !> @author  Claude Fable 5.1
+  !>
+  !> @date    2026
+  !>
+  !> @param built Whether the tables have been built
+  !> @param n_classes Number of pair classes tabulated
+  !> @param n_groups Number of groups (interaction blocks) tabulated
+  !> @param max_offset Largest cell offset in the neighbour lists
+  !> @param class_key Exact key (9 rho^2, layers apart) of each class
+  !> @param class_distance Distance of each class in units of a
+  !> @param class_group Group index of each class
+  !> @param class_count Number of neighbours of each basis atom in
+  !>                    each class
+  !> @param group_distance Distance of the first class of each group
+  !> @param group_count Number of neighbours of each basis atom in
+  !>                    each group
+  !> @param nbrs Neighbour offsets (basis index, di, dj, dk) of each
+  !>             basis atom, ordered by group
+  !> @param nbr_group Group index of each neighbour
+  !> @param n_nbrs_energy Number of neighbours of each basis atom
+  !>                      within the interaction range
+  !> @param n_nbrs_asro Number of neighbours of each basis atom within
+  !>                    the ASRO range
+  type pair_tables
+
+    ! Whether the tables have been built
+    logical :: built = .false.
+    ! Number of pair classes and of groups tabulated
+    integer :: n_classes = 0
+    integer :: n_groups = 0
+    ! Largest cell offset appearing in the neighbour lists
+    integer :: max_offset = 0
+    ! Per class: exact key (9 rho^2, layers apart), distance in units
+    ! of the lattice parameter, group index, and number of neighbours
+    ! of each basis atom
+    integer, allocatable, dimension(:,:) :: class_key
+    real(real64), allocatable, dimension(:) :: class_distance
+    integer, allocatable, dimension(:) :: class_group
+    integer, allocatable, dimension(:,:) :: class_count
+    ! Per group: distance of its first class and number of neighbours
+    ! of each basis atom
+    real(real64), allocatable, dimension(:) :: group_distance
+    integer, allocatable, dimension(:,:) :: group_count
+    ! Neighbour lists of each basis atom, ordered by group: offsets
+    ! (basis index of the neighbour, di, dj, dk) and group index
+    integer, allocatable, dimension(:,:,:) :: nbrs
+    integer, allocatable, dimension(:,:) :: nbr_group
+    ! Number of neighbours of each basis atom within the interaction
+    ! range and within the ASRO range
+    integer, allocatable, dimension(:) :: n_nbrs_energy
+    integer, allocatable, dimension(:) :: n_nbrs_asro
+
+  end type pair_tables
 
   !> @brief   Derived type for parameters specifying general simulation
   !>          parameters which are common to all sampling methods.
@@ -52,7 +123,7 @@ module derived_types
   !> @param n_atoms Number of atoms in the cell (Note: not user-specified, determined based on size and lattice type)
   !> @param static_seed Whether to use a static PRNG seed (for testing)
   !> @param lattice String naming the lattice type. Currently 'fcc',
-  !>                'bcc', 'simple_cubic', and 'ideal_hcp' are
+  !>                'bcc', 'simple_cubic', 'ideal_hcp', and 'hcp' are
   !>                supported.
   !> @param lattice_parameter Lattice constant (Note: only used for i/o of xyz files. Does not affect calculations internally)
   !> @param lattice_vectors Vectors between neighbouring points of the
@@ -66,6 +137,17 @@ module derived_types
   !> @param interaction_file Name of file containing atom-atom effective pair interactions
   !> @param interaction_range Range (in number of coordination shells) of the EPIs
   !> @param wc_range Number of shells (including the on-site values) for calculation of the WC ASRO parameters
+  !> @param c_over_a Axial ratio c/a for lattice 'hcp' (required for
+  !>                 that lattice; must not be given for 'ideal_hcp')
+  !> @param epi_indexing 'shells' (default) or 'classes': whether the
+  !>                     blocks of the interaction file are distance
+  !>                     shells or individual pair classes (see
+  !>                     neighbour_tables.f90)
+  !> @param shell_tolerance Relative tolerance on distance within which
+  !>                        pair classes are merged into one shell
+  !>                        (default 1.0e-6)
+  !> @param tables Runtime pair tables, built at start-up for lattices
+  !>               with a multi-atom basis
   !> @param full_energy Function pointer to full Hamiltoninan implmentation used at runtime
   !> @param nbr_energy Function pointer to local Hamiltoninan implmentation used at runtime
   !> @param rdm_site Function pointer to random lattice site implmentation used at runtime
@@ -116,6 +198,18 @@ module derived_types
     integer :: interaction_range
     ! Number of coordination shells for Warren-Cowley parameters
     integer :: wc_range
+    ! Axial ratio c/a (hcp only; zero means not specified)
+    real(real64) :: c_over_a = 0.0_real64
+    ! How the blocks of the interaction file are indexed for lattices
+    ! with runtime pair tables: 'shells' (classes merged by distance)
+    ! or 'classes' (one block per pair class)
+    character(len=10) :: epi_indexing = 'shells'
+    ! Relative tolerance on distance within which pair classes are
+    ! merged into one shell
+    real(real64) :: shell_tolerance = 1.0e-6_real64
+    ! Runtime pair classes and neighbour lists (lattices with a
+    ! multi-atom basis)
+    type(pair_tables) :: tables
     ! Hamiltonian to use
     procedure(hamiltonian), pointer, pass :: full_energy => null()
     ! neighbour energy function to use

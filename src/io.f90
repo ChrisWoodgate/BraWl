@@ -163,6 +163,9 @@ module io
     parameters%interaction_file = 'V_ijs.txt'
     parameters%wc_range = 2
     parameters%static_seed = .false.
+    parameters%c_over_a = 0.0_real64
+    parameters%epi_indexing = 'shells'
+    parameters%shell_tolerance = 1.0e-6_real64
 
     ! See if the relevant file exists
     inquire(file=trim(filename), exist=exists)
@@ -232,6 +235,12 @@ module io
           read(buffer, *, iostat=ios) parameters%wc_range
         case ('static_seed')
           read(buffer, *, iostat=ios) parameters%static_seed
+        case ('c_over_a')
+          read(buffer, *, iostat=ios) parameters%c_over_a
+        case ('epi_indexing')
+          read(buffer, *, iostat=ios) parameters%epi_indexing
+        case ('shell_tolerance')
+          read(buffer, *, iostat=ios) parameters%shell_tolerance
         case default
         end select
       end if
@@ -356,6 +365,11 @@ module io
     print*, ' Read lattice = ', parameters%lattice
     print*, ' Read interaction_file = ', parameters%interaction_file
     print*, ' Read wc_range = ', parameters%wc_range
+    if (trim(parameters%lattice) .eq. 'hcp') then
+      print*, ' Read c_over_a = ', parameters%c_over_a
+      print*, ' Read epi_indexing = ', parameters%epi_indexing
+      print*, ' Read shell_tolerance = ', parameters%shell_tolerance
+    end if
 
     ! Print specified concentrations/numbers of atoms
     if (abs(sum(parameters%species_concentrations)-1.0_real64) &
