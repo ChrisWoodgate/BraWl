@@ -394,10 +394,17 @@ module io
   !>          shell as an sxs matrix, with a blank line between the set
   !>          of EPIs for one coordination shell and those for the
   !>          next. They should be given in order from nearest to
-  !>          furthest coordination shell.
+  !>          furthest coordination shell. (For lattices with runtime
+  !>          pair tables the blocks are the groups printed at
+  !>          start-up, which are distance shells or individual pair
+  !>          classes according to epi_indexing.) The file is checked
+  !>          to hold at least n_species*n_species*interaction_range
+  !>          values before it is read; a surplus is reported and
+  !>          ignored.
   !>
   !> @author  C. D. Woodgate
-  !> @date    2020-2025
+  !> @author  Claude Fable 5.1
+  !> @date    2020-2026
   !>
   !> @param  setup Derived type containing simulation parameters
   !> @param  my_rank Rank of current MPI process
@@ -407,10 +414,54 @@ module io
 
     type(run_params) , intent(in) :: setup
     integer :: my_rank
+    character(len=1024) :: line
+    integer :: ios, n_values, n_needed
+    logical :: exists
 
     if(my_rank == 0) then
       !write(6,'(72("-"),/)', advance='no')
       write(6,'(8("-"),x,"Reading atom-atom effective pair interaction parameters",x, 7("-"),/)')
+    end if
+
+    inquire(file=setup%interaction_file, exist=exists)
+    if (.not. exists) then
+      call comms_finalise()
+      stop 'Could not find interaction file ' //                      &
+           trim(setup%interaction_file)
+    end if
+
+    ! Count the values in the file before reading it, so that a file
+    ! with too few blocks gives a clear message rather than a runtime
+    ! error, and a surplus is reported
+    n_needed = setup%n_species*setup%n_species*setup%interaction_range
+    n_values = 0
+    open(16, file=setup%interaction_file)
+    do
+      read(16, '(A)', iostat=ios) line
+      if (ios .ne. 0) exit
+      n_values = n_values + count_tokens(line)
+    end do
+    close(16)
+
+    if (n_values .lt. n_needed) then
+      if (my_rank == 0) then
+        write(6,'(x,"Interaction file ",A," holds ",I0," values, but ",&
+                 &I0," are needed:")') trim(setup%interaction_file),   &
+              n_values, n_needed
+        write(6,'(x,"interaction_range = ",I0," blocks of ",I0," x ",  &
+                 &I0," (n_species x n_species).")')                    &
+              setup%interaction_range, setup%n_species, setup%n_species
+      end if
+      call comms_finalise()
+      stop 'Too few values in interaction file'
+    else if (n_values .gt. n_needed) then
+      if (my_rank == 0) then
+        write(6,'(x,"Note: interaction file ",A," holds ",I0,          &
+                 &" values; only the first ",I0,/,x,"(interaction_",  &
+                 &"range = ",I0," blocks of n_species x n_species) ",  &
+                 &"are used.",/)') trim(setup%interaction_file),       &
+              n_values, n_needed, setup%interaction_range
+      end if
     end if
 
     V_ex = 0.0_real64
@@ -430,6 +481,36 @@ module io
     end if
 
   end subroutine read_exchange
+
+  !> @brief   Function to count the blank-, tab- or comma-separated
+  !>          tokens on a line
+  !>
+  !> @author  C. D. Woodgate
+  !> @author  Claude Fable 5.1
+  !> @date    2026
+  !>
+  !> @param  line The line of text
+  !>
+  !> @return The number of tokens
+  pure function count_tokens(line) result(n)
+
+    character(len=*), intent(in) :: line
+    integer :: n, i
+    logical :: in_token
+
+    n = 0
+    in_token = .false.
+    do i=1, len_trim(line)
+      if ((line(i:i) .eq. ' ') .or. (line(i:i) .eq. ',') .or.          &
+          (line(i:i) .eq. achar(9))) then
+        in_token = .false.
+      else if (.not. in_token) then
+        in_token = .true.
+        n = n + 1
+      end if
+    end do
+
+  end function count_tokens
 
   !> @brief   Subroutine to parse command line arguments
   !>
