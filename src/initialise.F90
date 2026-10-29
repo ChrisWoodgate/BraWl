@@ -175,6 +175,13 @@ module initialise
       setup%n_grid_1 = 2*setup%n_1
       setup%n_grid_2 = 2*setup%n_2
       setup%n_grid_3 = 2*setup%n_3
+      ! Every grid point is a lattice site, one lattice parameter apart
+      setup%lattice_vectors = reshape( (/ 1.0, 0.0, 0.0,     &
+                                          0.0, 1.0, 0.0,     &
+                                          0.0, 0.0, 1.0  /), &
+                                       (/ 3, 3 /))
+      allocate(setup%basis_vectors(3,1))
+      setup%basis_vectors(:,1)   = (/ 0.0, 0.0, 0.0 /)
       if (setup%interaction_range .eq. 1) then
         setup%nbr_energy => simple_cubic_energy_1shells
       else if (setup%interaction_range .eq. 2) then

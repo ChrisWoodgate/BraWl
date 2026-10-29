@@ -6,8 +6,9 @@
 !>
 !> @author  C. D. Woodgate
 !> @author  L. B. Partay
+!> @author  Claude Fable 5.1
 !>
-!> @date    2019-2025
+!> @date    2019-2026
 module write_xyz
 
   use kinds
@@ -24,12 +25,16 @@ module write_xyz
   !>
   !> @details This is routine writes an xyz file of the current configuration, in the extended xyz format, 
   !>          (incl. lattice, element type and coordinates) with option to append configurations in a 
-  !>          single trajectory file.
+  !>          single trajectory file. The simulation cell and the
+  !>          atomic positions are built from the grid vectors, grid
+  !>          extents and basis positions stored in setup, so the
+  !>          routine serves every lattice type.
   !>
   !> @author  C. D. Woodgate
   !> @author  L. B. Partay
+  !> @author  Claude Fable 5.1
   !>
-  !> @date    2024
+  !> @date    2024-2026
   !>
   !> @param  filename Name of file to be created                                          
   !> @param  configuration Current atomic configuration
@@ -57,6 +62,7 @@ module write_xyz
     integer :: n_particles, i, j, k, l
     logical :: exist
     real(real64), dimension(3) :: pos
+    real(real64), dimension(3,3) :: cell
 
     n_particles = total_particle_count(setup, configuration)
 
@@ -82,9 +88,15 @@ module write_xyz
 
     write(7, *) n_particles
 
-    write(7,*) 'Lattice="',setup%lattice_parameter*setup%n_1, 0.0, 0.0 , &
-                   &   0.0, setup%lattice_parameter*setup%n_2, 0.0 , &
-                   &   0.0, 0.0, setup%lattice_parameter*setup%n_3,     '"'
+    ! Simulation cell vectors (one per column here, written one after
+    ! another as the extended xyz format expects) from the grid vectors
+    ! and the grid extents
+    cell(:,1) = real(setup%n_grid_1, real64)*setup%lattice_vectors(:,1)
+    cell(:,2) = real(setup%n_grid_2, real64)*setup%lattice_vectors(:,2)
+    cell(:,3) = real(setup%n_grid_3, real64)*setup%lattice_vectors(:,3)
+    cell = cell*setup%lattice_parameter
+
+    write(7,*) 'Lattice="', cell(:,1), cell(:,2), cell(:,3), '"'
 
 !    if (present(trajectory)) then
 !      if (trajectory) then
@@ -104,7 +116,7 @@ module write_xyz
             pos = real(j-1)*setup%lattice_vectors(:,1) + &
                   real(k-1)*setup%lattice_vectors(:,2) + &
                   real(l-1)*setup%lattice_vectors(:,3) + &
-                  real(i)*setup%basis_vectors(:,i)
+                  setup%basis_vectors(:,i)
             pos = pos*setup%lattice_parameter
             write(7,*) setup%species_names(configuration(i,j,k,l)), pos(1),pos(2),pos(3)
           end do
