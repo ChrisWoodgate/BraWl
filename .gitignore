@@ -61,10 +61,12 @@ tests/*
 !tests/03_serial_nested_sampling
 !tests/04_parallel_wang-landau
 !tests/05_serial_metropolis_hcp
+!tests/06_serial_metropolis_hcp_nonideal
 !tests/99_ref
 !tests/ci_test.py
 !tests/ideal_hcp_neighbour_tables.py
 !tests/hcp_brute_force_check.py
+!tests/compare_energy_trajectories.py
 
 tests/01_serial_metropolis/*
 !tests/01_serial_metropolis/fcc_epi.vij
@@ -95,6 +97,11 @@ tests/05_serial_metropolis_hcp/*
 !tests/05_serial_metropolis_hcp/brawl.inp
 !tests/05_serial_metropolis_hcp/metropolis.inp
 
+tests/06_serial_metropolis_hcp_nonideal/*
+!tests/06_serial_metropolis_hcp_nonideal/hcp_epi.vij
+!tests/06_serial_metropolis_hcp_nonideal/brawl.inp
+!tests/06_serial_metropolis_hcp_nonideal/metropolis.inp
+
 tests/99_ref/*
 !tests/99_ref/01_serial_metropolis
 !tests/99_ref/01_serial_metropolis/*
@@ -106,6 +113,8 @@ tests/99_ref/*
 !tests/99_ref/04_parallel_wang-landau/*
 !tests/99_ref/05_serial_metropolis_hcp
 !tests/99_ref/05_serial_metropolis_hcp/*
+!tests/99_ref/06_serial_metropolis_hcp_nonideal
+!tests/99_ref/06_serial_metropolis_hcp_nonideal/*
 
 # Ignore locally Doxygen-generated files
 docs/html/

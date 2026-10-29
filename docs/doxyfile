@@ -8,7 +8,7 @@ OUTPUT_DIRECTORY       = docs
 RECURSIVE              = YES
 
 # Input files and directories
-INPUT                  = src docs/mainpage.md
+INPUT                  = src docs/mainpage.md docs/lattices.md
 FILE_PATTERNS          = *.f90 *.md
 
 # Enable Fortran-specific optimizations

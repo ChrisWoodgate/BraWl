@@ -53,6 +53,28 @@ jobs:
           ../../brawl.run
           python ../ci_test.py
 
+      - name: Run serial Metropolis test on hcp with a non-ideal axial ratio
+        run: |
+          cd tests/06_serial_metropolis_hcp_nonideal
+          ../../brawl.run
+          python ../ci_test.py
+
+      - name: Check hcp energies and ASRO against a brute-force evaluation
+        run: |
+          cd tests/06_serial_metropolis_hcp_nonideal
+          python ../hcp_brute_force_check.py brawl.inp configs/proc_0000_final_config_at_0300.0.nc trajectories/proc_0000_energy_trajectory_at_T_0300.0.dat --asro trajectories/proc_0000_asro_trajectory_at_T_0300.0.dat
+
+      - name: Check that hcp at the ideal axial ratio reproduces ideal_hcp
+        run: |
+          mkdir -p tests/scratch_hcp_consistency
+          cd tests/scratch_hcp_consistency
+          cp ../05_serial_metropolis_hcp/hcp_epi.vij ../05_serial_metropolis_hcp/metropolis.inp .
+          grep -v -E '^lattice[[:space:]]*=' ../05_serial_metropolis_hcp/brawl.inp > brawl.inp
+          printf 'lattice = hcp\nc_over_a = 1.6329931618554521\n' >> brawl.inp
+          grep -n 'lattice\|c_over_a' brawl.inp
+          ../../brawl.run
+          python ../compare_energy_trajectories.py trajectories/proc_0000_energy_trajectory_at_T_0300.0.dat ../99_ref/05_serial_metropolis_hcp/proc_0000_energy_trajectory_at_T_0300.0.dat 1.0e-10
+
       - name: Run serial Nested Sampling test
         run: |
           cd tests/03_serial_nested_sampling
