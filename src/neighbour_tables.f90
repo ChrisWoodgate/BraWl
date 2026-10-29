@@ -127,7 +127,7 @@ module neighbour_tables
     integer, allocatable, dimension(:) :: key
 
     real(real64) :: gamma, tol, d2, d2_max
-    integer :: b0, b1, di, dj, dk, x, y, z4, k1, zeta, c, i, j, n, m
+    integer :: b0, b1, di, dj, dk, x, y, z4, k1, zeta, c, i, j, n, m, g
     logical :: by_shells
 
     gamma = setup%c_over_a
@@ -158,8 +158,8 @@ module neighbour_tables
     reach_z = 2
 
     !------------------------------------------------------------------!
-    ! Enumerate pair vectors in a box, enlarging it until enough groups !
-    ! lie safely inside                                                !
+    ! Enumerate pair vectors in a box, enlarging it until enough       !
+    ! groups lie safely inside                                         !
     !------------------------------------------------------------------!
     do
 
@@ -205,7 +205,8 @@ module neighbour_tables
                 ! Find or create the class of this pair vector
                 c = 0
                 do i=1, n_cls
-                  if ((cls_k1(i) .eq. k1) .and. (cls_z(i) .eq. zeta)) then
+                  if ((cls_k1(i) .eq. k1) .and.                        &
+                      (cls_z(i) .eq. zeta)) then
                     c = i
                     exit
                   end if
@@ -364,9 +365,10 @@ module neighbour_tables
       setup%tables%n_nbrs_energy(b0) = 0
       setup%tables%n_nbrs_asro(b0) = 0
       do n=1, j
-        if (setup%tables%nbr_group(n, b0) .le. setup%interaction_range) &
+        g = setup%tables%nbr_group(n, b0)
+        if (g .le. setup%interaction_range)                            &
           setup%tables%n_nbrs_energy(b0) = n
-        if (setup%tables%nbr_group(n, b0) .le. setup%wc_range - 1)     &
+        if (g .le. setup%wc_range - 1)                                 &
           setup%tables%n_nbrs_asro(b0) = n
       end do
     end do
@@ -510,8 +512,8 @@ module neighbour_tables
       if (gap .lt. 1000.0_real64*setup%shell_tolerance) then
         if (n_close .eq. 0) write(6,'(a)') ''
         n_close = n_close + 1
-        write(6,'(x,"Note: groups ",I3," and ",I3," differ in distance", &
-                 &" by only ",ES9.2," (relative)")') g-1, g, gap
+        write(6,'(x,"Note: groups ",I3," and ",I3," differ in ",       &
+                 &"distance by only ",ES9.2," (relative)")') g-1, g, gap
       end if
     end do
 
