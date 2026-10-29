@@ -635,6 +635,31 @@ module initialise
           end do ! i
         end do ! j
       end do ! k
+    else if(trim(setup%lattice) == 'ideal_hcp') then
+      ! Loop over lattice sites
+      do l=1, grid_dims(4)
+        do k=1, grid_dims(3)
+          do j=1, grid_dims(2)
+            do i=1, grid_dims(1)
+              do while (config(i,j,k,l) .eq. 0_int32)
+                ! Get a random number
+                rand = genrand()
+                ! Loop over species
+                do l=1, n_species
+                  ! Decide which species to sit on that site
+                  if ((rand .ge. sum(setup%species_concentrations(0:(l-1)))) .and. &
+                      (rand .le. sum(setup%species_concentrations(0:l)))) then
+                    if (check(l) .lt. species_count(l)) then
+                      config(i,j,k,l) = l
+                      check(l) = check(l) + 1
+                    end if
+                  end if
+                end do ! Species
+              end do ! While
+            end do ! i
+          end do ! j
+        end do ! k
+      end do ! l
     else
       call comms_finalise()
       print*, 'Lattice type: ', setup%lattice, ' not yet implemented'
