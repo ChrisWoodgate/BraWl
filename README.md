@@ -147,7 +147,8 @@ A (hopefully fairly complete) list of publications where `Brawl` was used is as 
 11. X. Zhang, C. D. Woodgate, G. Hadjipanayis, J. B. Staunton, L. H. Lewis, [Acta Materialia **307**, 121965 (2026)](https://doi.org/10.1016/j.actamat.2026.121965).
 12. A. M. Fisher, C. D. Woodgate, X. Zhang, G. C. Hadjipanayis, L. H. Lewis, J. B. Staunton, [Physical Review Materials **10**, 034410 (2026)](https://doi.org/10.1103/4q1c-97bp).
 13. H. J. Naguszewski, C. D. Woodgate, D. Quigley, [Computer Physics Communications **324**, 110125 (2026)](https://doi.org/10.1016/j.cpc.2026.110125).
-14. C. D. Woodgate, H. J. Naguszewski, N. F. Piwek, D. Redka, [arXiv:2601.16528](https://doi.org/10.48550/arXiv.2601.16528).
+14. J. E. Arnold, C. D. Woodgate, R. Hafizi, M. J. Harris, A. Mottura, G. García Fuentes, B. Gurrutxaga-Lerma, [Physical Review Materials **10**, 073605 (2026)](https://doi.org/10.1103/5tz1-zg9z).
+15. C. D. Woodgate, H. J. Naguszewski, N. F. Piwek, D. Redka, [arXiv:2601.16528](https://doi.org/10.48550/arXiv.2601.16528).
 
 ## Authors
 - Hubert J. Naguszewski ([@HubertJN](https://github.com/HubertJN), University of Warwick)
