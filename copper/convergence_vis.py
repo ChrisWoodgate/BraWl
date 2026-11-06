@@ -87,7 +87,7 @@ def plot_study(study, dirs, label, xlabel_fmt, out_name):
         ax.set_xticks(np.arange(start_temp, end_temp + cv_ticks, cv_ticks))
         ax.set_xlim(start_temp, end_temp)
         ax.set_ylim(0, ax.get_ylim()[1]*1.01)
-        legend = ax.legend(loc='upper right', title=composition.replace("Cu", "$x_{\\mathrm{Cu}}=") + "$, " + label)
+        legend = ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1), title=composition.replace("Cu", "$x_{\\mathrm{Cu}}=") + "$, " + label)
         for handle in legend.legend_handles:
             handle.set_linewidth(3)
         fig.savefig(os.path.join(base_path, out_name.format(composition)), bbox_inches='tight')
