@@ -627,7 +627,7 @@ module wang_landau
           call pair_swap(config, rdm1, rdm2)
           jbin = ibin
         end if
-        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+        if (MOD(i,MAX(1,INT(0.02_real64*REAL(setup_internal%n_atoms)))) == 0) then
           mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
           if (config_store(jbin)) then
             config_store(jbin) = .False.
@@ -639,7 +639,7 @@ module wang_landau
         ! reject and reset
         jbin = ibin
         call pair_swap(config, rdm1, rdm2)
-        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+        if (MOD(i,MAX(1,INT(0.02_real64*REAL(setup_internal%n_atoms)))) == 0) then
           mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
           if (config_store(jbin)) then
             config_store(jbin) = .False.
@@ -1682,7 +1682,7 @@ subroutine energy_explore(wl_logdos)
           call pair_swap(config, rdm1, rdm2)
           jbin = ibin
         end if
-        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+        if (MOD(i,MAX(1,INT(0.02_real64*REAL(setup_internal%n_atoms)))) == 0) then
           if (config_store(jbin)) then
             config_store(jbin) = .False.
             config_per_bin(jbin, :, :, :, :) = config
@@ -1692,7 +1692,7 @@ subroutine energy_explore(wl_logdos)
         ! reject and reset
         jbin = ibin
         call pair_swap(config, rdm1, rdm2)
-        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+        if (MOD(i,MAX(1,INT(0.02_real64*REAL(setup_internal%n_atoms)))) == 0) then
           if (config_store(jbin)) then
             config_store(jbin) = .False.
             config_per_bin(jbin, :, :, :, :) = config
