@@ -3,6 +3,7 @@ bins=1024
 num_windows=1
 bin_overlap=0.5
 tolerance=1e-10
+dos_tolerance=0.5
 flatness=0.85
 wl_f=0.05
 energy_min=-130
