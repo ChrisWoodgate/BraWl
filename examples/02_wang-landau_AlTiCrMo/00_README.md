@@ -6,7 +6,7 @@ C. D. Woodgate, H. J. Naguszewski, D. Redka, J. Minar, D. Quigley, J. B. Staunto
 
 A Wang-Landau sampling run needs the following input files:
  - The file 'input.inp' contains all relevant parameters for the simulation, while 'AlTiCrMo.vij' contains the atom-atom interaction parameters.
- - The file 'wl\_input.inp' contains the relevant Wang-Landau parameters. An optional `dos_tolerance=<percent>` line stops the run early once the RMSE of the change in ln g(E) between WL iterations (uniform offset removed), as a percentage of the ln g(E) range, falls below that value (e.g. `dos_tolerance=0.5`). If omitted (or <= 0) only the `tolerance` on the modification factor ln f is used.
+ - The file 'wl\_input.inp' contains the relevant Wang-Landau parameters. An optional `dos_tolerance=<value>` line stops the run early once the change in ln g(E) between WL iterations, measured as the RMSE within each energy window (uniform offset removed) and taking the worst window, stays below that value (in units of ln g, i.e. the relative change in g) for 2 consecutive iterations (e.g. `dos_tolerance=0.02`). If omitted (or <= 0) only the `tolerance` on the modification factor ln f is used.
 
 Run 'mpirun -n 8 /path/to/brawl/brawl.run' to launch the simulation. Once it has finished, analyse the results with wl\_vis.py. (Note that this example requires a parallel build.)
 

@@ -56,6 +56,7 @@ module wang_landau
   real(real64) :: target_energy, flatness, bins_buffer, bins_min, radial_min, radial_min_buffer
   real(real64), allocatable :: wl_logdos_prev(:)
   real(real64) :: dos_change
+  integer :: dos_stable_count
   logical :: dos_converged
   real(real64), allocatable :: bin_edges(:), wl_hist(:), wl_logdos(:), bin_energy(:), mean_energy(:,:), prob(:), wl_mc_steps(:)
   integer, allocatable :: pre_sampled(:), pre_sampled_buffer(:)
@@ -194,6 +195,7 @@ module wang_landau
     converged = 0
     converged_sum = 0
     dos_converged = .false.
+    dos_stable_count = 0
     dos_change = 0.0_real64
     wl_logdos_prev = wl_logdos
     radial_time = 0.0_real64
@@ -247,18 +249,24 @@ module wang_landau
         call dos_average(wl_logdos)
         call dos_combine(wl_logdos)
 
-        ! Change in DOS since previous iteration: RMSE of ln g, normalised by the
-        ! ln g range and given as a percentage. ln g is only defined up to an
-        ! additive constant, so any uniform offset between iterations is removed.
+        ! Change in DOS since previous iteration, in units of ln g (so it is the
+        ! relative change in g, independent of system size). ln g is only defined
+        ! up to an additive constant, so the median change over all bins is removed
+        ! first; the median is used rather than the value of any single bin
+        ! (dos_combine pins the lowest bin to zero, which is also the noisiest).
+        ! The RMSE of the remaining change is then taken within each energy window
+        ! and the worst window is reported, so that poorly sampled windows are not
+        ! hidden by well converged ones. The run is converged once this stays below
+        ! dos_tolerance for 2 consecutive iterations.
         ! wl_logdos is identical on all ranks after dos_combine (broadcast).
-        dos_change = 100.0_real64*sqrt(sum((wl_logdos - wl_logdos_prev - &
-                     sum(wl_logdos - wl_logdos_prev)/real(size(wl_logdos), real64))**2) / &
-                     real(size(wl_logdos), real64)) / &
-                     max(maxval(wl_logdos) - minval(wl_logdos), tiny(1.0_real64))
+        dos_change = worst_window_dos_change(wl_logdos - wl_logdos_prev)
         wl_logdos_prev = wl_logdos
         if (wl_setup_internal%dos_tolerance > 0.0 .and. dos_change < real(wl_setup_internal%dos_tolerance, real64)) then
-          dos_converged = .true.
+          dos_stable_count = dos_stable_count + 1
+        else
+          dos_stable_count = 0
         end if
+        if (dos_stable_count >= 2) dos_converged = .true.
 
         call MPI_ALLREDUCE(MPI_IN_PLACE, wl_mc_steps, SIZE(wl_mc_steps), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
 
@@ -284,9 +292,10 @@ module wang_landau
           write (6, '(a,f20.18,a,f8.2,a)', advance='no') "Flatness reached f of: ", wl_f_prev, &
                   " | Radial samples: ", radial_min*100.0_real64, "%"
           write (*, *)
-          write (6, '(a,es10.3,a)', advance='no') "DOS change since last iteration: ", dos_change, "%"
+          write (6, '(a,es10.3,a,i2,a)', advance='no') "Worst-window DOS change (ln g): ", dos_change, &
+                  " | Consecutive below tolerance: ", dos_stable_count, "/2"
           if (wl_setup_internal%dos_tolerance > 0.0) then
-            write (6, '(a,es10.3,a)', advance='no') " | Tolerance: ", real(wl_setup_internal%dos_tolerance, real64), "%"
+            write (6, '(a,es10.3)', advance='no') " | Tolerance: ", real(wl_setup_internal%dos_tolerance, real64)
           end if
           write (*, *)
           do i=1, wl_setup_internal%num_windows
@@ -768,6 +777,59 @@ module wang_landau
     call comms_wait()
     call comms_purge()
   end subroutine enter_energy_window
+
+  !> @brief   Worst-window change in the density of states between iterations
+  !>
+  !> @details Takes the change in ln g(E) between two iterations, removes the
+  !>          median change over all bins (ln g is defined only up to an additive
+  !>          constant), and returns the largest RMSE of the remaining change
+  !>          taken within any one energy window (overlap bins included).
+  !>
+  !> @param   delta Change in ln g(E) for every bin
+  !> @return  Largest per-window RMSE, in units of ln g
+  function worst_window_dos_change(delta) result(worst)
+    real(real64), intent(in) :: delta(:)
+    real(real64) :: worst, offset, rmse
+    real(real64), allocatable :: centred(:)
+    integer :: w, lo, hi
+
+    offset = median_of(delta)
+    centred = delta - offset
+    worst = 0.0_real64
+    do w = 1, wl_setup_internal%num_windows
+      lo = max(window_indices(w, 1), 1)
+      hi = min(window_indices(w, 2), size(delta))
+      if (hi < lo) cycle
+      rmse = sqrt(sum(centred(lo:hi)**2)/real(hi - lo + 1, real64))
+      worst = max(worst, rmse)
+    end do
+  end function worst_window_dos_change
+
+  !> @brief   Median of an array (insertion sort of a copy)
+  function median_of(x) result(med)
+    real(real64), intent(in) :: x(:)
+    real(real64) :: med, key
+    real(real64), allocatable :: y(:)
+    integer :: i, j, n
+
+    n = size(x)
+    y = x
+    do i = 2, n
+      key = y(i)
+      j = i - 1
+      do while (j >= 1)
+        if (y(j) <= key) exit
+        y(j+1) = y(j)
+        j = j - 1
+      end do
+      y(j+1) = key
+    end do
+    if (mod(n, 2) == 1) then
+      med = y((n + 1)/2)
+    else
+      med = 0.5_real64*(y(n/2) + y(n/2 + 1))
+    end if
+  end function median_of
 
   !> @brief   Pre-sampling routine that performs initial sweeps
   !>

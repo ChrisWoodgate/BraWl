@@ -306,9 +306,10 @@ module derived_types
   !> @param  bin_overlap Percentage overlap between windows
   !> @param  tolerance Tolerance for Wang-Landau
   !> @param  wl_f Flatness for Wang-Landau histogram
-  !> @param  dos_tolerance Optional stopping tolerance (percent): stop when the RMSE (offset removed)
-  !>         of the change in ln g(E) between WL iterations, as a percentage of the ln g(E) range, falls
-  !>         below this value. Zero or negative (default) disables the check.
+  !> @param  dos_tolerance Optional stopping tolerance in units of ln g(E): stop when the
+  !>         worst energy window's RMSE change in ln g(E) between WL iterations (median
+  !>         offset removed) is below this value for 2 consecutive iterations. Zero or
+  !>         negative (default) disables the check.
   !> @param  energy_min Energy range minimum
   !> @param  energy_max Energy range maximum
   !> @param  T Temperature to use for dynamics
