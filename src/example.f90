@@ -4,19 +4,23 @@
 !>          developers
 !>
 !> @details This file contains an example program showcasing the code's
-!>          functionalities.
+!>          functionalities. It is built with
+!>          `make compiler=<compiler> example` and run from the
+!>          directory `examples/00_examples_tests`. The sequence of
+!>          calls mirrors that of the main program in main.f90: the
+!>          global (cross-rank) Metropolis arrays only exist in the
+!>          parallel build, so the calls which set them up and tear
+!>          them down are guarded by the USE_MPI preprocessor macro.
 !>
 !> @author  C. D. Woodgate
-!> @date    2019-2024
+!> @author  Claude Fable 5.1
+!> @date    2019-2026
 program example
   
   use initialise
   use comms
   use shared_data
   use metropolis
-  use nested_sampling
-  use tmmc
-  use wang_landau
   use io
   use kinds
   use c_functions
@@ -31,17 +35,8 @@ program example
   ! Runtime parameters type
   type(run_params) :: setup
 
-  ! Nested Sampling parameters type
+  ! Metropolis parameters type
   type(metropolis_params) :: metropolis
-
-  ! Nested Sampling parameters type
-  type(ns_params) :: ns_setup
-
-  ! Tmmc parameters type
-  type(tmmc_params) :: tmmc_setup
-
-  ! Wang Landau parameters type
-  type(wl_params) :: wl_setup
 
   ! Start MPI
   call comms_initialise()
@@ -72,8 +67,17 @@ program example
   ! Make directories for data
   call make_data_directories(my_rank)
 
-  ! Initialise some global arrays
+  ! Make sure the required directories have been made before any rank
+  ! tries to write to them
+  call comms_wait()
+
+#ifdef USE_MPI
+
+  ! Initialise some global arrays. These are only used (and only
+  ! defined) in the parallel build.
   call initialise_global_metropolis_arrays(setup, metropolis)
+
+#endif
 
   ! Initialise some local arrays
   call initialise_local_arrays(setup)
@@ -85,7 +89,14 @@ program example
   call examples(setup, metropolis, my_rank)
 
   ! Clean up
+  call local_metropolis_clean_up()
+
+#ifdef USE_MPI
+
+  ! Clean up
   call global_metropolis_clean_up()
+
+#endif
 
   ! Clean up
   call clean_up_interaction()
