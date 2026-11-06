@@ -6,15 +6,16 @@ import numpy as np
 base_path = os.path.dirname(os.path.abspath(__file__))
 ry_to_mev = 13605.693122
 energy_max = 10          # meV/atom, as in the production runs
-min_margin = 0.0         # meV/atom below the annealed energy (truncating the low end is fine)
-frac_margin = 0.0       # or this fraction of |E|, whichever is larger
+shrink = 0.05            # otherwise energy_min is the annealed energy made 5% smaller, truncated towards 0
+# Production energy_min (meV/atom); used when it is closer to zero than the annealed energy
+production = {"Cu0.00": -181, "Cu0.50": -110}
 
-# Same annealing as the original production runs: 8010 K down to 1010 K
+# Slow anneal from 8010 K down to 210 K (about 2 minutes for 2048 atoms on 4 ranks)
 metropolis_inp = """mode = simulated_annealing
-n_mc_steps = 256000
+n_mc_steps = 1000000
 burn_in_start = F
 burn_in = T
-n_burn_in_steps = 25600
+n_burn_in_steps = 100000
 n_sample_steps = 256
 calculate_energies = T
 n_sample_steps_trajectory = 256
@@ -29,8 +30,8 @@ write_final_config_xyz = F
 write_final_config_nc = F
 read_start_config_nc = F
 T = 8010.0
-T_steps = 8
-delta_T = -1000.0
+T_steps = 40
+delta_T = -200.0
 nbr_swap = F
 """
 
@@ -66,7 +67,8 @@ def apply(write=True):
             continue
         energies = np.atleast_2d(np.loadtxt(energy_file, skiprows=1))
         e_low = energies[np.argmin(energies[:, 0]), 1]*ry_to_mev
-        e_min = int(np.floor(e_low - max(min_margin, frac_margin*abs(e_low))))
+        prod = production[d.split("/")[1]]
+        e_min = prod if prod > e_low else int(e_low*(1.0 - shrink))
         if not write:
             print(f"{d}: annealed E = {e_low:.2f} meV/atom -> energy_min = {e_min}")
             continue
