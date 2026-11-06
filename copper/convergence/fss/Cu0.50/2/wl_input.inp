@@ -1,5 +1,5 @@
 mc_sweeps=50
-bins=32
+bins=8
 num_windows=1
 bin_overlap=0.5
 tolerance=1e-12
