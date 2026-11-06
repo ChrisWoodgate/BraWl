@@ -980,7 +980,6 @@ module io
     ! Default values
     parameters%performance = 0
     parameters%nbr_swap = .False.
-    parameters%dos_tolerance = 0.0
 
     do while (ios==0)
 
@@ -994,11 +993,6 @@ module io
         buffer = buffer(pos+1:)
 
         select case (label)
-        case ('dos_tolerance')
-          read(buffer, *, iostat=ios) parameters%dos_tolerance
-          if (my_rank == 0) then
-            print*, '# Read dos_tolerance = ', parameters%dos_tolerance
-          end if
         case ('mc_sweeps')
           read(buffer, *, iostat=ios) parameters%mc_sweeps
           if (my_rank == 0) then

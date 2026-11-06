@@ -306,9 +306,6 @@ module derived_types
   !> @param  bin_overlap Percentage overlap between windows
   !> @param  tolerance Tolerance for Wang-Landau
   !> @param  wl_f Flatness for Wang-Landau histogram
-  !> @param  dos_tolerance Optional stopping tolerance (percent): stop when the maximum change
-  !>         in ln g(E) between WL iterations, as a percentage of the ln g(E) range, falls
-  !>         below this value. Zero or negative (default) disables the check.
   !> @param  energy_min Energy range minimum
   !> @param  energy_max Energy range maximum
   !> @param  T Temperature to use for dynamics
@@ -336,8 +333,6 @@ module derived_types
     real :: tolerance
     ! Flatness for wang landau histogram
     real :: flatness
-    ! DOS change tolerance (percent) between iterations. <= 0 disables.
-    real :: dos_tolerance
     ! Wang Landau density of states histogram tuning parameter
     real :: wl_f
     ! Energy range minimum
