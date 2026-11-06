@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 20 runs, 16 MPI processes each. One 48-core node runs 3 runs at once,
-# so 7 array tasks cover everything (the last one only has 2 runs).
+# 16 runs, 16 MPI processes each. One 48-core node runs 3 runs at once,
+# so 6 array tasks cover everything (the last one only has 1 run).
 
 #SBATCH --job-name=CuConv
 #SBATCH --nodes=1
@@ -10,7 +10,7 @@
 #SBATCH --mem-per-cpu=3850
 #SBATCH --partition=compute
 #SBATCH --time=48:00:00
-#SBATCH --array=0-6
+#SBATCH --array=0-5
 #SBATCH --account=su007-dq
 #SBATCH --output=logs/out_%A_%a.txt
 #SBATCH --error=logs/err_%A_%a.txt

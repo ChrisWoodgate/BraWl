@@ -75,12 +75,12 @@ def apply(write=True):
         with open(os.path.join(path, "wl_input.inp")) as f:
             lines = f.read().split("\n")
         with open(os.path.join(path, "wl_input.inp"), "w") as f:
-            for line in lines:
+            for n, line in enumerate(lines):
                 if line.startswith("energy_min"):
-                    line = f"energy_min={e_min}"
+                    lines[n] = f"energy_min={e_min}"
                 elif line.startswith("energy_max"):
-                    line = f"energy_max={energy_max}"
-                f.write(line + "\n")
+                    lines[n] = f"energy_max={energy_max}"
+            f.write("\n".join(lines))
         print(f"{d}: annealed E = {e_low:.2f} meV/atom -> energy_min = {e_min}")
 
 if __name__ == "__main__":

@@ -29,8 +29,8 @@ kb_ev = 8.617333262e-5
 ev_to_ry = 13.605693122
 base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "convergence")
 compositions = ["Cu0.00", "Cu0.50"]
-fss_dirs = ["2", "3", "4", "5", "6", "7", "8"]
-cutoff_dirs = ["2", "4", "6"]
+fss_dirs = ["2", "4", "6", "8"]
+cutoff_dirs = ["2", "4", "6", "8"]
 
 # fixed temperature grid controls
 start_temp = 0
@@ -65,10 +65,10 @@ def read_atoms(path):
                 return sum(int(x) for x in line.split("=")[1].split())
 
 def plot_study(study, dirs, label, xlabel_fmt, out_name):
-    fig, axes = plt.subplots(1, len(compositions), figsize=(4.25*len(compositions), 3.375),
-                             constrained_layout=True, sharey=True)
-    for ax, composition in zip(axes, compositions):
-        for i, d in enumerate(dirs):
+    # One figure per composition
+    for composition in compositions:
+        fig, ax = plt.subplots(figsize=(4.25, 3.375), constrained_layout=True)
+        for d in dirs:
             path = os.path.join(base_path, study, composition, d) + "/"
             if not os.path.exists(path + "data/wl_dos.nc"):
                 print("Skipping (no data yet):", path)
@@ -77,13 +77,14 @@ def plot_study(study, dirs, label, xlabel_fmt, out_name):
             ax.plot(temperatures, heat_capacity(path, n_atoms), label=xlabel_fmt.format(d, n_atoms))
         ax.set_title(composition.replace("Cu", "$x_{\\mathrm{Cu}}=") + "$")
         ax.set_xlabel("$T$ (K)")
+        ax.set_ylabel("$C_v/k_B$ per atom")
         ax.legend(fontsize=font_size - 8, title=label)
-    axes[0].set_ylabel("$C_v/k_B$ per atom")
-    fig.savefig(os.path.join(base_path, out_name))
+        fig.savefig(os.path.join(base_path, out_name.format(composition)))
+        plt.close(fig)
 
 if __name__ == "__main__":
     which = sys.argv[1] if len(sys.argv) > 1 else "both"
     if which in ("fss", "both"):
-        plot_study("fss", fss_dirs, "6 shells", "${0}^3$ cells, $N={1}$", "fss_heat_capacity.pdf")
+        plot_study("fss", fss_dirs, "6 shells", "${0}^3$ cells, $N={1}$", "fss_{}.pdf")
     if which in ("cutoff", "both"):
-        plot_study("cutoff", cutoff_dirs, "2048 atoms", "{0} shells", "cutoff_heat_capacity.pdf")
+        plot_study("cutoff", cutoff_dirs, "2048 atoms", "{0} shells", "cutoff_{}.pdf")
