@@ -34,7 +34,7 @@ cutoff_dirs = ["2", "4", "6", "8"]
 
 # fixed temperature grid controls
 start_temp = 0
-end_temp = 3000
+end_temp = 5000
 step_size = 25
 temperatures = np.arange(start_temp, end_temp + step_size, step_size).astype(np.float64)
 temperatures[0] = 1e-64
@@ -65,21 +65,32 @@ def read_atoms(path):
                 return sum(int(x) for x in line.split("=")[1].split())
 
 def plot_study(study, dirs, label, xlabel_fmt, out_name):
-    # One figure per composition
+    # One figure per composition, styled as the specific heat panels in copper_vis.py
+    label_size_offset = 3
+    cv_ticks = 1000
+    fig_height = 4.5
+    fig_width = 4 * 1.68 * 1.5
     for composition in compositions:
-        fig, ax = plt.subplots(figsize=(4.25, 3.375), constrained_layout=True)
+        fig, ax = plt.subplots(1, 1, figsize=(fig_width, fig_height*1.2), constrained_layout=True)
         for d in dirs:
             path = os.path.join(base_path, study, composition, d) + "/"
             if not os.path.exists(path + "data/wl_dos.nc"):
                 print("Skipping (no data yet):", path)
                 continue
             n_atoms = read_atoms(path)
-            ax.plot(temperatures, heat_capacity(path, n_atoms), label=xlabel_fmt.format(d, n_atoms))
-        ax.set_title(composition.replace("Cu", "$x_{\\mathrm{Cu}}=") + "$")
-        ax.set_xlabel("$T$ (K)")
-        ax.set_ylabel("$C_v/k_B$ per atom")
-        ax.legend(fontsize=font_size - 8, title=label)
-        fig.savefig(os.path.join(base_path, out_name.format(composition)))
+            ax.plot(temperatures, heat_capacity(path, n_atoms), '-', label=xlabel_fmt.format(d, n_atoms))
+        ax.tick_params(direction="in")
+        ax.tick_params(axis='both', pad=6)
+        ax.grid(True, axis='x')
+        ax.set_xlabel(r'Temperature, $T$ (K)', fontsize=font_size+label_size_offset)
+        ax.set_ylabel(r'Specific heat, $C_V$ ($k_B$/atom)', fontsize=font_size+label_size_offset)
+        ax.set_xticks(np.arange(start_temp, end_temp + cv_ticks, cv_ticks))
+        ax.set_xlim(start_temp, end_temp)
+        ax.set_ylim(0, ax.get_ylim()[1]*1.01)
+        legend = ax.legend(loc='upper right', title=composition.replace("Cu", "$x_{\\mathrm{Cu}}=") + "$, " + label)
+        for handle in legend.legend_handles:
+            handle.set_linewidth(3)
+        fig.savefig(os.path.join(base_path, out_name.format(composition)), bbox_inches='tight')
         plt.close(fig)
 
 if __name__ == "__main__":
