@@ -6,8 +6,8 @@ import numpy as np
 base_path = os.path.dirname(os.path.abspath(__file__))
 ry_to_mev = 13605.693122
 energy_max = 10          # meV/atom, as in the production runs
-min_margin = 5.0         # meV/atom below the annealed energy
-frac_margin = 0.03       # or this fraction of |E|, whichever is larger
+min_margin = 0.0         # meV/atom below the annealed energy (truncating the low end is fine)
+frac_margin = 0.0       # or this fraction of |E|, whichever is larger
 
 metropolis_inp = """mode = simulated_annealing
 n_mc_steps = {n_steps}
