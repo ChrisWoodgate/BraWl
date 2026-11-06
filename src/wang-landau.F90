@@ -54,6 +54,9 @@ module wang_landau
   integer :: bins, resets, pre_sampled_state, ibin, itemp
   real(real64) :: bin_width, wl_f, wl_f_prev, tolerance, flatness_tolerance
   real(real64) :: target_energy, flatness, bins_buffer, bins_min, radial_min, radial_min_buffer
+  real(real64), allocatable :: wl_logdos_prev(:)
+  real(real64) :: dos_change
+  logical :: dos_converged
   real(real64), allocatable :: bin_edges(:), wl_hist(:), wl_logdos(:), bin_energy(:), mean_energy(:,:), prob(:), wl_mc_steps(:)
   integer, allocatable :: pre_sampled(:), pre_sampled_buffer(:)
   logical :: rho_saved
@@ -190,6 +193,9 @@ module wang_landau
     iter = iter + 1
     converged = 0
     converged_sum = 0
+    dos_converged = .false.
+    dos_change = 0.0_real64
+    wl_logdos_prev = wl_logdos
     radial_time = 0.0_real64
     mpi_wl_hist = 0.0_real64
     i = 0
@@ -241,6 +247,15 @@ module wang_landau
         call dos_average(wl_logdos)
         call dos_combine(wl_logdos)
 
+        ! Change in DOS since previous iteration, as % of ln g range.
+        ! wl_logdos is identical on all ranks after dos_combine (broadcast).
+        dos_change = 100.0_real64*maxval(abs(wl_logdos - wl_logdos_prev)) / &
+                     max(maxval(wl_logdos) - minval(wl_logdos), tiny(1.0_real64))
+        wl_logdos_prev = wl_logdos
+        if (wl_setup_internal%dos_tolerance > 0.0 .and. dos_change < real(wl_setup_internal%dos_tolerance, real64)) then
+          dos_converged = .true.
+        end if
+
         call MPI_ALLREDUCE(MPI_IN_PLACE, wl_mc_steps, SIZE(wl_mc_steps), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
 
         call reduce_time(start, end, radial_time)
@@ -264,6 +279,11 @@ module wang_landau
           write(*,*)
           write (6, '(a,f20.18,a,f8.2,a)', advance='no') "Flatness reached f of: ", wl_f_prev, &
                   " | Radial samples: ", radial_min*100.0_real64, "%"
+          write (*, *)
+          write (6, '(a,es10.3,a)', advance='no') "DOS change since last iteration: ", dos_change, "%"
+          if (wl_setup_internal%dos_tolerance > 0.0) then
+            write (6, '(a,es10.3,a)', advance='no') " | Tolerance: ", real(wl_setup_internal%dos_tolerance, real64), "%"
+          end if
           write (*, *)
           do i=1, wl_setup_internal%num_windows
             write (6, '(a,i3,a,f16.0,a,f7.2,a,a,f12.2,a)') "MPI Window: ", i, " | Total MC Steps: ", wl_mc_steps(i), &
@@ -303,11 +323,16 @@ module wang_landau
         iter = iter + 1
 
         start = mpi_wtime()
+
+        if (dos_converged) exit
       end if
     end do
 
     if (my_rank == 0) then
       write (*, *)
+      if (dos_converged) then
+        call print_centered_message("Converged: DOS change below tolerance", "-")
+      end if
       call print_centered_message("Simulation Complete!", "=")
     end if
 
@@ -1036,6 +1061,7 @@ module wang_landau
     allocate(wl_hist(bins))
     allocate(wl_logdos(bins))
     allocate(wl_logdos_buffer(bins))
+    allocate(wl_logdos_prev(bins))
     allocate(bin_energy(bins))
     allocate(mean_energy(300,2))
     allocate(prob(bins))
