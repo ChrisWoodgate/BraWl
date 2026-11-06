@@ -78,7 +78,7 @@ filename = "data/wl_hist.nc"
 wl_hist = nc.Dataset(filename)
 wl_hist = np.array(wl_hist["grid data"][:], dtype=np.float64)
 
-kb_ev = 8.167333262e-5
+kb_ev = 8.617333262e-5
 ev_to_ry = 13.605693122
 kb_ry = kb_ev/ev_to_ry
 n_atoms = 128

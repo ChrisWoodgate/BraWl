@@ -39,11 +39,11 @@ module constants
 
   ! 2022 CODATA Value for k_b in eV/K
   real(real64), parameter :: k_b_in_eV &
-                             =8.167333262e-5_real64
+                             =8.617333262e-5_real64
 
   ! 2022 CODATA Value for k_b in eV/K 
   real(real64), parameter :: k_b_in_Ry &
-                             =8.167333262e-5_real64/13.605693122990_real64
+                             =8.617333262e-5_real64/13.605693122990_real64
 
   ! 2022 CODATA value for Rydberg in eV
   real(real64), parameter :: Ry_to_eV = 13.605693122_real64

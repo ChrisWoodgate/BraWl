@@ -25,7 +25,7 @@ def compute_cv_curve(path):
         bin_edges = np.array(nc.Dataset("data/wl_dos_bins.nc")["grid data"][:], dtype=np.float64)
         wl_logdos = np.array(nc.Dataset("data/wl_dos.nc")["grid data"][:], dtype=np.float64)
 
-        kb_ev = 8.167333262e-5
+        kb_ev = 8.617333262e-5
         ev_to_ry = 13.605693122
         n_atoms = 2048
 

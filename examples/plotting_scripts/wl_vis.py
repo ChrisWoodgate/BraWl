@@ -82,7 +82,7 @@ concentrations = 1.0/n_species*np.ones(n_species)
 
 wl_logdos = wl_logdos - np.max(wl_logdos)
 
-kb_ev = 8.167333262e-5
+kb_ev = 8.617333262e-5
 ev_to_ry = 13.605693122
 kb_ry = kb_ev/ev_to_ry
 n_atoms = 128
