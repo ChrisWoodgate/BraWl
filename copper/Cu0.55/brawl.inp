@@ -1,0 +1,13 @@
+mode=302
+n_1=8
+n_2=8
+n_3=8
+n_species = 3
+lattice = fcc
+lattice_parameter = 3.02475
+interaction_file = 'Cu0.55_Cu-Ni-Al_V_ijs_Ry.txt'
+interaction_range = 6
+wc_range = 5
+species_names = Al Ni Cu
+!species_concentrations = 0.1125 0.3375 0.5500
+species_numbers = 230 691 1127
