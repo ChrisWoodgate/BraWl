@@ -6,7 +6,9 @@ tolerance=1e-12
 dos_tolerance=0.5
 flatness=0.85
 wl_f=0.05
-energy_min=-145
+energy_min=-110
 energy_max=10
 radial_samples=128
 performance=0
+
+
