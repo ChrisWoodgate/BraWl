@@ -247,9 +247,13 @@ module wang_landau
         call dos_average(wl_logdos)
         call dos_combine(wl_logdos)
 
-        ! Change in DOS since previous iteration, as % of ln g range.
+        ! Change in DOS since previous iteration: RMSE of ln g, normalised by the
+        ! ln g range and given as a percentage. ln g is only defined up to an
+        ! additive constant, so any uniform offset between iterations is removed.
         ! wl_logdos is identical on all ranks after dos_combine (broadcast).
-        dos_change = 100.0_real64*maxval(abs(wl_logdos - wl_logdos_prev)) / &
+        dos_change = 100.0_real64*sqrt(sum((wl_logdos - wl_logdos_prev - &
+                     sum(wl_logdos - wl_logdos_prev)/real(size(wl_logdos), real64))**2) / &
+                     real(size(wl_logdos), real64)) / &
                      max(maxval(wl_logdos) - minval(wl_logdos), tiny(1.0_real64))
         wl_logdos_prev = wl_logdos
         if (wl_setup_internal%dos_tolerance > 0.0 .and. dos_change < real(wl_setup_internal%dos_tolerance, real64)) then
