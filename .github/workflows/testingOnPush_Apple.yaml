@@ -6,6 +6,7 @@ on:
       - 'tests/**'
       - 'src/**'
       - 'Makefile'
+      - 'examples/00_examples_tests/**'
       - 'requirements.txt'
       - '.github/workflows/testingOnPush_Apple.yaml'
   workflow_dispatch:
@@ -49,6 +50,12 @@ jobs:
           ../../brawl.run
           python ../ci_test.py
 
+      - name: Build and run the serial example program
+        run: |
+          make compiler=gfortran example
+          cd examples/00_examples_tests
+          ../../example.run
+
       - name: Run parallel compilation with mpifort
         run: |
           make clean
@@ -65,3 +72,9 @@ jobs:
           cd tests/04_parallel_wang-landau
           mpirun --map-by :OVERSUBSCRIBE -np 4 ../../brawl.run
           python ../ci_test.py
+
+      - name: Build and run the parallel example program
+        run: |
+          make compiler=mpifort example
+          cd examples/00_examples_tests
+          mpirun --map-by :OVERSUBSCRIBE -np 2 ../../example.run

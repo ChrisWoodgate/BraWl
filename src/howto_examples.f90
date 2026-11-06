@@ -8,8 +8,9 @@
 !>          in example.f90
 !>
 !> @author  C. D. Woodgate
-!> @date    2021-2024
-module howto_examples 
+!> @author  Claude Fable 5.1
+!> @date    2021-2026
+module howto_examples
 
   use initialise
   use kinds
@@ -34,9 +35,11 @@ module howto_examples
   !> @brief   Subroutine showing examples of code's functionalities
   !>
   !> @author  C. D. Woodgate
-  !> @date    2019-2025
+  !> @author  Claude Fable 5.1
+  !> @date    2019-2026
   !>
   !> @param  setup Derived type containing simulation parameters
+  !> @param  metropolis Derived type containing Metropolis parameters
   !> @param  my_rank Rank of current MPI process
   !>
   !> @return None
@@ -52,20 +55,17 @@ module howto_examples
     type(metropolis_params) :: metropolis
 
     ! Integers used in calculations
-    integer :: i,j, div_steps, accept, n_save
+    integer :: i, j, accept, n_save
     
     ! Temperature and temperature steps
     real(real64) :: beta, temp, sim_temp, current_energy, step_E,     &
                     step_Esq, C, acceptance
   
     ! Name of file for grid state and xyz file at this temperature
-    character(len=36) :: xyz_file
+    character(len=80) :: xyz_file
 
-    ! Name of file for writing diagnostics at the end
-    character(len=43) :: diagnostics_file
-  
     ! Name of file for writing radial densities at the end
-    character(len=37) :: radial_file
+    character(len=80) :: radial_file
 
     ! Radial densities array (to populate)
     real(real64), allocatable, dimension(:,:,:) :: r_densities
@@ -196,11 +196,11 @@ module howto_examples
     ! 5. Write the grid to a .xyz file   !
     !------------------------------------!
 
-    write(xyz_file, '(A11 I3.3 A12 I4.4 F2.1 A4)') 'configs/proc_', &
-    my_rank, 'config_at_T_', int(temp), temp-int(temp),'.xyz'
-  
+    write(xyz_file, '(A,I4.4,A,I4.4,F2.1,A)') 'configs/proc_',       &
+          my_rank, '_config_at_T_', int(temp), temp-int(temp), '.xyz'
+
     ! Write xyz file
-    call xyz_writer(xyz_file, config, setup)
+    call xyz_writer(trim(xyz_file), config, setup)
   
     !----------------------------------------------------------------!
     ! 6. Compute the Warren-Cowley ASRO parameters and write to file !
@@ -212,10 +212,12 @@ module howto_examples
     ! Compute the radial densities
     r_densities = radial_densities(setup, config, setup%wc_range, shells)
   
-    write(radial_file, '(A,I3.3,A)') 'asro/proc_', my_rank, '_rho_of_T.nc'
+    write(radial_file, '(A,I4.4,A)') 'asro/proc_', my_rank,           &
+          '_rho_of_T.nc'
 
     ! Write the radial densities to file
-    call ncdf_radial_density_writer_once(trim(radial_file), r_densities, shells, setup)
+    call ncdf_radial_density_writer_once(trim(radial_file),           &
+                                         r_densities, shells, setup)
 
     if(my_rank == 0) then
       write(6,'(25("-"),x,"Simulation Complete!",x,25("-"))')

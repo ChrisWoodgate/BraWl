@@ -72,5 +72,41 @@ for i, _ in enumerate(ref_files):
       print(f"[FILE ERROR] {file_name}: {e}")
       sys.exit(1)
 
+  # --- Case 3: Nested sampling (.energies) files ---
+  # One header line (n_walkers, 1, 0, 'False', n_at) followed by one
+  # line per iteration holding the iteration number and the energy
+  # limit. Serial nested sampling with a fixed seed is deterministic,
+  # so the header must match token for token and the energies exactly.
+  elif file_name.endswith(".energies"):
+    try:
+      with open(ref_files[i], 'r') as ref_f, open(test_files[i], 'r') as test_f:
+        ref_header = ref_f.readline().split()
+        test_header = test_f.readline().split()
+
+      if ref_header != test_header:
+        print(f"[HEADER MISMATCH] {file_name}")
+        sys.exit(1)
+
+      ref_data = np.loadtxt(ref_files[i], skiprows=1, ndmin=2)
+      test_data = np.loadtxt(test_files[i], skiprows=1, ndmin=2)
+
+      if ref_data.shape != test_data.shape:
+        print(f"[SHAPE MISMATCH] {file_name}: {ref_data.shape} vs {test_data.shape}")
+        sys.exit(1)
+
+      if not np.array_equal(ref_data, test_data):
+        n_diff = int(np.sum(ref_data[:, 1] != test_data[:, 1]))
+        max_diff = float(np.max(np.abs(ref_data[:, 1] - test_data[:, 1])))
+        print(f"[DATA MISMATCH] {file_name}: {n_diff} iterations differ, max |dE| = {max_diff:.3e}")
+        sys.exit(1)
+
+    except Exception as e:
+      print(f"[FILE ERROR] {file_name}: {e}")
+      sys.exit(1)
+
+  # --- Any other extension is not compared ---
+  else:
+    print(f"[SKIPPED] {file_name}: no comparison rule for this file type")
+
 print("Pass")
 sys.exit(0)
