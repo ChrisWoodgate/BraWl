@@ -580,6 +580,11 @@ module wang_landau
     real(real64) :: e_swapped, e_unswapped, pair_unswapped, pair_swapped, delta_e, radial_start, radial_end
     integer :: i, ibin, jbin
     integer(array_int) :: site1, site2
+    real(real64), allocatable :: logdos_base(:), hist_base(:)
+
+    ! Starting values, common to all walkers in the window, used when sharing
+    logdos_base = wl_logdos
+    hist_base = mpi_wl_hist
 
     ! Establish total energy before any moves
     e_unswapped = setup_internal%full_energy(config)
@@ -662,11 +667,16 @@ module wang_landau
         wl_logdos(jbin) = wl_logdos(jbin) + wl_f
       end if
     end do
-    ! Reduce internal
+    ! Share ln g and the histogram across the walkers in this window by summing
+    ! each walker's increments on top of the common starting values, so every
+    ! visit by any walker counts with weight f (a shared ln g), rather than
+    ! averaging the copies (which would weight each visit by f/num_walkers).
+    wl_logdos = wl_logdos - logdos_base
     call MPI_Allreduce(MPI_IN_PLACE, wl_logdos, size(wl_logdos), MPI_DOUBLE_PRECISION, MPI_SUM, sub_comm, ierr)
-    wl_logdos = wl_logdos/REAL(mpi_processes/wl_setup_internal%num_windows)
+    wl_logdos = logdos_base + wl_logdos
+    mpi_wl_hist = mpi_wl_hist - hist_base
     call MPI_Allreduce(MPI_IN_PLACE, mpi_wl_hist, size(mpi_wl_hist), MPI_DOUBLE_PRECISION, MPI_SUM, sub_comm, ierr)
-    mpi_wl_hist = mpi_wl_hist/REAL(mpi_processes/wl_setup_internal%num_windows)
+    mpi_wl_hist = hist_base + mpi_wl_hist
   end subroutine sweeps
 
   !> @brief   Routine for moving processes into assigned energy window
@@ -868,7 +878,8 @@ module wang_landau
       lb_mc_steps(1) = lb_mc_steps(1) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
 
       flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
-      if (minval(mpi_wl_hist) > 1000.0_real64/REAL(num_walkers) .and. pre_sampled_state == 0 &
+      ! mpi_wl_hist now holds visits summed over the window's walkers
+      if (minval(mpi_wl_hist) > 1000.0_real64 .and. pre_sampled_state == 0 &
        .and. flatness > wl_setup_internal%flatness) then
         pre_sampled(mpi_index) = 1
       end if
