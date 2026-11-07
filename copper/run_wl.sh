@@ -3,7 +3,7 @@
 # Rerun the copper production Wang-Landau runs (Cu0.00 ... Cu0.95) without slurm.
 # Usage: BRAWL=/path/to/brawl.run ./run_wl.sh [Cu0.00 Cu0.50 ...]
 # With no arguments every Cu* directory is run.
-# Optional: PROCS (MPI processes per run, default 16), PARALLEL (runs at once, default 1),
+# Optional: PROCS (MPI processes per run, default 16), PARALLEL (runs at once, default 3),
 #           ARCHIVE (1 = move existing data/asro/load_balance output aside first, default 1)
 
 if [ -z "$BRAWL" ] || [ ! -x "$BRAWL" ]; then
@@ -12,7 +12,7 @@ if [ -z "$BRAWL" ] || [ ! -x "$BRAWL" ]; then
 fi
 
 PROCS=${PROCS:-16}
-PARALLEL=${PARALLEL:-1}
+PARALLEL=${PARALLEL:-3}
 ARCHIVE=${ARCHIVE:-1}
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 STAMP="$(date +%Y%m%d_%H%M%S)"
