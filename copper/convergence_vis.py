@@ -29,7 +29,7 @@ kb_ev = 8.617333262e-5
 ev_to_ry = 13.605693122
 base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "convergence")
 compositions = ["Cu0.00", "Cu0.50"]
-fss_dirs = ["2", "4", "6", "8"]
+fss_dirs = ["2", "4", "6", "8", "10"]
 cutoff_dirs = ["2", "4", "6", "8"]
 
 # fixed temperature grid controls
