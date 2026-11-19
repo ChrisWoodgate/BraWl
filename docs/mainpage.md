@@ -85,7 +85,7 @@ Additionally, as [developer documentation for the package](https://chriswoodgate
 
 ## 🪪 License
 
-This software is released under the LGPL-3.0 license. See the file LICENSE.txt for details.
+This software is released under the LGPL-3.0-or-later license. See the file LICENSE.txt for details.
 
 ---
 
@@ -110,7 +110,7 @@ BraWl/
 ├── docs/              # Documentation (this!)
 ├── README.md          # High-level overview and README
 ├── Makefile           # Makefile (for building the code!)
-├── LICENSE.txt        # Copyright statement and license (LGPL-3.0)
+├── LICENSE.txt        # Copyright statement and license (LGPL-3.0-or-later)
 └── CODE_OF_CONDUCT.md # Contributor Covenant Code of Conduct
 </pre>
 

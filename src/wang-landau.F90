@@ -54,6 +54,10 @@ module wang_landau
   integer :: bins, resets, pre_sampled_state, ibin, itemp
   real(real64) :: bin_width, wl_f, wl_f_prev, tolerance, flatness_tolerance
   real(real64) :: target_energy, flatness, bins_buffer, bins_min, radial_min, radial_min_buffer
+  real(real64), allocatable :: wl_logdos_prev(:)
+  real(real64) :: dos_change
+  integer :: dos_stable_count
+  logical :: dos_converged
   real(real64), allocatable :: bin_edges(:), wl_hist(:), wl_logdos(:), bin_energy(:), mean_energy(:,:), prob(:), wl_mc_steps(:)
   integer, allocatable :: pre_sampled(:), pre_sampled_buffer(:)
   logical :: rho_saved
@@ -190,6 +194,10 @@ module wang_landau
     iter = iter + 1
     converged = 0
     converged_sum = 0
+    dos_converged = .false.
+    dos_stable_count = 0
+    dos_change = 0.0_real64
+    wl_logdos_prev = wl_logdos
     radial_time = 0.0_real64
     mpi_wl_hist = 0.0_real64
     i = 0
@@ -241,6 +249,25 @@ module wang_landau
         call dos_average(wl_logdos)
         call dos_combine(wl_logdos)
 
+        ! Change in DOS since previous iteration, in units of ln g (so it is the
+        ! relative change in g, independent of system size). ln g is only defined
+        ! up to an additive constant, so the median change over all bins is removed
+        ! first; the median is used rather than the value of any single bin
+        ! (dos_combine pins the lowest bin to zero, which is also the noisiest).
+        ! The RMSE of the remaining change is then taken within each energy window
+        ! and the worst window is reported, so that poorly sampled windows are not
+        ! hidden by well converged ones. The run is converged once this stays below
+        ! dos_tolerance for 2 consecutive iterations.
+        ! wl_logdos is identical on all ranks after dos_combine (broadcast).
+        dos_change = worst_window_dos_change(wl_logdos - wl_logdos_prev)
+        wl_logdos_prev = wl_logdos
+        if (wl_setup_internal%dos_tolerance > 0.0 .and. dos_change < real(wl_setup_internal%dos_tolerance, real64)) then
+          dos_stable_count = dos_stable_count + 1
+        else
+          dos_stable_count = 0
+        end if
+        if (dos_stable_count >= 2) dos_converged = .true.
+
         call MPI_ALLREDUCE(MPI_IN_PLACE, wl_mc_steps, SIZE(wl_mc_steps), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
 
         call reduce_time(start, end, radial_time)
@@ -264,6 +291,12 @@ module wang_landau
           write(*,*)
           write (6, '(a,f20.18,a,f8.2,a)', advance='no') "Flatness reached f of: ", wl_f_prev, &
                   " | Radial samples: ", radial_min*100.0_real64, "%"
+          write (*, *)
+          write (6, '(a,es10.3,a,i2,a)', advance='no') "Worst-window DOS change (ln g): ", dos_change, &
+                  " | Consecutive below tolerance: ", dos_stable_count, "/2"
+          if (wl_setup_internal%dos_tolerance > 0.0) then
+            write (6, '(a,es10.3)', advance='no') " | Tolerance: ", real(wl_setup_internal%dos_tolerance, real64)
+          end if
           write (*, *)
           do i=1, wl_setup_internal%num_windows
             write (6, '(a,i3,a,f16.0,a,f7.2,a,a,f12.2,a)') "MPI Window: ", i, " | Total MC Steps: ", wl_mc_steps(i), &
@@ -303,11 +336,16 @@ module wang_landau
         iter = iter + 1
 
         start = mpi_wtime()
+
+        if (dos_converged) exit
       end if
     end do
 
     if (my_rank == 0) then
       write (*, *)
+      if (dos_converged) then
+        call print_centered_message("Converged: DOS change below tolerance", "-")
+      end if
       call print_centered_message("Simulation Complete!", "=")
     end if
 
@@ -542,6 +580,11 @@ module wang_landau
     real(real64) :: e_swapped, e_unswapped, pair_unswapped, pair_swapped, delta_e, radial_start, radial_end
     integer :: i, ibin, jbin
     integer(array_int) :: site1, site2
+    real(real64), allocatable :: logdos_base(:), hist_base(:)
+
+    ! Starting values, common to all walkers in the window, used when sharing
+    logdos_base = wl_logdos
+    hist_base = mpi_wl_hist
 
     ! Establish total energy before any moves
     e_unswapped = setup_internal%full_energy(config)
@@ -602,7 +645,7 @@ module wang_landau
           call pair_swap(config, rdm1, rdm2)
           jbin = ibin
         end if
-        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+        if (MOD(i,MAX(1,INT(0.02_real64*REAL(setup_internal%n_atoms)))) == 0) then
           mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
           if (config_store(jbin)) then
             config_store(jbin) = .False.
@@ -614,7 +657,7 @@ module wang_landau
         ! reject and reset
         jbin = ibin
         call pair_swap(config, rdm1, rdm2)
-        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+        if (MOD(i,MAX(1,INT(0.02_real64*REAL(setup_internal%n_atoms)))) == 0) then
           mpi_wl_hist(jbin - mpi_start_idx + 1) = mpi_wl_hist(jbin - mpi_start_idx + 1) + 1.0_real64
           if (config_store(jbin)) then
             config_store(jbin) = .False.
@@ -624,11 +667,16 @@ module wang_landau
         wl_logdos(jbin) = wl_logdos(jbin) + wl_f
       end if
     end do
-    ! Reduce internal
+    ! Share ln g and the histogram across the walkers in this window by summing
+    ! each walker's increments on top of the common starting values, so every
+    ! visit by any walker counts with weight f (a shared ln g), rather than
+    ! averaging the copies (which would weight each visit by f/num_walkers).
+    wl_logdos = wl_logdos - logdos_base
     call MPI_Allreduce(MPI_IN_PLACE, wl_logdos, size(wl_logdos), MPI_DOUBLE_PRECISION, MPI_SUM, sub_comm, ierr)
-    wl_logdos = wl_logdos/REAL(mpi_processes/wl_setup_internal%num_windows)
+    wl_logdos = logdos_base + wl_logdos
+    mpi_wl_hist = mpi_wl_hist - hist_base
     call MPI_Allreduce(MPI_IN_PLACE, mpi_wl_hist, size(mpi_wl_hist), MPI_DOUBLE_PRECISION, MPI_SUM, sub_comm, ierr)
-    mpi_wl_hist = mpi_wl_hist/REAL(mpi_processes/wl_setup_internal%num_windows)
+    mpi_wl_hist = hist_base + mpi_wl_hist
   end subroutine sweeps
 
   !> @brief   Routine for moving processes into assigned energy window
@@ -740,6 +788,59 @@ module wang_landau
     call comms_purge()
   end subroutine enter_energy_window
 
+  !> @brief   Worst-window change in the density of states between iterations
+  !>
+  !> @details Takes the change in ln g(E) between two iterations, removes the
+  !>          median change over all bins (ln g is defined only up to an additive
+  !>          constant), and returns the largest RMSE of the remaining change
+  !>          taken within any one energy window (overlap bins included).
+  !>
+  !> @param   delta Change in ln g(E) for every bin
+  !> @return  Largest per-window RMSE, in units of ln g
+  function worst_window_dos_change(delta) result(worst)
+    real(real64), intent(in) :: delta(:)
+    real(real64) :: worst, offset, rmse
+    real(real64), allocatable :: centred(:)
+    integer :: w, lo, hi
+
+    offset = median_of(delta)
+    centred = delta - offset
+    worst = 0.0_real64
+    do w = 1, wl_setup_internal%num_windows
+      lo = max(window_indices(w, 1), 1)
+      hi = min(window_indices(w, 2), size(delta))
+      if (hi < lo) cycle
+      rmse = sqrt(sum(centred(lo:hi)**2)/real(hi - lo + 1, real64))
+      worst = max(worst, rmse)
+    end do
+  end function worst_window_dos_change
+
+  !> @brief   Median of an array (insertion sort of a copy)
+  function median_of(x) result(med)
+    real(real64), intent(in) :: x(:)
+    real(real64) :: med, key
+    real(real64), allocatable :: y(:)
+    integer :: i, j, n
+
+    n = size(x)
+    y = x
+    do i = 2, n
+      key = y(i)
+      j = i - 1
+      do while (j >= 1)
+        if (y(j) <= key) exit
+        y(j+1) = y(j)
+        j = j - 1
+      end do
+      y(j+1) = key
+    end do
+    if (mod(n, 2) == 1) then
+      med = y((n + 1)/2)
+    else
+      med = 0.5_real64*(y(n/2) + y(n/2 + 1))
+    end if
+  end function median_of
+
   !> @brief   Pre-sampling routine that performs initial sweeps
   !>
   !> @details Routine that performs pre-sampling such that each energy
@@ -777,7 +878,8 @@ module wang_landau
       lb_mc_steps(1) = lb_mc_steps(1) + wl_setup_internal%mc_sweeps*setup_internal%n_atoms
 
       flatness = minval(mpi_wl_hist)/(sum(mpi_wl_hist)/mpi_bins)
-      if (minval(mpi_wl_hist) > 1000.0_real64/REAL(num_walkers) .and. pre_sampled_state == 0 &
+      ! mpi_wl_hist now holds visits summed over the window's walkers
+      if (minval(mpi_wl_hist) > 1000.0_real64 .and. pre_sampled_state == 0 &
        .and. flatness > wl_setup_internal%flatness) then
         pre_sampled(mpi_index) = 1
       end if
@@ -1036,6 +1138,7 @@ module wang_landau
     allocate(wl_hist(bins))
     allocate(wl_logdos(bins))
     allocate(wl_logdos_buffer(bins))
+    allocate(wl_logdos_prev(bins))
     allocate(bin_energy(bins))
     allocate(mean_energy(300,2))
     allocate(prob(bins))
@@ -1549,7 +1652,7 @@ module wang_landau
     max_bin = mpi_end_idx
   
     ! Generate random bin index
-    call random_number(rand_val)
+    rand_val = genrand()
     rand_bin = min_bin + int(rand_val * real(max_bin - min_bin + 1, real64))
     ! Load the selected configuration
     config = config_per_bin(rand_bin, :, :, :, :)
@@ -1580,7 +1683,7 @@ module wang_landau
 
             if (size(ranks_with_config) > 0) then
                 ! Randomly select one rank
-                call random_number(rand_val)
+                rand_val = genrand()
                 pick_rank = ranks_with_config(1 + int(rand_val * size(ranks_with_config)))
 
                 ! Broadcast which rank was selected
@@ -1662,7 +1765,7 @@ subroutine energy_explore(wl_logdos)
           call pair_swap(config, rdm1, rdm2)
           jbin = ibin
         end if
-        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+        if (MOD(i,MAX(1,INT(0.02_real64*REAL(setup_internal%n_atoms)))) == 0) then
           if (config_store(jbin)) then
             config_store(jbin) = .False.
             config_per_bin(jbin, :, :, :, :) = config
@@ -1672,7 +1775,7 @@ subroutine energy_explore(wl_logdos)
         ! reject and reset
         jbin = ibin
         call pair_swap(config, rdm1, rdm2)
-        if (MOD(i,INT(0.02_real64*REAL(setup_internal%n_atoms))) == 0) then
+        if (MOD(i,MAX(1,INT(0.02_real64*REAL(setup_internal%n_atoms)))) == 0) then
           if (config_store(jbin)) then
             config_store(jbin) = .False.
             config_per_bin(jbin, :, :, :, :) = config
