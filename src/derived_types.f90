@@ -337,7 +337,7 @@ module derived_types
     real :: tolerance
     ! Flatness for wang landau histogram
     real :: flatness
-    ! DOS change tolerance (percent) between iterations. <= 0 disables.
+    ! DOS change tolerance (worst-window RMSE change in ln g) between iterations. <= 0 disables.
     real :: dos_tolerance
     ! Wang Landau density of states histogram tuning parameter
     real :: wl_f
