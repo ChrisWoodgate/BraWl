@@ -1,0 +1,58 @@
+cff-version: 1.2.0
+message: >-
+  If you use BraWl in your research, please cite the associated
+  JOSS article, given below as the preferred citation.
+type: software
+title: BraWl
+abstract: >-
+  A package for performing lattice-based atomistic simulations
+  of alloys with an internal energy given by a Bragg-Williams
+  Hamiltonian, implementing Metropolis-Hastings Monte Carlo,
+  Nested Sampling and Wang-Landau sampling.
+authors:
+  - given-names: Hubert J.
+    family-names: Naguszewski
+    orcid: https://orcid.org/0009-0006-1670-5437
+  - given-names: Livia B.
+    family-names: Pártay
+    orcid: https://orcid.org/0000-0003-3249-3586
+  - given-names: David
+    family-names: Quigley
+    orcid: https://orcid.org/0000-0003-4750-4372
+  - given-names: Christopher D.
+    family-names: Woodgate
+    orcid: https://orcid.org/0000-0003-4876-5558
+repository-code: https://github.com/ChrisWoodgate/BraWl
+url: https://chriswoodgate.github.io/BraWl/
+license: LGPL-3.0-or-later
+keywords:
+  - alloys
+  - statistical mechanics
+  - thermodynamics
+  - Monte Carlo
+  - Wang-Landau sampling
+  - nested sampling
+preferred-citation:
+  type: article
+  title: >-
+    BraWl: Simulating the thermodynamics and phase stability of
+    multicomponent alloys using conventional and enhanced
+    sampling techniques
+  authors:
+    - given-names: Hubert J.
+      family-names: Naguszewski
+      orcid: https://orcid.org/0009-0006-1670-5437
+    - given-names: Livia B.
+      family-names: Pártay
+      orcid: https://orcid.org/0000-0003-3249-3586
+    - given-names: David
+      family-names: Quigley
+      orcid: https://orcid.org/0000-0003-4750-4372
+    - given-names: Christopher D.
+      family-names: Woodgate
+      orcid: https://orcid.org/0000-0003-4876-5558
+  journal: Journal of Open Source Software
+  volume: 10
+  start: 8346
+  year: 2025
+  doi: 10.21105/joss.08346
