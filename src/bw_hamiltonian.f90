@@ -26,6 +26,8 @@ module bw_hamiltonian
   public :: fcc_energy_1shells, fcc_energy_2shells
   public :: fcc_energy_3shells, fcc_energy_4shells
   public :: fcc_energy_5shells, fcc_energy_6shells
+  public :: fcc_energy_7shells, fcc_energy_8shells
+  public :: fcc_energy_9shells, fcc_energy_10shells
 
   ! BCC routines
   public :: bcc_energy_1shells, bcc_energy_2shells
@@ -1691,6 +1693,370 @@ module bw_hamiltonian
   end function fcc_shell6_energy
 
   !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 7th-nearest
+  !>          neighbours on the fcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 7th-nearest neighbours on the fcc
+  !>         lattice (cubic representation)
+  function fcc_shell7_energy(setup, site_b, site_i, site_j, site_k, &
+                             config, species)     &
+           result(energy)
+
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
+    integer :: i, i_m3, i_m2, i_m1, i_p1, i_p2, i_p3, j_m3, j_m2, j_m1, j_p1, j_p2, j_p3, k_m3, k_m2, k_m1, k_p1, k_p2, k_p3, ib
+
+    energy=0.0_real64
+
+    ! Compute where my neighbours are (offsets in units of half a lattice parameter)
+    i_m3 = modulo(site_i-3-1, 2*setup%n_1) + 1
+    i_m2 = modulo(site_i-2-1, 2*setup%n_1) + 1
+    i_m1 = modulo(site_i-1-1, 2*setup%n_1) + 1
+    i_p1 = modulo(site_i+1-1, 2*setup%n_1) + 1
+    i_p2 = modulo(site_i+2-1, 2*setup%n_1) + 1
+    i_p3 = modulo(site_i+3-1, 2*setup%n_1) + 1
+    j_m3 = modulo(site_j-3-1, 2*setup%n_2) + 1
+    j_m2 = modulo(site_j-2-1, 2*setup%n_2) + 1
+    j_m1 = modulo(site_j-1-1, 2*setup%n_2) + 1
+    j_p1 = modulo(site_j+1-1, 2*setup%n_2) + 1
+    j_p2 = modulo(site_j+2-1, 2*setup%n_2) + 1
+    j_p3 = modulo(site_j+3-1, 2*setup%n_2) + 1
+    k_m3 = modulo(site_k-3-1, 2*setup%n_3) + 1
+    k_m2 = modulo(site_k-2-1, 2*setup%n_3) + 1
+    k_m1 = modulo(site_k-1-1, 2*setup%n_3) + 1
+    k_p1 = modulo(site_k+1-1, 2*setup%n_3) + 1
+    k_p2 = modulo(site_k+2-1, 2*setup%n_3) + 1
+    k_p3 = modulo(site_k+3-1, 2*setup%n_3) + 1
+
+    ! Basis index (always =1 for this lattice implementation,
+    ! but keep here for generality)
+    ib = site_b
+
+    allocate(nbrs(48))
+
+    nbrs(1) = config(ib, i_m3, j_m2, k_m1)
+    nbrs(2) = config(ib, i_m3, j_m2, k_p1)
+    nbrs(3) = config(ib, i_m3, j_m1, k_m2)
+    nbrs(4) = config(ib, i_m3, j_m1, k_p2)
+    nbrs(5) = config(ib, i_m3, j_p1, k_m2)
+    nbrs(6) = config(ib, i_m3, j_p1, k_p2)
+    nbrs(7) = config(ib, i_m3, j_p2, k_m1)
+    nbrs(8) = config(ib, i_m3, j_p2, k_p1)
+    nbrs(9) = config(ib, i_m2, j_m3, k_m1)
+    nbrs(10) = config(ib, i_m2, j_m3, k_p1)
+    nbrs(11) = config(ib, i_m2, j_m1, k_m3)
+    nbrs(12) = config(ib, i_m2, j_m1, k_p3)
+    nbrs(13) = config(ib, i_m2, j_p1, k_m3)
+    nbrs(14) = config(ib, i_m2, j_p1, k_p3)
+    nbrs(15) = config(ib, i_m2, j_p3, k_m1)
+    nbrs(16) = config(ib, i_m2, j_p3, k_p1)
+    nbrs(17) = config(ib, i_m1, j_m3, k_m2)
+    nbrs(18) = config(ib, i_m1, j_m3, k_p2)
+    nbrs(19) = config(ib, i_m1, j_m2, k_m3)
+    nbrs(20) = config(ib, i_m1, j_m2, k_p3)
+    nbrs(21) = config(ib, i_m1, j_p2, k_m3)
+    nbrs(22) = config(ib, i_m1, j_p2, k_p3)
+    nbrs(23) = config(ib, i_m1, j_p3, k_m2)
+    nbrs(24) = config(ib, i_m1, j_p3, k_p2)
+    nbrs(25) = config(ib, i_p1, j_m3, k_m2)
+    nbrs(26) = config(ib, i_p1, j_m3, k_p2)
+    nbrs(27) = config(ib, i_p1, j_m2, k_m3)
+    nbrs(28) = config(ib, i_p1, j_m2, k_p3)
+    nbrs(29) = config(ib, i_p1, j_p2, k_m3)
+    nbrs(30) = config(ib, i_p1, j_p2, k_p3)
+    nbrs(31) = config(ib, i_p1, j_p3, k_m2)
+    nbrs(32) = config(ib, i_p1, j_p3, k_p2)
+    nbrs(33) = config(ib, i_p2, j_m3, k_m1)
+    nbrs(34) = config(ib, i_p2, j_m3, k_p1)
+    nbrs(35) = config(ib, i_p2, j_m1, k_m3)
+    nbrs(36) = config(ib, i_p2, j_m1, k_p3)
+    nbrs(37) = config(ib, i_p2, j_p1, k_m3)
+    nbrs(38) = config(ib, i_p2, j_p1, k_p3)
+    nbrs(39) = config(ib, i_p2, j_p3, k_m1)
+    nbrs(40) = config(ib, i_p2, j_p3, k_p1)
+    nbrs(41) = config(ib, i_p3, j_m2, k_m1)
+    nbrs(42) = config(ib, i_p3, j_m2, k_p1)
+    nbrs(43) = config(ib, i_p3, j_m1, k_m2)
+    nbrs(44) = config(ib, i_p3, j_m1, k_p2)
+    nbrs(45) = config(ib, i_p3, j_p1, k_m2)
+    nbrs(46) = config(ib, i_p3, j_p1, k_p2)
+    nbrs(47) = config(ib, i_p3, j_p2, k_m1)
+    nbrs(48) = config(ib, i_p3, j_p2, k_p1)
+
+    do i=1, 48
+      energy = energy + V_ex(species, nbrs(i), 7)
+    end do
+
+    deallocate(nbrs)
+
+  end function fcc_shell7_energy
+
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 8th-nearest
+  !>          neighbours on the fcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 8th-nearest neighbours on the fcc
+  !>         lattice (cubic representation)
+  function fcc_shell8_energy(setup, site_b, site_i, site_j, site_k, &
+                             config, species)     &
+           result(energy)
+
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
+    integer :: i, i_m4, i_p4, j_m4, j_p4, k_m4, k_p4, ib
+
+    energy=0.0_real64
+
+    ! Compute where my neighbours are (offsets in units of half a lattice parameter)
+    i_m4 = modulo(site_i-4-1, 2*setup%n_1) + 1
+    i_p4 = modulo(site_i+4-1, 2*setup%n_1) + 1
+    j_m4 = modulo(site_j-4-1, 2*setup%n_2) + 1
+    j_p4 = modulo(site_j+4-1, 2*setup%n_2) + 1
+    k_m4 = modulo(site_k-4-1, 2*setup%n_3) + 1
+    k_p4 = modulo(site_k+4-1, 2*setup%n_3) + 1
+
+    ! Basis index (always =1 for this lattice implementation,
+    ! but keep here for generality)
+    ib = site_b
+
+    allocate(nbrs(6))
+
+    nbrs(1) = config(ib, i_m4, site_j, site_k)
+    nbrs(2) = config(ib, site_i, j_m4, site_k)
+    nbrs(3) = config(ib, site_i, site_j, k_m4)
+    nbrs(4) = config(ib, site_i, site_j, k_p4)
+    nbrs(5) = config(ib, site_i, j_p4, site_k)
+    nbrs(6) = config(ib, i_p4, site_j, site_k)
+
+    do i=1, 6
+      energy = energy + V_ex(species, nbrs(i), 8)
+    end do
+
+    deallocate(nbrs)
+
+  end function fcc_shell8_energy
+
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 9th-nearest
+  !>          neighbours on the fcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 9th-nearest neighbours on the fcc
+  !>         lattice (cubic representation)
+  function fcc_shell9_energy(setup, site_b, site_i, site_j, site_k, &
+                             config, species)     &
+           result(energy)
+
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
+    integer :: i, i_m4, i_m3, i_m1, i_p1, i_p3, i_p4, j_m4, j_m3, j_m1, j_p1, j_p3, j_p4, k_m4, k_m3, k_m1, k_p1, k_p3, k_p4, ib
+
+    energy=0.0_real64
+
+    ! Compute where my neighbours are (offsets in units of half a lattice parameter)
+    i_m4 = modulo(site_i-4-1, 2*setup%n_1) + 1
+    i_m3 = modulo(site_i-3-1, 2*setup%n_1) + 1
+    i_m1 = modulo(site_i-1-1, 2*setup%n_1) + 1
+    i_p1 = modulo(site_i+1-1, 2*setup%n_1) + 1
+    i_p3 = modulo(site_i+3-1, 2*setup%n_1) + 1
+    i_p4 = modulo(site_i+4-1, 2*setup%n_1) + 1
+    j_m4 = modulo(site_j-4-1, 2*setup%n_2) + 1
+    j_m3 = modulo(site_j-3-1, 2*setup%n_2) + 1
+    j_m1 = modulo(site_j-1-1, 2*setup%n_2) + 1
+    j_p1 = modulo(site_j+1-1, 2*setup%n_2) + 1
+    j_p3 = modulo(site_j+3-1, 2*setup%n_2) + 1
+    j_p4 = modulo(site_j+4-1, 2*setup%n_2) + 1
+    k_m4 = modulo(site_k-4-1, 2*setup%n_3) + 1
+    k_m3 = modulo(site_k-3-1, 2*setup%n_3) + 1
+    k_m1 = modulo(site_k-1-1, 2*setup%n_3) + 1
+    k_p1 = modulo(site_k+1-1, 2*setup%n_3) + 1
+    k_p3 = modulo(site_k+3-1, 2*setup%n_3) + 1
+    k_p4 = modulo(site_k+4-1, 2*setup%n_3) + 1
+
+    ! Basis index (always =1 for this lattice implementation,
+    ! but keep here for generality)
+    ib = site_b
+
+    allocate(nbrs(36))
+
+    nbrs(1) = config(ib, i_m4, j_m1, k_m1)
+    nbrs(2) = config(ib, i_m4, j_m1, k_p1)
+    nbrs(3) = config(ib, i_m4, j_p1, k_m1)
+    nbrs(4) = config(ib, i_m4, j_p1, k_p1)
+    nbrs(5) = config(ib, i_m3, j_m3, site_k)
+    nbrs(6) = config(ib, i_m3, site_j, k_m3)
+    nbrs(7) = config(ib, i_m3, site_j, k_p3)
+    nbrs(8) = config(ib, i_m3, j_p3, site_k)
+    nbrs(9) = config(ib, i_m1, j_m4, k_m1)
+    nbrs(10) = config(ib, i_m1, j_m4, k_p1)
+    nbrs(11) = config(ib, i_m1, j_m1, k_m4)
+    nbrs(12) = config(ib, i_m1, j_m1, k_p4)
+    nbrs(13) = config(ib, i_m1, j_p1, k_m4)
+    nbrs(14) = config(ib, i_m1, j_p1, k_p4)
+    nbrs(15) = config(ib, i_m1, j_p4, k_m1)
+    nbrs(16) = config(ib, i_m1, j_p4, k_p1)
+    nbrs(17) = config(ib, site_i, j_m3, k_m3)
+    nbrs(18) = config(ib, site_i, j_m3, k_p3)
+    nbrs(19) = config(ib, site_i, j_p3, k_m3)
+    nbrs(20) = config(ib, site_i, j_p3, k_p3)
+    nbrs(21) = config(ib, i_p1, j_m4, k_m1)
+    nbrs(22) = config(ib, i_p1, j_m4, k_p1)
+    nbrs(23) = config(ib, i_p1, j_m1, k_m4)
+    nbrs(24) = config(ib, i_p1, j_m1, k_p4)
+    nbrs(25) = config(ib, i_p1, j_p1, k_m4)
+    nbrs(26) = config(ib, i_p1, j_p1, k_p4)
+    nbrs(27) = config(ib, i_p1, j_p4, k_m1)
+    nbrs(28) = config(ib, i_p1, j_p4, k_p1)
+    nbrs(29) = config(ib, i_p3, j_m3, site_k)
+    nbrs(30) = config(ib, i_p3, site_j, k_m3)
+    nbrs(31) = config(ib, i_p3, site_j, k_p3)
+    nbrs(32) = config(ib, i_p3, j_p3, site_k)
+    nbrs(33) = config(ib, i_p4, j_m1, k_m1)
+    nbrs(34) = config(ib, i_p4, j_m1, k_p1)
+    nbrs(35) = config(ib, i_p4, j_p1, k_m1)
+    nbrs(36) = config(ib, i_p4, j_p1, k_p1)
+
+    do i=1, 36
+      energy = energy + V_ex(species, nbrs(i), 9)
+    end do
+
+    deallocate(nbrs)
+
+  end function fcc_shell9_energy
+
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with its 10th-nearest
+  !>          neighbours on the fcc lattice (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with its 10th-nearest neighbours on the fcc
+  !>         lattice (cubic representation)
+  function fcc_shell10_energy(setup, site_b, site_i, site_j, site_k, &
+                             config, species)     &
+           result(energy)
+
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int), intent(in) :: species
+    integer(array_int), allocatable, dimension(:) :: nbrs
+    integer :: i, i_m4, i_m2, i_p2, i_p4, j_m4, j_m2, j_p2, j_p4, k_m4, k_m2, k_p2, k_p4, ib
+
+    energy=0.0_real64
+
+    ! Compute where my neighbours are (offsets in units of half a lattice parameter)
+    i_m4 = modulo(site_i-4-1, 2*setup%n_1) + 1
+    i_m2 = modulo(site_i-2-1, 2*setup%n_1) + 1
+    i_p2 = modulo(site_i+2-1, 2*setup%n_1) + 1
+    i_p4 = modulo(site_i+4-1, 2*setup%n_1) + 1
+    j_m4 = modulo(site_j-4-1, 2*setup%n_2) + 1
+    j_m2 = modulo(site_j-2-1, 2*setup%n_2) + 1
+    j_p2 = modulo(site_j+2-1, 2*setup%n_2) + 1
+    j_p4 = modulo(site_j+4-1, 2*setup%n_2) + 1
+    k_m4 = modulo(site_k-4-1, 2*setup%n_3) + 1
+    k_m2 = modulo(site_k-2-1, 2*setup%n_3) + 1
+    k_p2 = modulo(site_k+2-1, 2*setup%n_3) + 1
+    k_p4 = modulo(site_k+4-1, 2*setup%n_3) + 1
+
+    ! Basis index (always =1 for this lattice implementation,
+    ! but keep here for generality)
+    ib = site_b
+
+    allocate(nbrs(24))
+
+    nbrs(1) = config(ib, i_m4, j_m2, site_k)
+    nbrs(2) = config(ib, i_m4, site_j, k_m2)
+    nbrs(3) = config(ib, i_m4, site_j, k_p2)
+    nbrs(4) = config(ib, i_m4, j_p2, site_k)
+    nbrs(5) = config(ib, i_m2, j_m4, site_k)
+    nbrs(6) = config(ib, i_m2, site_j, k_m4)
+    nbrs(7) = config(ib, i_m2, site_j, k_p4)
+    nbrs(8) = config(ib, i_m2, j_p4, site_k)
+    nbrs(9) = config(ib, site_i, j_m4, k_m2)
+    nbrs(10) = config(ib, site_i, j_m4, k_p2)
+    nbrs(11) = config(ib, site_i, j_m2, k_m4)
+    nbrs(12) = config(ib, site_i, j_m2, k_p4)
+    nbrs(13) = config(ib, site_i, j_p2, k_m4)
+    nbrs(14) = config(ib, site_i, j_p2, k_p4)
+    nbrs(15) = config(ib, site_i, j_p4, k_m2)
+    nbrs(16) = config(ib, site_i, j_p4, k_p2)
+    nbrs(17) = config(ib, i_p2, j_m4, site_k)
+    nbrs(18) = config(ib, i_p2, site_j, k_m4)
+    nbrs(19) = config(ib, i_p2, site_j, k_p4)
+    nbrs(20) = config(ib, i_p2, j_p4, site_k)
+    nbrs(21) = config(ib, i_p4, j_m2, site_k)
+    nbrs(22) = config(ib, i_p4, site_j, k_m2)
+    nbrs(23) = config(ib, i_p4, site_j, k_p2)
+    nbrs(24) = config(ib, i_p4, j_p2, site_k)
+
+    do i=1, 24
+      energy = energy + V_ex(species, nbrs(i), 10)
+    end do
+
+    deallocate(nbrs)
+
+  end function fcc_shell10_energy
+
+  !> @brief   Function to compute the contribution to the simulation
   !>          energy made by an atom interacting with atoms up to and
   !>          including its 1st-nearest neighbours on the fcc lattice
   !>          (cubic representation)
@@ -1908,6 +2274,172 @@ module bw_hamiltonian
            + fcc_shell6_energy(setup, site_b, site_i, site_j, site_k, config, species)
     
   end function fcc_energy_6shells
+
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 7th-nearest neighbours on the fcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 7th-nearest
+  !>         neighbours on the fcc lattice (cubic representation).
+  function fcc_energy_7shells(setup, config, site_b, site_i, site_j, site_k) &
+           result(energy)
+
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int) :: species
+
+    species = config(site_b, site_i, site_j, site_k)
+
+    energy = fcc_shell1_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell2_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell3_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell4_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell5_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell6_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell7_energy(setup, site_b, site_i, site_j, site_k, config, species)
+
+  end function fcc_energy_7shells
+
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 8th-nearest neighbours on the fcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 8th-nearest
+  !>         neighbours on the fcc lattice (cubic representation).
+  function fcc_energy_8shells(setup, config, site_b, site_i, site_j, site_k) &
+           result(energy)
+
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int) :: species
+
+    species = config(site_b, site_i, site_j, site_k)
+
+    energy = fcc_shell1_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell2_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell3_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell4_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell5_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell6_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell7_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell8_energy(setup, site_b, site_i, site_j, site_k, config, species)
+
+  end function fcc_energy_8shells
+
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 9th-nearest neighbours on the fcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 9th-nearest
+  !>         neighbours on the fcc lattice (cubic representation).
+  function fcc_energy_9shells(setup, config, site_b, site_i, site_j, site_k) &
+           result(energy)
+
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int) :: species
+
+    species = config(site_b, site_i, site_j, site_k)
+
+    energy = fcc_shell1_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell2_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell3_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell4_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell5_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell6_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell7_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell8_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell9_energy(setup, site_b, site_i, site_j, site_k, config, species)
+
+  end function fcc_energy_9shells
+
+  !> @brief   Function to compute the contribution to the simulation
+  !>          energy made by an atom interacting with atoms up to and
+  !>          including its 10th-nearest neighbours on the fcc lattice
+  !>          (cubic representation)
+  !>
+  !> @author  C. D. Woodgate
+  !> @date    2019-2025
+  !>
+  !> @param  setup Derived type containing simulation parameters
+  !> @param  site_b Basis index (always =1 for this lattice)
+  !> @param  site_i Lattice vector index 1
+  !> @param  site_j Lattice vector index 2
+  !> @param  site_k Lattice vector index 3
+  !> @param  config Current atomic configuration
+  !> @param  species
+  !>
+  !> @return The contribution to the simulation energy made by an atom
+  !>         interacting with atoms up to and including its 10th-nearest
+  !>         neighbours on the fcc lattice (cubic representation).
+  function fcc_energy_10shells(setup, config, site_b, site_i, site_j, site_k) &
+           result(energy)
+
+    integer(array_int), dimension(:,:,:,:), intent(in) :: config
+    real(real64) :: energy
+    class(run_params), intent(in) :: setup
+    integer, intent(in) :: site_b, site_i, site_j, site_k
+    integer(array_int) :: species
+
+    species = config(site_b, site_i, site_j, site_k)
+
+    energy = fcc_shell1_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell2_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell3_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell4_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell5_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell6_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell7_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell8_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell9_energy(setup, site_b, site_i, site_j, site_k, config, species) &
+           + fcc_shell10_energy(setup, site_b, site_i, site_j, site_k, config, species)
+
+  end function fcc_energy_10shells
 
   !> @brief   Function to compute the contribution to the simulation
   !>          energy made by an atom interacting with its 1st-nearest
