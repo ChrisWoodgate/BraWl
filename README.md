@@ -148,12 +148,13 @@ A (hopefully fairly complete) list of publications where `Brawl` was used is as 
 12. A. M. Fisher, C. D. Woodgate, X. Zhang, G. C. Hadjipanayis, L. H. Lewis, J. B. Staunton, [Physical Review Materials **10**, 034410 (2026)](https://doi.org/10.1103/4q1c-97bp).
 13. H. J. Naguszewski, C. D. Woodgate, D. Quigley, [Computer Physics Communications **324**, 110125 (2026)](https://doi.org/10.1016/j.cpc.2026.110125).
 14. J. E. Arnold, C. D. Woodgate, R. Hafizi, M. J. Harris, A. Mottura, G. García Fuentes, B. Gurrutxaga-Lerma, [Physical Review Materials **10**, 073605 (2026)](https://doi.org/10.1103/5tz1-zg9z).
-15. C. D. Woodgate, H. J. Naguszewski, N. F. Piwek, D. Redka, [arXiv:2601.16528](https://doi.org/10.48550/arXiv.2601.16528).
+15. C. D. Woodgate, H. J. Naguszewski, N. F. Piwek, D. Redka, [Journal of Materials Research (2026)](https://doi.org/10.1557/s43578-026-01999-z).
+16. C. D. Woodgate, H. J. Naguszewski, S. L. Deacon, M. P. Potel, J. Minár, D. Quigley, J. B. Staunton, [arXiv:2607.27108](https://doi.org/10.48550/arXiv.2607.27108).
 
 ## Authors
 - Hubert J. Naguszewski ([@HubertJN](https://github.com/HubertJN), University of Warwick)
 - Livia B. Pártay ([@liviabp](https://github.com/liviabp), University of Warwick)
-- Christopher D. Woodgate ([@ChrisWoodgate](https://github.com/ChrisWoodgate), University of Bristol)
+- Christopher D. Woodgate ([@ChrisWoodgate](https://github.com/ChrisWoodgate), University of Cambridge)
 
 ## Contributors
 - Heather Ratcliffe
