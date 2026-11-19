@@ -56,7 +56,7 @@ module io
     call date_and_time(date=date,time=time)
 
     write(6,'(/,72("="))')
-    write(6,'(22x,"BraWl Version 1.1.0, 12.03.26")')
+    write(6,'(21x,"BraWl Version 1.2.1, 2026-11-19")')
     write(6,'(72("-"))')
 
     if (point .eq. 's') then
