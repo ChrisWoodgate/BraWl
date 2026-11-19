@@ -2,14 +2,14 @@
 
 [![Ubuntu (x86_64)](https://github.com/ChrisWoodgate/BraWl/actions/workflows/testingOnPush_Ubuntu.yaml/badge.svg)](https://github.com/ChrisWoodgate/BraWl/actions/workflows/testingOnPush_Ubuntu.yaml)
 [![MacOS (ARM64)](https://github.com/ChrisWoodgate/BraWl/actions/workflows/testingOnPush_Apple.yaml/badge.svg)](https://github.com/ChrisWoodgate/BraWl/actions/workflows/testingOnPush_Apple.yaml)
-[![License: MIT](https://img.shields.io/badge/License-LGPLv3-yellow.svg)](https://opensource.org/license/lgpl-3-0)
+[![License: LGPL v3 or later](https://img.shields.io/badge/License-LGPLv3%2B-yellow.svg)](https://opensource.org/license/lgpl-3-0)
 
 `BraWl` — a package for performing lattice-based atomistic simulations of alloys with an internal energy given by a Bragg-Williams Hamiltonian. The package implements a range of conventional and enhanced sampling techniques, including Metropolis-Hastings Monte Carlo, Nested Sampling, and Wang-Landau sampling. It is designed to be extensible so additional sampling algorithms can be implemented in due course. This `README` contains key information and installation instructions, while developer documentation can be found at: [https://chriswoodgate.github.io/BraWl/](https://chriswoodgate.github.io/BraWl/)
 
 You can read more about the package in our JOSS article:
 * H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [Journal of Open Source Software **10**, 8346 (2025).](https://doi.org/10.21105/joss.08346).
 
-Copyright (C) The Authors 2019-2025. Released under the GNU Lesser General Public License, version 3.
+Copyright (C) The Authors 2019-2026. Released under the GNU Lesser General Public License, version 3 or (at your option) any later version.
 
 ## Background
 
@@ -31,7 +31,7 @@ In practice, it is assumed that interactions are isotropic (direction-independen
 
 $$H(\{\xi_{i\alpha}\}) = \frac{1}{2}\sum_{i} \sum_{n} \left(\sum_{j \in n(i)} \sum_{\alpha \alpha'} V_{\alpha \alpha'}^{(n)} \xi_{i \alpha} \xi_{j \alpha'} \right),$$
 
-where $n(i)$ denotes the set of lattice sites which are $n$ th nearest-neighbours to site $i$, and $V_{\alpha \alpha'}^{(n)}$ denotes the interaction between species $\alpha$ and $\alpha'$ on coordination shell $n$. This is the description which with BraWL works internally.
+where $n(i)$ denotes the set of lattice sites which are $n$ th nearest-neighbours to site $i$, and $V_{\alpha \alpha'}^{(n)}$ denotes the interaction between species $\alpha$ and $\alpha'$ on coordination shell $n$. This is the description with which BraWl works internally.
 
 ## Dependencies
 
@@ -110,7 +110,7 @@ mpirun -np <num_processors> /path/to/BraWl/brawl.run input=<brawl_input_name> me
 If you navigate to the `examples` subdirectory, you should find various further subdirectories containing some example input files demonstrating the code's usage, which can be run inside those directories. These input files are commented to explain what the various parameters mean and do.
 
 Most options specified in the input files are fairly self-explanatory. Commented examples of input files can be found in the `examples` subdirectory. The least obvious is the `mode` option of `brawl.inp`. Because it is our intention to include 2D (and potentially 1D) options in future, the first digit indicates the number of spatial dimensions for the simulation. Then the last two digits the mode. At present, the implemented (and fully tested) options are:
-- 01: Metropolis-Hastings Monte Carlo. Uses the Metropolis-Hastings algortithm to equilibrate a system then perform sampling. Can also be used to perform simulated annealing, _e.g._ as used in [npj Comput. Mater. **10** 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y), or to draw decorrelated samples for use in other modelling approaches, such as training machine-learned interatomic potentials, _e.g._ as used in [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
+- 01: Metropolis-Hastings Monte Carlo. Uses the Metropolis-Hastings algorithm to equilibrate a system then perform sampling. Can also be used to perform simulated annealing, _e.g._ as used in [npj Comput. Mater. **10** 272 (2024)](https://doi.org/10.1038/s41524-024-01435-y), or to draw decorrelated samples for use in other modelling approaches, such as training machine-learned interatomic potentials, _e.g._ as used in [Phys. Rev. Mater. **8**, 033804 (2024)](https://doi.org/10.1103/PhysRevMaterials.8.033804).
 - 02: Wang-Landau sampling. Uses Wang-Landau sampling to compute the simulation density of states in energy, which can then be used to sample thermodynamic quantities as a post-processing step. This procedure is outlined in [J. Phys.: Mater. **8**, 045002 (2025)](https://doi.org/10.1088/2515-7639/adf468).
 - 03: Nested sampling. Uses the nested sampling algorithm to sample the configuration space from random initial configurations, allowing to calculate the partition function at an arbitrary temperature during the post-processing step. This procedure is outlined in [npj Comput. Mater. **10**, 271 (2024)](https://doi.org/10.1038/s41524-024-01445-w).
 
@@ -118,7 +118,7 @@ Most options specified in the input files are fairly self-explanatory. Commented
 The `tests` directory contains some test inputs/outputs to verify the code's core functionality once compiled. These tests are run automatically using GitHub Actions. You can find full details in `.github/workflows/`
 
 ## Documentation
-The in addition to this README and the provided examples, the code also has (searchable) documentation which is auto-generated using [Doxygen](https://www.doxygen.nl). This documentation contains information about all modules, functions, subroutines, and derived types, so is particularly useful if you are looking to develop a new feature. There are two options available for viewing this documentation:
+In addition to this README and the provided examples, the code also has (searchable) documentation which is auto-generated using [Doxygen](https://www.doxygen.nl). This documentation contains information about all modules, functions, subroutines, and derived types, so is particularly useful if you are looking to develop a new feature. There are two options available for viewing this documentation:
 1. View the auto-generated documentation hosted online at [https://chriswoodgate.github.io/BraWl/](https://chriswoodgate.github.io/BraWl/). (Intended for end-users and developers looking to implement new features.)
 2. Generate and 'host' your own version of the documentation on your local machine. (Intended for developers wanting to check that their comments/documentation is being rendered as expected.)
 
@@ -133,7 +133,7 @@ If you use `BraWl` in your research, please cite the associated JOSS article in 
 * H. J. Naguszewski, L. B. Partay, D. Quigley, C. D. Woodgate, [Journal of Open Source Software **10**, 8346 (2025).](https://doi.org/10.21105/joss.08346).
 
 ## List of publications
-A (hopefully fairly complete) list of publications where `Brawl` was used is as follows:
+A (hopefully fairly complete) list of publications where `BraWl` was used is as follows:
 1. G. A. Marchant, C. D. Woodgate, C. E. Patrick, J. B. Staunton, [Physical Review B **103**, 094414 (2021)](https://doi.org/10.1103/PhysRevB.103.094414).
 2. C. D. Woodgate, J. B. Staunton, [Physical Review B **105**, 115124 (2022)](https://doi.org/10.1103/PhysRevB.105.115124).
 3. C. D. Woodgate, J. B. Staunton, [Physical Review Materials **7**, 013801 (2023)](https://doi.org/10.1103/PhysRevMaterials.7.013801).
@@ -175,7 +175,7 @@ Features which we do not currently plan on implementing are:
 Additionally, as [developer documentation for the package](https://chriswoodgate.github.io/BraWl/) is auto-generated using [Doxygen](https://www.doxygen.nl), we ask that all contributions to the codebase follow the [Doxygen guide for formatting comment blocks](https://www.doxygen.nl/manual/docblocks.html#fortranblocks) and uses the relevant [Doxygen commands](https://www.doxygen.nl/manual/commands.html) to specify the details of new features/routines.
 
 ## License
-This software is released under the LGPL-3.0 license. See the file LICENSE.txt for details.
+This software is released under the LGPL-3.0-or-later license. See the file LICENSE.txt for details.
 
 ## Questions, Brickbats, and Bouquets
 [Drop me an email](mailto:christopher.woodgate@physics.org) if you have any questions, comments, or feedback!
